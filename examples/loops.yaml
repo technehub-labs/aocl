@@ -19,7 +19,7 @@ loops:
       - Pre-emptive scaling capped at +20% capacity
       - Rollback exercised monthly
     budget_end_to_end: "< 100 ms"
-    last_review: 2026-10-20
+    last_review: "2026-10-20"
     review_cadence_days: 90
     notes: >
       Predictive signals trigger pre-emptive scaling before threshold breach.
@@ -41,7 +41,7 @@ loops:
       - Digital-twin trials mandatory before policy deployment
       - Model-drift monitoring with graceful degradation
     budget_end_to_end: "< 7 days"
-    last_review: 2026-11-01
+    last_review: "2026-11-01"
     review_cadence_days: 90
     notes: >
       Slow loop generating policies that parametrize the fast assurance loops
@@ -59,7 +59,7 @@ loops:
     guardrails:
       - Max replica ceiling enforced
     budget_end_to_end: "< 100 ms"
-    last_review: 2026-07-01
+    last_review: "2026-07-01"
     review_cadence_days: 90
     notes: >
       Threshold-based scaling; intentionally stale at the pinned --today date
