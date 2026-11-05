@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install (runtime dep: pyyaml)
+      - name: Install (runtime dep is pyyaml)
         run: python -m pip install --disable-pip-version-check pyyaml
       - name: Engine self-tests (via zero-install shims)
         run: |
