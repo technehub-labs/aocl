@@ -106,7 +106,8 @@ latency_budgets:
     actuation_latency: "< 4 hours"
     end_to_end_budget: "< 7 days"
     availability_slo: 99.9%
-  note: >-
+
+note: >-
     When defined, these budgets are architectural constraints: loops that consistently violate
     them shall be decomposed, optimized, or downgraded in maturity.
 
