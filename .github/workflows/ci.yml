@@ -36,9 +36,7 @@ jobs:
           python3 tools/aocl_realization.py --E 0.6 --target 1.0
       - name: Example ledger health (deterministic)
         run: |
-          if python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null; then
-            echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1
-          fi
+          python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
           echo "healthy on 2026-09-28: ok"
           if python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-11-05 --json > /dev/null; then
             echo "expected staleness finding on 2026-11-05"; exit 1
