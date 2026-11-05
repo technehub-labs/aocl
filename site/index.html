@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AOCL — Autonomous Operations &amp; Closed Loops</title>
+<style>
+  :root { --ink:#1e293b; --muted:#64748b; --accent:#7c3aed; --bg:#f8fafc; --card:#ffffff; --line:#e2e8f0; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  code, .mono { font-family:ui-monospace,Menlo,Consolas,monospace; }
+  header { background:linear-gradient(135deg,#1e1b4b,#4c1d95); color:#fff; padding:22px 28px; }
+  header h1 { margin:0; font-size:20px; letter-spacing:.4px; }
+  header p { margin:6px 0 0; font-size:13px; opacity:.85; }
+  nav { display:flex; gap:4px; background:#fff; border-bottom:1px solid var(--line); padding:0 20px; position:sticky; top:0; z-index:5; }
+  nav button { border:0; background:none; padding:12px 16px; font-size:14px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; }
+  nav button.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+  main { max-width:1180px; margin:0 auto; padding:24px 20px 60px; }
+  .grid { display:grid; gap:18px; }
+  .cols-2 { grid-template-columns:1fr 1fr; }
+  @media (max-width:900px){ .cols-2 { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; }
+  .card h3 { margin:0 0 10px; font-size:15px; }
+  .muted { color:var(--muted); font-size:12.5px; }
+  .banner { border:1px solid #fde68a; background:#fffbeb; color:#92400e; border-radius:8px; padding:10px 14px; font-size:12.5px; margin-bottom:18px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
+  select, input[type=text], input[type=number], textarea { border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:13px; width:100%; background:#fff; }
+  label { font-size:12px; color:var(--muted); display:block; margin:10px 0 4px; }
+  button.primary { background:var(--accent); color:#fff; border:0; border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; }
+  button.ghost { background:#fff; border:1px solid var(--line); border-radius:6px; padding:6px 12px; font-size:12.5px; cursor:pointer; color:var(--ink); }
+  button.danger { background:#fff; border:1px solid #fecaca; color:#b91c1c; border-radius:6px; padding:6px 12px; font-size:12.5px; cursor:pointer; }
+  .qrow { display:flex; gap:8px; align-items:flex-start; padding:7px 0; border-bottom:1px dashed var(--line); }
+  .qrow input { margin-top:3px; }
+  .qrow span { font-size:13px; }
+  .vec-badge { display:inline-block; width:34px; text-align:center; border-radius:5px; color:#fff; font-size:11px; padding:2px 0; font-weight:700; }
+  .scorebox { background:#f1f5f9; border-radius:8px; padding:12px; font-size:13px; }
+  .scorebox .lvl { font-size:26px; font-weight:800; color:var(--accent); }
+  .chart { text-align:center; }
+  /* modeler */
+  .lanes { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  @media (max-width:980px){ .lanes { grid-template-columns:repeat(2,1fr); } }
+  .lane { background:#f1f5f9; border:1px solid var(--line); border-radius:10px; padding:10px; min-height:180px; }
+  .lane h4 { margin:2px 0 8px; font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+  .entity { background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; }
+  .entity .name { font-size:13px; font-weight:600; }
+  .entity .dom { font-size:11px; color:var(--muted); }
+  .loopchip { display:flex; align-items:center; gap:6px; margin-top:6px; padding:5px 8px; border-radius:6px; font-size:12px; cursor:pointer; border:1px solid transparent; }
+  .loopchip:hover { border-color:var(--accent); }
+  .loopchip .lv { font-weight:800; }
+  .vel-fast { background:#dbeafe; color:#1e40af; } .vel-tactical { background:#ede9fe; color:#5b21b6; } .vel-slow { background:#dcfce7; color:#166534; }
+  .toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .editor .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .steps .step { display:grid; grid-template-columns:90px 1fr 1fr; gap:6px; margin-bottom:6px; align-items:center; }
+  .step .sn { font-size:12px; color:var(--muted); font-weight:600; }
+  .problems { background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; border-radius:8px; padding:10px 12px; font-size:12.5px; margin-top:10px; white-space:pre-wrap; }
+  .ok-msg { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; border-radius:8px; padding:10px 12px; font-size:12.5px; margin-top:10px; }
+  textarea.yaml { font-family:ui-monospace,monospace; font-size:11.5px; min-height:220px; }
+  .tabs-sub { display:flex; gap:6px; margin-bottom:12px; }
+  .tabs-sub button { font-size:12px; }
+  .tabs-sub button.on { border-color:var(--accent); color:var(--accent); font-weight:700; }
+  details { margin-top:8px; }
+  summary { cursor:pointer; font-size:12.5px; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>AOCL — Autonomous Operations &amp; Closed Loops</h1>
+  <p>Loop maturity assessment · realization heuristic · interactive loop modeler — <span class="mono" id="hdrVersion"></span></p>
+</header>
+<nav>
+  <button data-tab="assess" class="active">Assess</button>
+  <button data-tab="realization">Realization</button>
+  <button data-tab="modeler">Loop Modeler</button>
+  <button data-tab="portfolio">Portfolio</button>
+  <button data-tab="about">About</button>
+</nav>
+<main>
+  <div class="banner">The realization model on this site is an <strong>informative planning heuristic</strong> — not a normative measurement, and never a certification or contractual metric. Decision-model guidance covers OODA and MAPE-K; selection is implementation-specific.</div>
+
+  <!-- ============ ASSESS ============ -->
+  <section id="tab-assess">
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Assess a closed loop</h3>
+        <p class="muted">Tick every item that demonstrably holds for the loop. Evidence is required at L3 and above — an unevidenced L3+ item does not count. A vector's level is the highest fully-achieved rung.</p>
+        <div id="quiz"></div>
+        <label>Velocity of the loop</label>
+        <select id="assessVelocity"><option value="fast">fast (sub-second to seconds)</option><option value="tactical" selected>tactical (minutes to hours)</option><option value="slow">slow (minutes to months)</option></select>
+        <label>Currently operating level (optional)</label>
+        <select id="assessCurrent"><option value="">not in operation</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        <p><button class="primary" id="assessBtn">Score the loop</button></p>
+      </div>
+      <div class="card" id="assessOut">
+        <h3>Scorecard</h3>
+        <p class="muted">Run an assessment to see the scorecard, radar, and guidance.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REALIZATION ============ -->
+  <section id="tab-realization" style="display:none">
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Realization position <span class="muted">(informative heuristic)</span></h3>
+        <p class="muted mono">R = √( E² + (C·V_d)² ) &nbsp;&nbsp; effort = e^R</p>
+        <label>Experience E = 1 − T<sub>manual</sub>/T<sub>total</sub> — <span id="eVal">0.60</span></label>
+        <input type="range" id="rE" min="0" max="1" step="0.01" value="0.6">
+        <label>Complexity C — <span id="cVal">0.80</span></label>
+        <input type="range" id="rC" min="0" max="3.8" step="0.05" value="0.8">
+        <label>Data Veracity V<sub>d</sub> — <span id="vVal">0.90</span></label>
+        <input type="range" id="rV" min="0" max="1" step="0.01" value="0.9">
+        <label>Maturity level (for the value-band marker)</label>
+        <select id="rLevel"><option value="">none</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+        <details><summary>Compose E and C from their four-vector components instead</summary>
+          <div class="editor">
+            <div class="row">
+              <div><label>E data (Ed)</label><input type="number" id="cEd" min="0" max="1" step="0.05" value="0.3"></div>
+              <div><label>E model (Em)</label><input type="number" id="cEm" min="0" max="1" step="0.05" value="0.3"></div>
+              <div><label>E operational (Eo)</label><input type="number" id="cEo" min="0" max="1" step="0.05" value="0.3"></div>
+              <div><label>E meta (Ex)</label><input type="number" id="cEx" min="0" max="1" step="0.05" value="0.3"></div>
+            </div>
+            <button class="ghost" id="applyEcomps">Apply → E</button>
+            <div class="row" style="margin-top:8px">
+              <div><label>C structural (Cs)</label><input type="number" id="cCs" min="0" step="0.1" value="0.4"></div>
+              <div><label>C dynamic (Cd)</label><input type="number" id="cCd" min="0" step="0.1" value="0.4"></div>
+              <div><label>C semantic (Cm)</label><input type="number" id="cCm" min="0" step="0.1" value="0.4"></div>
+              <div><label>C coupling (Cc)</label><input type="number" id="cCc" min="0" step="0.1" value="0.4"></div>
+            </div>
+            <button class="ghost" id="applyCcomps">Apply → C</button>
+          </div>
+        </details>
+      </div>
+      <div class="card">
+        <div class="scorebox" id="realScore"></div>
+        <div class="chart" id="chartEC"></div>
+      </div>
+    </div>
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="card chart" id="chartCurve"></div>
+      <div class="card chart" id="chartEffort"></div>
+    </div>
+  </section>
+
+  <!-- ============ MODELER ============ -->
+  <section id="tab-modeler" style="display:none">
+    <div class="card">
+      <div class="toolbar">
+        <button class="primary" id="mAddEntity">+ Entity</button>
+        <button class="ghost" id="mExportYaml">Export loop-model YAML</button>
+        <button class="ghost" id="mExportClam">Export CLAM payloads</button>
+        <button class="ghost" id="mExportLedger">Export ledger YAML</button>
+        <button class="ghost" id="mImport">Import JSON</button>
+        <button class="ghost" id="mSample">Load sample</button>
+        <button class="danger" id="mClear">Clear</button>
+      </div>
+      <p class="muted">Place closed loops on <strong>Processes, Capabilities, Systems, or Functions</strong>. Each loop is specified in the <a href="https://github.com/emmanuel-a-otchere/Closed-Loop-Management" target="_blank" rel="noopener">Closed-Loop-Management (CLAM)</a> aligned format — decision model (OODA / MAPE / CUSTOM), goals, and lifecycle state — with AOCL context (velocity, maturity level, HITL) carried alongside. See <span class="mono">docs/clm-alignment.md</span>.</p>
+      <div class="grid" style="grid-template-columns:1.6fr 1fr">
+        <div>
+          <div class="lanes" id="lanes"></div>
+          <div id="modelMsg"></div>
+        </div>
+        <div class="card editor" id="loopEditor" style="background:#fbfbfe">
+          <h3>Loop specification</h3>
+          <p class="muted">Select a loop chip to edit it here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PORTFOLIO ============ -->
+  <section id="tab-portfolio" style="display:none">
+    <div class="grid cols-2">
+      <div class="card chart" id="pfScatter"></div>
+      <div class="card">
+        <h3>Portfolio table</h3>
+        <p class="muted">Loops registered in the modeler (stored in this browser).</p>
+        <div id="pfTable"></div>
+        <div class="chart" id="pfBudgets" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section id="tab-about" style="display:none">
+    <div class="card">
+      <h3>About AOCL</h3>
+      <p class="muted">AOCL formalizes the TechNE Hub <em>Autonomous Operations and Closed Loops</em> introductory guide (v1.2.0) as a versioned, tool-supported model: the L1–L5 Closed Loop Automation maturity ladder across three assessment vectors, the informative realization heuristic R = √(E² + (C·V_d)²), the Fast/Tactical/Slow loop taxonomy, and a CLAM-aligned loop modeler.</p>
+      <p class="muted"><strong>Naming.</strong> This toolkit concerns <em>closed-loop automation maturity</em>. It is distinct from the lowercase <span class="mono">mama</span> method (measuring and managing autonomy — decision-rights grants) and from the MAMA umbrella organization; see <span class="mono">docs/naming.md</span>.</p>
+      <p class="muted"><strong>Everything runs locally.</strong> No telemetry, no CDN, no accounts. The modeler's state lives in your browser; exports are plain files.</p>
+      <p class="muted mono" id="aboutVersion"></p>
+    </div>
+  </section>
+</main>
+
+<script src="scoring.js"></script>
+<script src="charts.js"></script>
+<script src="modeler.js"></script>
+<script>
+(function () {
+  "use strict";
+  var A = window.AOCL, C = window.AOCLCharts, M = window.AOCLModeler;
+  function esc(s) { return C.esc(s); }
+  document.getElementById("hdrVersion").textContent = "ruleset " + A.RULESET_VERSION;
+  document.getElementById("aboutVersion").textContent = "AOCL site · ruleset " + A.RULESET_VERSION + " (parity-tested against the Python engine)";
+
+  /* ---- tabs ---- */
+  document.querySelectorAll("nav button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll("nav button").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      ["assess", "realization", "modeler", "portfolio", "about"].forEach(function (t) {
+        document.getElementById("tab-" + t).style.display = t === btn.dataset.tab ? "" : "none";
+      });
+      if (btn.dataset.tab === "portfolio") renderPortfolio();
+    });
+  });
+
+  /* ---- assessment quiz ---- */
+  var quizEl = document.getElementById("quiz");
+  ["GD", "DV", "FI"].forEach(function (code) {
+    var name = A.VECTORS.filter(function (v) { return v[0] === code; })[0][1];
+    var color = { GD: "#2563eb", DV: "#dc2626", FI: "#16a34a" }[code];
+    var html = '<p style="margin:14px 0 4px"><span class="vec-badge" style="background:' + color + '">' + code + "</span> <strong>" + esc(name) + "</strong></p>";
+    A.QUESTIONS[code].forEach(function (q, i) {
+      html += '<div class="qrow"><input type="checkbox" data-vec="' + code + '" data-level="' + (i + 1) + '"><span>L' + (i + 1) + " — " + esc(q) + "</span></div>";
+    });
+    quizEl.insertAdjacentHTML("beforeend", html);
+  });
+
+  document.getElementById("assessBtn").addEventListener("click", function () {
+    var levels = {};
+    ["GD", "DV", "FI"].forEach(function (code) {
+      var answers = [];
+      for (var l = 1; l <= 5; l++) {
+        var box = quizEl.querySelector('input[data-vec="' + code + '"][data-level="' + l + '"]');
+        answers.push(box.checked);
+      }
+      levels[code] = A.scoreVector(code, answers);
+    });
+    var velocity = document.getElementById("assessVelocity").value;
+    var currentSel = document.getElementById("assessCurrent").value;
+    var current = currentSel === "" ? null : parseInt(currentSel, 10);
+    var result = A.assess(levels, current, velocity);
+    renderScorecard(result);
+  });
+
+  function renderScorecard(r) {
+    var rows = A.VECTORS.map(function (v) {
+      return "<tr><td><span class='vec-badge' style='background:" + { GD: "#2563eb", DV: "#dc2626", FI: "#16a34a" }[v[0]] + "'>" + v[0] + "</span> " + esc(v[1]) + "</td><td>L" + r.vectorLevels[v[0]] + "</td></tr>";
+    }).join("");
+    var notes = r.notes.length ? "<ul style='font-size:12.5px;margin:8px 0 0;padding-left:18px'>" + r.notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul>" : "";
+    document.getElementById("assessOut").innerHTML =
+      "<h3>Scorecard</h3>" +
+      "<div class='scorebox'><span class='lvl'>L" + r.level + "</span> <strong>" + esc(A.LEVEL_NAMES[r.level]) + "</strong>" +
+      "<div class='muted'>weakest-link overall · ruleset " + r.rulesetVersion + "</div></div>" +
+      "<table style='margin-top:10px'>" + rows + "</table>" +
+      "<p style='font-size:13px;margin:12px 0 0'>Frontier: <strong>" + esc(r.frontier || "top of the ladder") + "</strong><br>" +
+      "Recommended decision model: <strong>" + esc(r.recommendedDecisionModel) + "</strong> · " +
+      "HITL model: <strong>" + esc(r.hitl) + "</strong></p>" +
+      "<p style='font-size:13px'><strong>Move:</strong> " + esc(r.recommendedMove) + "</p>" + notes +
+      "<div class='chart' style='margin-top:10px'>" + C.radarChart(r.vectorLevels) + "</div>";
+  }
+
+  /* ---- realization ---- */
+  function drawRealization() {
+    var E = parseFloat(document.getElementById("rE").value);
+    var Cv = parseFloat(document.getElementById("rC").value);
+    var Vd = parseFloat(document.getElementById("rV").value);
+    var levelSel = document.getElementById("rLevel").value;
+    var level = levelSel === "" ? null : parseInt(levelSel, 10);
+    document.getElementById("eVal").textContent = E.toFixed(2);
+    document.getElementById("cVal").textContent = Cv.toFixed(2);
+    document.getElementById("vVal").textContent = Vd.toFixed(2);
+    var R = A.realize(E, Cv, Vd);
+    var eff = A.effort(R);
+    var s = A.sensitivity(E, Cv, Vd);
+    var ref = A.nearestReference(R);
+    document.getElementById("realScore").innerHTML =
+      "<div class='lvl'>R = " + R.toFixed(3) + "</div>" +
+      "effort e<sup>R</sup> = <strong>" + eff.toFixed(2) + "×</strong> · nearest Table 1.1 reference: <strong>" + ref.level + " " + ref.name + "</strong><br>" +
+      "<span class='muted'>∂R/∂E=" + s.dR_dE.toFixed(2) + " · ∂R/∂C=" + s.dR_dC.toFixed(2) + " · ∂R/∂Vd=" + s.dR_dVd.toFixed(2) + " — informative heuristic, not a normative measurement</span>";
+    document.getElementById("chartEC").innerHTML = C.ecPlane(E, Cv, Vd, "Experience–Complexity plane");
+    document.getElementById("chartCurve").innerHTML = "<h3>Value realization across maturity</h3>" + C.realizationCurve(E, Cv, Vd, level);
+    document.getElementById("chartEffort").innerHTML = "<h3>Effort asymmetry</h3>" + C.effortCurve(R);
+  }
+  ["rE", "rC", "rV", "rLevel"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", drawRealization);
+  });
+  document.getElementById("applyEcomps").addEventListener("click", function () {
+    var v = function (id) { return parseFloat(document.getElementById(id).value) || 0; };
+    var E = A.experienceFromComponents(v("cEd"), v("cEm"), v("cEo"), v("cEx"));
+    document.getElementById("rE").value = E;
+    drawRealization();
+  });
+  document.getElementById("applyCcomps").addEventListener("click", function () {
+    var v = function (id) { return parseFloat(document.getElementById(id).value) || 0; };
+    var Cv = A.complexityFromComponents(v("cCs"), v("cCd"), v("cCm"), v("cCc"));
+    document.getElementById("rC").value = Math.min(Cv, 3.8);
+    drawRealization();
+  });
+  drawRealization();
+
+  /* ---- modeler ---- */
+  var LS_KEY = "aocl-modeler-v1";
+  var state = load() || M.emptyModel();
+  var selectedLoopId = null;
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) { return null; }
+  }
+  function save() {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+  function msg(text, ok) {
+    document.getElementById("modelMsg").innerHTML = text
+      ? "<div class='" + (ok ? "ok-msg" : "problems") + "'>" + esc(text) + "</div>" : "";
+  }
+
+  function renderLanes() {
+    var lanesEl = document.getElementById("lanes");
+    lanesEl.innerHTML = "";
+    M.ENTITY_KINDS.forEach(function (kind) {
+      var entities = state.entities.filter(function (e) { return e.kind === kind.id; });
+      var html = '<div class="lane"><h4>' + esc(kind.name) + 's</h4>';
+      entities.forEach(function (ent) {
+        html += '<div class="entity"><div class="name">' + esc(ent.name) + '</div>' +
+          (ent.domain ? '<div class="dom mono">' + esc(ent.domain) + "</div>" : "") +
+          '<div class="dom">' + esc(kind.hint) + "</div>";
+        state.loops.filter(function (l) { return l.entity === ent.id; }).forEach(function (loop) {
+          var sel = loop.id === selectedLoopId ? "border-color:#7c3aed;" : "";
+          html += '<div class="loopchip vel-' + loop.velocity + '" style="' + sel + '" data-loop="' + esc(loop.id) + '">' +
+            '<span class="lv">L' + loop.level + "</span><span>" + esc(loop.id) + " · " + loop.velocity + " · " + esc(loop.decision_model.kind) + "</span></div>";
+        });
+        html += '<button class="ghost" style="margin-top:6px;font-size:11px;padding:3px 8px" data-addloop="' + esc(ent.id) + '">+ loop</button></div>';
+      });
+      html += '<button class="ghost" style="width:100%;font-size:11.5px" data-addentity="' + kind.id + '">+ ' + esc(kind.name) + "</button></div>";
+      lanesEl.insertAdjacentHTML("beforeend", html);
+    });
+    lanesEl.querySelectorAll("[data-addentity]").forEach(function (b) {
+      b.addEventListener("click", function () { addEntity(b.dataset.addentity); });
+    });
+    lanesEl.querySelectorAll("[data-addloop]").forEach(function (b) {
+      b.addEventListener("click", function () { addLoop(b.dataset.addloop); });
+    });
+    lanesEl.querySelectorAll("[data-loop]").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        selectedLoopId = chip.dataset.loop;
+        renderLanes();
+        renderEditor();
+      });
+    });
+  }
+
+  function addEntity(kind) {
+    var name = prompt(kind.charAt(0).toUpperCase() + kind.slice(1) + " name:", "");
+    if (!name) return;
+    var domain = prompt("Domain (optional):", "") || "";
+    var id = M.slugify(name, state.entities.map(function (e) { return e.id; }));
+    state.entities.push({ id: id, kind: kind, name: name, domain: domain, description: "" });
+    save(); renderLanes();
+  }
+
+  function addLoop(entityId) {
+    var loop = M.newLoop(entityId);
+    state.loops.push(loop);
+    selectedLoopId = loop.id;
+    save(); renderLanes(); renderEditor();
+  }
+
+  function selectedLoop() {
+    return state.loops.filter(function (l) { return l.id === selectedLoopId; })[0] || null;
+  }
+
+  function renderEditor() {
+    var loop = selectedLoop();
+    var el = document.getElementById("loopEditor");
+    if (!loop) { el.innerHTML = "<h3>Loop specification</h3><p class='muted'>Select a loop chip to edit it here.</p>"; return; }
+    var ent = state.entities.filter(function (e) { return e.id === loop.entity; })[0] || {};
+    var dm = loop.decision_model;
+    var stepsHtml = "";
+    if (M.DM_STEPS[dm.kind]) {
+      stepsHtml = M.DM_STEPS[dm.kind].map(function (step) {
+        var s = dm[step] || { name: "", action: "" };
+        return '<div class="step"><span class="sn">' + step + '</span><input type="text" placeholder="step name" data-dmstep="' + step + '" data-field="name" value="' + esc(s.name) + '"><input type="text" placeholder="action ref" data-dmstep="' + step + '" data-field="action" value="' + esc(s.action || "") + '"></div>';
+      }).join("");
+    } else {
+      stepsHtml = (dm.steps || []).map(function (s, i) {
+        return '<div class="step"><span class="sn">step ' + (i + 1) + '</span><input type="text" placeholder="step name" data-cstep="' + i + '" data-field="name" value="' + esc(s.name || "") + '"><input type="text" placeholder="action ref" data-cstep="' + i + '" data-field="action" value="' + esc((s && s.action) || "") + '"></div>';
+      }).join("") + '<button class="ghost" id="addCstep">+ step</button>';
+    }
+    var goalsHtml = (loop.goals || []).map(function (g, i) {
+      return '<div class="step" style="grid-template-columns:1fr 1fr 70px 84px 30px">' +
+        '<input type="text" placeholder="goal name" data-goal="' + i + '" data-field="name" value="' + esc(g.name || "") + '">' +
+        '<input type="text" placeholder="metric" data-goal="' + i + '" data-field="metric" value="' + esc(g.target ? g.target.metric : "") + '">' +
+        '<input type="number" data-goal="' + i + '" data-field="value" value="' + (g.target ? g.target.value : "") + '">' +
+        '<select data-goal="' + i + '" data-field="direction">' + ["AT_LEAST", "AT_MOST", "EXACTLY"].map(function (d) { return "<option" + (g.target && g.target.direction === d ? " selected" : "") + ">" + d + "</option>"; }).join("") + "</select>" +
+        '<button class="danger" style="padding:4px" data-delgoal="' + i + '">✕</button></div>';
+    }).join("");
+    el.innerHTML =
+      "<h3 class='mono'>" + esc(loop.id) + "</h3>" +
+      "<div class='muted'>on " + esc(ent.name || loop.entity) + " · " + esc(ent.kind || "?") + "</div>" +
+      "<div class='row'><div><label>Velocity</label><select id='eVelocity'>" + ["fast", "tactical", "slow"].map(function (v) { return "<option" + (loop.velocity === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></div>" +
+      "<div><label>State (CLAM lifecycle)</label><select id='eState'>" + M.STATES.map(function (s) { return "<option" + ((loop.state || "designed") === s ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></div>" +
+      "<label>Maturity level — <strong id='lvlLabel'>L" + loop.level + " " + esc(A.LEVEL_NAMES[loop.level]) + "</strong></label>" +
+      "<input type='range' id='eLevel' min='1' max='5' step='1' value='" + loop.level + "'>" +
+      "<div class='muted' id='levelHint'>" + esc(A.frontier(loop.level) ? A.frontier(loop.level)[1] : "top of the ladder — humans govern the loop") + "</div>" +
+      "<label>Decision model (CLAM discriminated union)</label>" +
+      "<select id='eDmKind'>" + ["MAPE", "OODA", "CUSTOM"].map(function (k) { return "<option" + (dm.kind === k ? " selected" : "") + ">" + k + "</option>"; }).join("") + "</select>" +
+      "<div class='steps' style='margin-top:8px'>" + stepsHtml + "</div>" +
+      "<label>Goals (CLAM Goal shape)</label>" + (goalsHtml || "<div class='muted'>none yet</div>") +
+      "<button class='ghost' id='addGoal' style='margin-top:6px'>+ goal</button>" +
+      "<div class='row'><div><label>HITL model</label><select id='eHitl'><option value=''>" + esc(A.HITL[loop.level]) + " (default)</option>" + ["HITL", "HOTL", "HOOTL"].map(function (h) { return "<option" + (loop.hitl === h ? " selected" : "") + ">" + h + "</option>"; }).join("") + "</select></div>" +
+      "<div><label>Owner</label><input type='text' id='eOwner' value='" + esc(loop.owner || "") + "'></div></div>" +
+      "<label>Notes</label><textarea id='eNotes' rows='2'>" + esc(loop.notes || "") + "</textarea>" +
+      "<p><button class='danger' id='delLoop'>Delete loop</button></p>";
+
+    document.getElementById("eVelocity").addEventListener("change", function (e) { loop.velocity = e.target.value; commit(); });
+    document.getElementById("eState").addEventListener("change", function (e) { loop.state = e.target.value; commit(); });
+    document.getElementById("eLevel").addEventListener("input", function (e) {
+      loop.level = parseInt(e.target.value, 10);
+      if (loop.hitl) loop.hitl = null; // reset override on level change
+      commit(); renderEditor(); renderLanes();
+    });
+    document.getElementById("eDmKind").addEventListener("change", function (e) {
+      var kind = e.target.value;
+      if (kind === "MAPE") loop.decision_model = { kind: kind, monitor: { name: "monitor-step", action: "" }, analyze: { name: "analyze-step", action: "" }, plan: { name: "plan-step", action: "" }, execute: { name: "execute-step", action: "" } };
+      else if (kind === "OODA") loop.decision_model = { kind: kind, observe: { name: "observe-step", action: "" }, orient: { name: "orient-step", action: "" }, decide: { name: "decide-step", action: "" }, act: { name: "act-step", action: "" } };
+      else loop.decision_model = { kind: kind, steps: [{ name: "step-1", action: "" }] };
+      commit(); renderEditor();
+    });
+    el.querySelectorAll("[data-dmstep]").forEach(function (input) {
+      input.addEventListener("change", function () {
+        var step = input.dataset.dmstep, field = input.dataset.field;
+        loop.decision_model[step][field] = input.value;
+        commit();
+      });
+    });
+    el.querySelectorAll("[data-cstep]").forEach(function (input) {
+      input.addEventListener("change", function () {
+        var i = parseInt(input.dataset.cstep, 10), field = input.dataset.field;
+        loop.decision_model.steps[i][field] = input.value;
+        commit();
+      });
+    });
+    var addC = document.getElementById("addCstep");
+    if (addC) addC.addEventListener("click", function () { loop.decision_model.steps.push({ name: "step-" + (loop.decision_model.steps.length + 1), action: "" }); commit(); renderEditor(); });
+    el.querySelectorAll("[data-goal]").forEach(function (input) {
+      input.addEventListener("change", function () {
+        var i = parseInt(input.dataset.goal, 10), field = input.dataset.field;
+        if (field === "name") loop.goals[i].name = input.value;
+        else { loop.goals[i].target[field] = field === "value" ? parseFloat(input.value) : input.value; }
+        commit();
+      });
+    });
+    el.querySelectorAll("[data-delgoal]").forEach(function (b) {
+      b.addEventListener("click", function () { loop.goals.splice(parseInt(b.dataset.delgoal, 10), 1); commit(); renderEditor(); });
+    });
+    document.getElementById("addGoal").addEventListener("click", function () {
+      loop.goals = loop.goals || [];
+      loop.goals.push({ name: "goal-" + (loop.goals.length + 1), target: { metric: "", value: 0, direction: "AT_LEAST" } });
+      commit(); renderEditor();
+    });
+    document.getElementById("eHitl").addEventListener("change", function (e) { loop.hitl = e.target.value || null; commit(); });
+    document.getElementById("eOwner").addEventListener("change", function (e) { loop.owner = e.target.value; commit(); });
+    document.getElementById("eNotes").addEventListener("change", function (e) { loop.notes = e.target.value; commit(); });
+    document.getElementById("delLoop").addEventListener("click", function () {
+      state.loops = state.loops.filter(function (l) { return l.id !== loop.id; });
+      state.links = (state.links || []).filter(function (l) { return l.source !== loop.id && l.target !== loop.id; });
+      selectedLoopId = null;
+      commit(); renderLanes(); renderEditor();
+    });
+
+    function commit() {
+      var problems = M.validate(state);
+      save();
+      if (problems.length) msg(problems.join("\n"), false);
+      else msg("");
+    }
+  }
+
+  function download(name, text, type) {
+    var blob = new Blob([text], { type: type || "text/plain" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  document.getElementById("mAddEntity").addEventListener("click", function () {
+    var kind = prompt("Entity kind — process, capability, system, or function:", "process");
+    if (!kind || !M.ENTITY_KINDS.some(function (k) { return k.id === kind; })) { if (kind) msg("kind must be process|capability|system|function", false); return; }
+    addEntity(kind);
+  });
+  document.getElementById("mExportYaml").addEventListener("click", function () {
+    var problems = M.validate(state);
+    if (problems.length) { msg(problems.join("\n"), false); return; }
+    download("aocl-loop-model.yaml", "# AOCL loop model — emitted by the Loop Modeler\n" + M.toYaml(state), "text/yaml");
+    msg("exported aocl-loop-model.yaml", true);
+  });
+  document.getElementById("mExportClam").addEventListener("click", function () {
+    var problems = M.validate(state);
+    if (problems.length) { msg(problems.join("\n"), false); return; }
+    download("aocl-clam-export.json", JSON.stringify(M.toClamExport(state), null, 2), "application/json");
+    msg("exported aocl-clam-export.json — POST decision models first, then closed loops (docs/clm-alignment.md)", true);
+  });
+  document.getElementById("mExportLedger").addEventListener("click", function () {
+    var problems = M.validate(state);
+    if (problems.length) { msg(problems.join("\n"), false); return; }
+    download("aocl-loop-ledger.yaml", M.toLedgerYaml(state), "text/yaml");
+    msg("exported aocl-loop-ledger.yaml — validate with: aocl-ledger aocl-loop-ledger.yaml", true);
+  });
+  document.getElementById("mImport").addEventListener("click", function () {
+    var text = prompt("Paste an aocl-loop-model JSON document:", "");
+    if (!text) return;
+    try {
+      var parsed = JSON.parse(text);
+      if (parsed.format !== "aocl-loop-model") throw new Error("expected format: aocl-loop-model");
+      var problems = M.validate(parsed);
+      if (problems.length) { msg(problems.join("\n"), false); return; }
+      state = parsed; selectedLoopId = null;
+      save(); renderLanes(); renderEditor(); msg("model imported", true);
+    } catch (e) { msg("import failed: " + e.message, false); }
+  });
+  document.getElementById("mSample").addEventListener("click", function () {
+    state = {
+      format: "aocl-loop-model", model_version: "1.0.0", ruleset_version: A.RULESET_VERSION,
+      entities: [
+        { id: "proc-anomaly-detect", kind: "process", name: "Detect Anomaly Event", domain: "service-assurance", description: "Real-time identification of network/service deterioration." },
+        { id: "sys-5g-core", kind: "system", name: "5G Standalone Core", domain: "network", description: "Cloud-native 5G core." },
+        { id: "fn-autoscaler", kind: "function", name: "HPA Autoscaler", domain: "cloud", description: "Horizontal pod autoscaling." },
+      ],
+      loops: [
+        {
+          id: "loop-anomaly-detect-v1", entity: "proc-anomaly-detect", velocity: "fast", level: 3,
+          decision_model: { kind: "MAPE", monitor: { name: "read-kpis", action: "kpi.stream" }, analyze: { name: "trend-forecast", action: "forecast.v1" }, plan: { name: "scale-plan", action: "planner.v1" }, execute: { name: "apply-scale", action: "orchestrator.scale" } },
+          goals: [{ name: "detection-latency", target: { metric: "detection_latency_ms", value: 10000, direction: "AT_MOST" } }],
+          hitl: null, state: "active", owner: "assurance-lead", notes: "Predictive signals trigger pre-emptive scaling.",
+        },
+        {
+          id: "loop-core-policy-v1", entity: "sys-5g-core", velocity: "slow", level: 4,
+          decision_model: { kind: "OODA", observe: { name: "aggregate-telemetry", action: "datalake.pull" }, orient: { name: "ml-inference", action: "twin.simulate" }, decide: { name: "policy-decision", action: "council.review" }, act: { name: "policy-deploy", action: "policy.deploy" } },
+          goals: [{ name: "slice-sla", target: { metric: "sla_attainment", value: 99.99, direction: "AT_LEAST" } }],
+          hitl: null, state: "designed", owner: "network-strategy", notes: "Slow loop generating policies for fast loops.",
+        },
+        {
+          id: "loop-autoscale-v1", entity: "fn-autoscaler", velocity: "fast", level: 2,
+          decision_model: { kind: "MAPE", monitor: { name: "read-metrics", action: "metrics.api" }, analyze: { name: "threshold-check", action: "rules.v1" }, plan: { name: "replica-plan", action: "hpa.v1" }, execute: { name: "scale", action: "k8s.scale" } },
+          goals: [{ name: "cpu-target", target: { metric: "cpu_util", value: 65, direction: "AT_MOST" } }],
+          hitl: null, state: "active", owner: "platform-team", notes: "",
+        },
+      ],
+      links: [
+        { source: "loop-core-policy-v1", target: "loop-anomaly-detect-v1", kind: "HIERARCHICAL", condition: null },
+      ],
+    };
+    selectedLoopId = null;
+    save(); renderLanes(); renderEditor(); msg("sample model loaded", true);
+  });
+  document.getElementById("mClear").addEventListener("click", function () {
+    if (!confirm("Clear the model?")) return;
+    state = M.emptyModel(); selectedLoopId = null;
+    save(); renderLanes(); renderEditor(); msg("");
+  });
+
+  /* ---- portfolio ---- */
+  function renderPortfolio() {
+    document.getElementById("pfScatter").innerHTML = "<h3>Loop portfolio</h3>" + C.portfolioScatter(state.loops);
+    var rows = state.loops.map(function (l) {
+      return "<tr><td class='mono'>" + esc(l.id) + "</td><td>" + esc(l.velocity) + "</td><td>L" + l.level + "</td><td>" + esc(l.decision_model.kind) + "</td><td>" + esc(l.state || "designed") + "</td></tr>";
+    }).join("");
+    document.getElementById("pfTable").innerHTML = state.loops.length
+      ? "<table><tr><th>loop</th><th>velocity</th><th>level</th><th>model</th><th>state</th></tr>" + rows + "</table>"
+      : "<p class='muted'>No loops yet — model one in the Loop Modeler tab.</p>";
+    document.getElementById("pfBudgets").innerHTML = "<h3>Reference latency budgets</h3>" + C.budgetBars();
+  }
+
+  renderLanes();
+  renderEditor();
+})();
+</script>
+</body>
+</html>

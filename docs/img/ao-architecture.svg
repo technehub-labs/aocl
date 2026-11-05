@@ -1,0 +1,59 @@
+<svg viewBox="0 0 940 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill:#ffffff; stroke:#334155; stroke-width:1.4; rx:5; }
+    .grp { fill:#f5f3ff; stroke:#7c3aed; stroke-width:1.3; rx:8; }
+    .lbl { font-size:12px; fill:#1e293b; }
+    .t { font-size:12.5px; font-weight:bold; fill:#4c1d95; }
+    .flow { stroke:#334155; stroke-width:1.3; fill:none; marker-end:url(#arr); }
+    .thin { stroke:#94a3b8; stroke-dasharray:4 3; }
+  </style>
+
+  <text x="470" y="22" text-anchor="middle" class="t">Autonomous Operations — the closed-loop interlock (after GB1054, Fig. 1)</text>
+
+  <!-- Business layer -->
+  <rect class="grp" x="700" y="40" width="220" height="180"/>
+  <text x="810" y="60" text-anchor="middle" class="t" font-size="11">Business Layer</text>
+  <rect class="box" x="716" y="72" width="188" height="30"/><text x="810" y="91" text-anchor="middle" class="lbl">Regulatory &amp; Ethical Constraints</text>
+  <rect class="box" x="716" y="110" width="188" height="30"/><text x="810" y="129" text-anchor="middle" class="lbl">Business Intent &amp; Strategy</text>
+  <rect class="box" x="716" y="148" width="188" height="30"/><text x="810" y="167" text-anchor="middle" class="lbl">Policy &amp; Governance</text>
+
+  <!-- AO Platform engine -->
+  <rect class="grp" x="330" y="40" width="330" height="150"/>
+  <text x="495" y="60" text-anchor="middle" class="t" font-size="11">Autonomous Operations Platform (Engine)</text>
+  <rect class="box" x="346" y="74" width="140" height="28"/><text x="416" y="92" text-anchor="middle" class="lbl">AI/ML Cognition</text>
+  <rect class="box" x="506" y="74" width="140" height="28"/><text x="576" y="92" text-anchor="middle" class="lbl">Knowledge Repository</text>
+  <rect class="box" x="436" y="112" width="140" height="28"/><text x="506" y="130" text-anchor="middle" class="lbl">Closed Loop Controller</text>
+  <rect class="box" x="560" y="150" width="90" height="26"/><text x="605" y="167" text-anchor="middle" class="lbl">Intent Translation</text>
+  <rect class="box" x="346" y="150" width="150" height="28"/><text x="421" y="168" text-anchor="middle" class="lbl">Explainability &amp; Audit</text>
+
+  <!-- Execution layer -->
+  <rect class="grp" x="60" y="70" width="220" height="110"/>
+  <text x="170" y="90" text-anchor="middle" class="t" font-size="11">Execution Layer</text>
+  <rect class="box" x="76" y="102" width="130" height="28"/><text x="141" y="120" text-anchor="middle" class="lbl">Security &amp; Trust</text>
+  <rect class="box" x="130" y="140" width="140" height="28"/><text x="200" y="158" text-anchor="middle" class="lbl">Resource Orchestration</text>
+
+  <!-- Observation layer -->
+  <rect class="grp" x="700" y="240" width="220" height="46"/>
+  <text x="810" y="258" text-anchor="middle" class="t" font-size="11">Observation Layer</text>
+  <text x="810" y="276" text-anchor="middle" class="lbl">Telemetry · External Intelligence · Experience</text>
+
+  <!-- Human operator -->
+  <rect class="box" x="30" y="240" width="120" height="30"/>
+  <text x="90" y="259" text-anchor="middle" class="lbl">Human Operator</text>
+  <text x="230" y="259" class="lbl" fill="#b45309">← exceptions only</text>
+
+  <!-- flows -->
+  <path class="flow" d="M716 125 L580 125"/>
+  <path class="flow" d="M576 88 L520 88"/>
+  <path class="flow" d="M506 126 L340 126 L340 155 L280 155"/>
+  <path class="flow" d="M280 116 L206 116"/>
+  <path class="flow" d="M690 262 L560 262 L560 140"/>
+  <path class="flow" d="M700 167 L560 167" stroke-dasharray="4 3"/>
+  <path class="flow thin" d="M421 178 L421 255 L152 255"/>
+  <path class="flow" d="M90 240 L90 182" stroke="#b45309" stroke-dasharray="4 3"/>
+</svg>

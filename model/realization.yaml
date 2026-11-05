@@ -1,0 +1,122 @@
+# AOCL model data: the realization model (INFORMATIVE planning heuristic)
+# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx, section 4
+# "The Computational Model". The source document is explicit: Section 4 is informative;
+# the formula is a planning heuristic, NOT a normative measurement, and shall not be used
+# for contractual commitments or certification purposes. This file preserves that framing.
+model_version: "1.0.0"
+status: informative
+
+formula:
+  realization: R = sqrt(E^2 + (C * V_d)^2)
+  description: >-
+    Realization is the Euclidean norm of the Experience–Complexity vector, with the
+    complexity term scaled by the Data Veracity Index. Goal Decisioning is the reference
+    axis (the loop's invariant purpose K), not an additive term.
+
+experience:
+  id: E
+  range: [0.0, 1.0]
+  summary: >-
+    Normalized index representing the reduction in manual intervention (operational
+    experience; the "Self-X" properties delivered to the operator/user).
+  formula: E = 1 - T_manual / T_total
+  components:
+    - id: Ed
+      name: Data Experience
+      description: Volume, variety, velocity, and veracity of historical observations available to train and validate models.
+      measure: Effective learning samples.
+    - id: Em
+      name: Model Experience
+      description: Sophistication and accuracy of embedded analytical models (statistical, ML, causal).
+      measure: Model performance metrics (RMSE, AUC, causal effect precision).
+    - id: Eo
+      name: Operational Experience
+      description: Codified knowledge of human experts — runbooks, post-mortems, architectural decisions, heuristic rules.
+      measure: Coverage of operational scenarios.
+    - id: Ex
+      name: Meta-Experience
+      description: The system's ability to learn from its own learning — transfer learning efficiency, few-shot adaptation, AutoML performance.
+      measure: Learning-rate acceleration.
+  aggregation: E = sqrt(Ed^2 + Em^2 + Eo^2 + Ex^2)
+
+complexity:
+  id: C
+  summary: >-
+    Normalized index of technical sophistication: data sources, AI model depth, interwoven
+    loops. Values above 1.0 indicate platform sophistication beyond the L3 reference.
+  components:
+    - id: Cs
+      name: Structural Complexity
+      description: Static intricacy of the system architecture — components, interfaces, dependencies, configuration parameters.
+      example: 5G standalone core with microservices, service meshes, multivendor RAN.
+    - id: Cd
+      name: Dynamic Complexity
+      description: Temporal variability — rate of state change, traffic burstiness, topology change frequency, external volatility.
+      example: Edge computing with IoT sensor floods.
+    - id: Cm
+      name: Semantic Complexity
+      description: Interpretive burden — ambiguity of business intent, multiplicity of stakeholder objectives, regulatory nuance.
+      example: Customer experience management.
+    - id: Cc
+      name: Coupling Complexity
+      description: Interdependence between subsystems — cascading failure modes, hidden feedback paths, emergent behaviour.
+      example: Cloud-native telecom stacks on shared infrastructure.
+  aggregation: C = sqrt(Cs^2 + Cd^2 + Cm^2 + Cc^2)
+
+data_veracity:
+  id: V_d
+  range: [0.0, 1.0]
+  role: multiplier on C
+  note: >-
+    If V_d is low, even the most complex AI model fails to deliver Realization. This
+    mandates data governance as a process-based system within the framework.
+
+effort:
+  formula: E_f = e^R   # with alpha = 1 per the source document
+  note: Illustrative effort scaling; see value_models for the composite curve.
+
+value_models:
+  logarithmic:
+    applies_to: "L1-L3"
+    formula: Value(L) = V_max * ln(1 + alpha*L) / ln(1 + alpha*5)
+    note: Diminishing returns per unit of effort as maturity increases; the manual-to-reactive transition yields the dramatic gains.
+  exponential:
+    applies_to: "L>=3"
+    formula: Value(L) = V_0 * exp(beta*(L-3))
+    note: Compounding learning effects, cross-loop network effects, non-obvious optimizations.
+  composite: >-
+    Sigmoid: logarithmic at low maturity, exponential at high maturity, inflection at the
+    L3–L4 boundary — the transition from human-designed control to machine-discovered control.
+
+limits:
+  zero_complexity: If C → 0, R → E: simple loops realize value proportional to their embedded knowledge.
+  zero_experience: If E → 0, R → C·V_d: inexperienced organisations achieve only raw complexity-matching.
+  balanced_growth: Maximum realization efficiency occurs when E and C grow in proportion; high-C/low-E is unstable, high-E/low-C is underutilized.
+
+# Table 1.1 from the source document — theoretical illustrations, not measured benchmarks.
+reference_points:
+  - {level: L1, name: Static,     E: 0.10, C: 0.10, R: 0.14, effort: 1.15}
+  - {level: L2, name: Reactive,   E: 0.30, C: 0.40, R: 0.50, effort: 1.65}
+  - {level: L3, name: Proactive,  E: 0.60, C: 0.80, R: 1.00, effort: 2.72}
+  - {level: L4, name: Predictive, E: 0.80, C: 1.50, R: 1.70, effort: 5.47}
+  - {level: L5, name: Pre-emptive, E: 0.95, C: 3.50, R: 3.63, effort: 37.71}
+
+validation_analysis: >-
+  Moving from L4 to L5 (achieving 95% zero-touch) requires more than double the platform
+  complexity (1.5 → 3.5) and roughly a 7x increase in realization effort (5.47 → 37.71).
+  The last 5% of manual effort is the most complex to eliminate.
+
+design_rules:
+  complexity_budgeting: >-
+    When structural complexity exceeds organizational experience, decompose the loop into
+    nested sub-loops, each operating within its own complexity–experience envelope.
+  experience_investment: >-
+    Invest in data pipelines, model governance, and knowledge management to raise E before
+    attempting to control high-complexity domains autonomously.
+  maturity_sequencing: >-
+    Do not attempt L4/L5 capabilities until L3 operational stability is achieved; premature
+    cognitive automation on unstable foundations adds risk without commensurate value.
+  safety_margins: >-
+    Bound R by safety constraints: if R exceeds the organisation's risk appetite or
+    regulatory limits, the loop should degrade to a lower maturity level or escalate to
+    human operators.

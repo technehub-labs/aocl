@@ -1,0 +1,62 @@
+# AOCL model data: assessment vectors and focus areas
+# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
+# (section 2.2 "Closed Loop definition" — the GB1075 three vectors), plus the
+# AOCL aggregation rule (see below, documented in docs/assessment.md).
+model_version: "1.0.0"
+
+vectors:
+  - id: GD
+    name: Goal Decisioning
+    definition: >-
+      Aligns automation with strategic intent and enables intelligent decision-making.
+      Establishes how well the loop can make complex, intelligent decisions aligned with
+      the desired outcomes of the system, domain, or environment.
+    focus_areas:
+      - id: intent_management
+        name: Intent Management
+        description: Converting business goals into operational objectives.
+      - id: analytics_decisioning
+        name: Analytics and Decisioning
+        description: Applying AI/ML and logic-based models to derive decisions from observed data.
+    axis_note: >-
+      Goal Decisioning is the reference axis of the loop — the purpose the loop serves
+      (the constant K), not a peer component of Realization. It is intentionally not a
+      term in the realization formula (see realization.yaml).
+
+  - id: DV
+    name: Data Veracity
+    definition: >-
+      The quality, trustworthiness, and contextual relevance of data used in closed loop
+      operations. Affects the quality and reliability of decisions and actions; multiplies
+      the effective complexity in the realization model (V_d).
+    focus_areas:
+      - id: observation
+        name: Observation
+        description: Real-time monitoring and data collection across systems.
+      - id: governance_assurance
+        name: Governance and Assurance
+        description: Validation, policy enforcement, and oversight to ensure data integrity and compliance.
+
+  - id: FI
+    name: Feedback Intelligence
+    definition: >-
+      The system's ability to learn from experience and continuously improve. Affects
+      learning and innovation of the loop.
+    focus_areas:
+      - id: action_execution
+        name: Action Execution
+        description: Implementing decisions through orchestrated workflows.
+      - id: knowledge_learning
+        name: Knowledge and Learning
+        description: Enabling systems to evolve based on historical outcomes.
+
+# AOCL aggregation rule (derived — not stated verbatim in the source document):
+# the loop's overall maturity level is the WEAKEST of its three vector levels.
+aggregation:
+  rule: weakest_link
+  vectors: [GD, DV, FI]
+  rationale: >-
+    The source document warns that "advancement in loop maturity without corresponding
+    advancement in Data and Culture dimensions is a common failure mode" and characterizes
+    each level with explicit per-vector characteristics. Taking the minimum vector level
+    is the conservative reading: a loop is as mature as its least mature vector.

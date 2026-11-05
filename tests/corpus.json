@@ -1,0 +1,335 @@
+{
+  "corpus_version": "1.0.0",
+  "ruleset_version": "1.0.0",
+  "description": "Single engine-agnostic fixture for every AOCL implementation (Python engine, site JS engine). CI runs a checker per implementation and blocks release on drift. Realization values are pinned to 4 decimal places from the unrounded computation (the source document's Table 1.1 effort column used R rounded to 2 dp).",
+  "assessment_cases": [
+    {
+      "name": "all-l2",
+      "description": "GD=2 DV=2 FI=2, current=None, velocity=tactical",
+      "vector_scores": {
+        "GD": 2,
+        "DV": 2,
+        "FI": 2
+      },
+      "current": null,
+      "velocity": "tactical",
+      "expect": {
+        "level": 2,
+        "frontier": "Prediction Frontier",
+        "recommended_decision_model": "MAPE",
+        "hitl": "HITL",
+        "recommended_move": "predict: add trend analysis and forecasting to cross the Prediction Frontier",
+        "notes_contain": [
+          "next: Prediction Frontier \u2014 data science"
+        ]
+      }
+    },
+    {
+      "name": "weakest-fi",
+      "description": "GD=3 DV=4 FI=2, current=None, velocity=tactical",
+      "vector_scores": {
+        "GD": 3,
+        "DV": 4,
+        "FI": 2
+      },
+      "current": null,
+      "velocity": "tactical",
+      "expect": {
+        "level": 2,
+        "frontier": "Prediction Frontier",
+        "recommended_decision_model": "MAPE",
+        "hitl": "HITL",
+        "recommended_move": "predict: add trend analysis and forecasting to cross the Prediction Frontier",
+        "notes_contain": [
+          "weakest link: Feedback Intelligence at L",
+          "next: Prediction Frontier \u2014 data science"
+        ]
+      }
+    },
+    {
+      "name": "solid-l3",
+      "description": "GD=3 DV=3 FI=3, current=3, velocity=tactical",
+      "vector_scores": {
+        "GD": 3,
+        "DV": 3,
+        "FI": 3
+      },
+      "current": 3,
+      "velocity": "tactical",
+      "expect": {
+        "level": 3,
+        "frontier": "Cognition Frontier",
+        "recommended_decision_model": "MAPE",
+        "hitl": "HOTL",
+        "recommended_move": "learn: introduce AI/ML strategy generation to cross the Cognition Frontier",
+        "notes_contain": [
+          "next: Cognition Frontier \u2014 AI/ML infrast",
+          "operating level matches assessment: hold"
+        ]
+      }
+    },
+    {
+      "name": "l4-slow-ooda",
+      "description": "GD=4 DV=5 FI=4, current=4, velocity=slow",
+      "vector_scores": {
+        "GD": 4,
+        "DV": 5,
+        "FI": 4
+      },
+      "current": 4,
+      "velocity": "slow",
+      "expect": {
+        "level": 4,
+        "frontier": "Autonomy Frontier",
+        "recommended_decision_model": "OODA",
+        "hitl": "HOTL",
+        "recommended_move": "delegate: extend autonomy toward goal-setting across the Autonomy Frontier",
+        "notes_contain": [
+          "weakest link: Goal Decisioning, Feedback",
+          "next: Autonomy Frontier \u2014 experimentatio",
+          "operating level matches assessment: hold"
+        ]
+      }
+    },
+    {
+      "name": "l4-fast-mape",
+      "description": "GD=5 DV=5 FI=4, current=None, velocity=fast",
+      "vector_scores": {
+        "GD": 5,
+        "DV": 5,
+        "FI": 4
+      },
+      "current": null,
+      "velocity": "fast",
+      "expect": {
+        "level": 4,
+        "frontier": "Autonomy Frontier",
+        "recommended_decision_model": "MAPE",
+        "hitl": "HOTL",
+        "recommended_move": "delegate: extend autonomy toward goal-setting across the Autonomy Frontier",
+        "notes_contain": [
+          "weakest link: Feedback Intelligence at L",
+          "next: Autonomy Frontier \u2014 experimentatio"
+        ]
+      }
+    },
+    {
+      "name": "l5-hootl",
+      "description": "GD=5 DV=5 FI=5, current=5, velocity=slow",
+      "vector_scores": {
+        "GD": 5,
+        "DV": 5,
+        "FI": 5
+      },
+      "current": 5,
+      "velocity": "slow",
+      "expect": {
+        "level": 5,
+        "frontier": null,
+        "recommended_decision_model": "OODA",
+        "hitl": "HOOTL",
+        "recommended_move": "hold: govern at the strategic level; re-review on cadence",
+        "notes_contain": [
+          "operating level matches assessment: hold"
+        ]
+      }
+    },
+    {
+      "name": "l1-static",
+      "description": "GD=1 DV=1 FI=1, current=None, velocity=fast",
+      "vector_scores": {
+        "GD": 1,
+        "DV": 1,
+        "FI": 1
+      },
+      "current": null,
+      "velocity": "fast",
+      "expect": {
+        "level": 1,
+        "frontier": "Automation Frontier",
+        "recommended_decision_model": "MAPE",
+        "hitl": "HITL",
+        "recommended_move": "stabilize: automate thresholds to reach the Automation Frontier (reactive control)",
+        "notes_contain": [
+          "next: Automation Frontier \u2014 instrumentat"
+        ]
+      }
+    }
+  ],
+  "realization_cases": [
+    {
+      "name": "doc-worked-example",
+      "E": 0.6,
+      "C": 0.8,
+      "Vd": 0.9,
+      "expect": {
+        "R": 0.9372,
+        "effort": 2.5529
+      }
+    },
+    {
+      "name": "doc-low-veracity",
+      "E": 0.6,
+      "C": 0.8,
+      "Vd": 0.5,
+      "expect": {
+        "R": 0.7211,
+        "effort": 2.0567
+      }
+    },
+    {
+      "name": "table-L1",
+      "E": 0.1,
+      "C": 0.1,
+      "Vd": 1.0,
+      "expect": {
+        "R": 0.1414,
+        "effort": 1.1519
+      }
+    },
+    {
+      "name": "table-L2",
+      "E": 0.3,
+      "C": 0.4,
+      "Vd": 1.0,
+      "expect": {
+        "R": 0.5,
+        "effort": 1.6487
+      }
+    },
+    {
+      "name": "table-L3",
+      "E": 0.6,
+      "C": 0.8,
+      "Vd": 1.0,
+      "expect": {
+        "R": 1.0,
+        "effort": 2.7183
+      }
+    },
+    {
+      "name": "table-L4",
+      "E": 0.8,
+      "C": 1.5,
+      "Vd": 1.0,
+      "expect": {
+        "R": 1.7,
+        "effort": 5.4739
+      }
+    },
+    {
+      "name": "table-L5",
+      "E": 0.95,
+      "C": 3.5,
+      "Vd": 1.0,
+      "expect": {
+        "R": 3.6266,
+        "effort": 37.5862
+      }
+    },
+    {
+      "name": "zero-complexity",
+      "E": 0.8,
+      "C": 0.0,
+      "Vd": 1.0,
+      "expect": {
+        "R": 0.8,
+        "effort": 2.2255
+      }
+    },
+    {
+      "name": "zero-experience",
+      "E": 0.0,
+      "C": 1.2,
+      "Vd": 1.0,
+      "expect": {
+        "R": 1.2,
+        "effort": 3.3201
+      }
+    }
+  ],
+  "invalid_inputs": {
+    "vector_scores_out_of_range": [
+      [
+        0,
+        3,
+        3
+      ],
+      [
+        6,
+        3,
+        3
+      ],
+      [
+        3,
+        0,
+        3
+      ],
+      [
+        3,
+        6,
+        3
+      ],
+      [
+        3,
+        3,
+        0
+      ],
+      [
+        3,
+        3,
+        6
+      ]
+    ],
+    "vector_scores_non_integer": [
+      [
+        2.5,
+        3,
+        3
+      ],
+      [
+        "a",
+        3,
+        3
+      ]
+    ],
+    "wrong_vector_count": [
+      [
+        3,
+        3
+      ],
+      [
+        3,
+        3,
+        3,
+        3
+      ],
+      []
+    ],
+    "realization_out_of_range": [
+      {
+        "E": 1.5,
+        "C": 0.8
+      },
+      {
+        "E": 0.6,
+        "C": -1.0
+      },
+      {
+        "E": 0.6,
+        "C": 0.8,
+        "Vd": 1.5
+      },
+      {
+        "E": 0.6,
+        "C": 0.8,
+        "Vd": -0.1
+      }
+    ],
+    "velocity_invalid": "hyper",
+    "infeasible_target": {
+      "E": 0.6,
+      "target_R": 0.5
+    }
+  }
+}

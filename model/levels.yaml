@@ -1,0 +1,159 @@
+# AOCL model data: Closed Loop Automation maturity levels (L1-L5)
+# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
+# (TechNE Hub; sections 3.2 "Closed Loop Automation Maturity Levels" and 3.3 "Progression Dynamics")
+# Model version governs THIS file's structure; see schema/levels.schema.json and docs/versioning.md.
+model_version: "1.0.0"
+source_document: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
+
+levels:
+  - id: L1
+    name: Static
+    definition: >-
+      Pre-defined loops that operate without dynamic adaptation to evolving conditions.
+      Management interventions are manual and based on fixed configurations. This is the
+      baseline state from which automation journeys begin.
+    vectors:
+      goal_decisioning: Fixed goals; rigid rule execution.
+      data_veracity: Static datasets; low trust.
+      feedback_intelligence: Basic, non-integrated feedback.
+    characteristics:
+      - System configurations are set manually by human operators.
+      - Changes require human initiation and approval through formal change management.
+      - Monitoring is present but informational only; alerts do not trigger automated actions.
+      - Set points are static, updated on scheduled maintenance cycles or incident response.
+      - No learning or adaptation occurs.
+    deployment_examples: [Circuit breakers, Static routing, Fixed threshold alarms]
+    human_role: >-
+      Humans perform all control functions: observation, orientation, decision, actuation.
+      Technology provides data presentation but not decision support.
+    control_problem_coverage: >-
+      Addresses only the Stabilization Problem in the most rudimentary sense — by preventing
+      change. Cannot handle the Optimization or Adaptation problems.
+    frontier_to_next: Automation Frontier   # L1→L2: instrumentation + orchestration + rule engines; barrier = organizational trust
+    transition_criteria: >-
+      A loop is classified L2 when automated thresholds trigger predefined corrective
+      actions without human initiation.
+
+  - id: L2
+    name: Reactive
+    definition: >-
+      Loops respond to detected events or deviations from expected states: monitoring of
+      outputs with predefined responses triggered by established thresholds or rules.
+    vectors:
+      goal_decisioning: Dynamic goals; post-event adjustments.
+      data_veracity: Real-time data; moderate accuracy.
+      feedback_intelligence: Basic feedback with delayed corrections.
+    characteristics:
+      - Sensors monitor KPIs against static thresholds.
+      - Threshold breach triggers a predefined action (scale out, restart, reroute).
+      - Actions are imperative and deterministic: same trigger, same action.
+      - Escalation to humans occurs when the predefined action fails to resolve the condition.
+      - No prediction or trend analysis is performed.
+    deployment_examples: [Autoscaling cloud systems, SCADA threshold responses, Automated ticket creation]
+    human_role: >-
+      Humans define thresholds, design response playbooks, and handle exceptions. The loop
+      executes decisions made by humans at design time.
+    control_problem_coverage: >-
+      Addresses Stabilization for known, bounded perturbations. Reacts to breaches rather
+      than preventing them. Does not address Optimization or Adaptation.
+    frontier_to_next: Prediction Frontier   # L2→L3: data science capability + forecast models; barrier = data quality and feature engineering
+    transition_criteria: >-
+      A loop is classified L3 when it incorporates trend analysis or predictive indicators
+      to anticipate threshold breaches before they occur.
+
+  - id: L3
+    name: Proactive
+    definition: >-
+      Loops anticipate potential issues through analysis of trends and patterns. Anticipation
+      is limited to known, recurring failure modes: predictive actions come from statistical
+      and forecasting models designed by humans. Preventative actions execute before the full
+      manifestation of a problem.
+    vectors:
+      goal_decisioning: Scenario-based anticipation; self-optimization.
+      data_veracity: Context-aware data; high consistency.
+      feedback_intelligence: Predictive analytics for risk mitigation.
+    characteristics:
+      - Time-series analysis and statistical models identify trends and seasonality.
+      - Predictive adjustments respond to forecasted demand, predicted failures, anticipated degradations.
+      - Actions remain largely predefined but are triggered by predictive signals, not current-state breaches.
+      - Confidence intervals and uncertainty quantification inform pre-emptive action aggressiveness.
+      - Simple feedback refines the forecast models.
+    deployment_examples: [Adaptive routing, Threat detection, Predictive capacity scaling]
+    human_role: >-
+      Humans define the predictive models, select features, set confidence thresholds, and
+      validate pre-emptive actions. The loop operates autonomously within those designs.
+    control_problem_coverage: >-
+      Addresses Stabilization more effectively (fewer, milder excursions). Begins to address
+      Optimization through anticipatory scaling and load balancing.
+    frontier_to_next: Cognition Frontier   # L3→L4: AI/ML infrastructure, model governance, MLOps, explainability; barriers = AI talent scarcity, non-stationary environments
+    transition_criteria: >-
+      A loop is classified L4 when it employs AI/ML techniques for continuous learning,
+      pattern discovery, and dynamic strategy generation.
+
+  - id: L4
+    name: Predictive
+    definition: >-
+      Loops employ machine learning to discover patterns, learn from outcomes, and generate
+      or refine their own control strategies — including for partially novel scenarios not
+      anticipated at design time. Responses initiate automatically on predictions, aiming to
+      optimize performance and avert disruptions.
+    distinguishing_note: >-
+      L3 executes predictions designed by humans for known failure modes; L4 learns new
+      strategies from data, including for scenarios not explicitly foreseen by its designers.
+    vectors:
+      goal_decisioning: AI-driven optimization; anticipatory goals.
+      data_veracity: Multi-source, cleansed data.
+      feedback_intelligence: Prescriptive insights for efficiency.
+    characteristics:
+      - Supervised, unsupervised, or reinforcement learning replaces static statistical forecasts.
+      - Multi-variate relationships are discovered automatically from high-dimensional telemetry.
+      - Control policies are generated or refined by ML algorithms rather than fully human-designed.
+      - Anomaly detection operates on learned baselines rather than fixed thresholds.
+      - Causal inference and root-cause analysis inform corrective strategies.
+      - Continuous training pipelines update models from new observations.
+    deployment_examples: [Predictive maintenance, Traffic forecasting, AI-driven root-cause analysis]
+    human_role: >-
+      Humans define learning objectives, curate training data, specify safety constraints and
+      guardrails, and audit model decisions. The loop generates and executes decisions within
+      human-specified boundaries.
+    control_problem_coverage: >-
+      Comprehensively addresses Stabilization and Optimization. Begins to address Adaptation
+      by learning new control strategies for previously unseen scenarios.
+    frontier_to_next: Autonomy Frontier   # L4→L5: experimentation infrastructure, digital twins, causal inference; barrier = philosophical (delegating goal-setting)
+    transition_criteria: >-
+      A loop is classified L5 when the system autonomously sets or modifies its own goals,
+      experiments with novel strategies, and operates with minimal human-defined constraints.
+
+  - id: L5
+    name: Pre-emptive
+    definition: >-
+      The highest maturity level: loops autonomously anticipate and act on potential issues
+      before their likely occurrence, enabled by advanced machine intelligence and a
+      comprehensive understanding of the systems and operational environment. Management is
+      largely autonomous, focused on continuous optimization and innovative solutions.
+    vectors:
+      goal_decisioning: Self-governed goals; experimental learning.
+      data_veracity: Self-curated, adaptive data.
+      feedback_intelligence: Autonomous refinement and innovation.
+    characteristics:
+      - Goal-setting autonomy: sub-goals are derived from high-level business intent and adjusted from outcomes.
+      - Generative experimentation: the system designs A/B tests, simulations, and sandbox trials to explore control policy space.
+      - Causal discovery: the system builds and refines causal models of the operational environment.
+      - Meta-learning: the system optimizes its own learning algorithms and exploration strategies.
+      - Self-modification: the system may reconfigure its own architecture, sensor selection, or actuation mechanisms.
+      - Human engagement is limited to strategic intent, ethical adjudication, and exception handling.
+    deployment_examples: [Autonomous network schedulers, Self-optimizing core networks, Generative AI operations agents]
+    human_role: >-
+      Humans provide high-level intent, define ethical boundaries and safety envelopes, and
+      intervene only for strategic pivots or unprecedented anomalies.
+    control_problem_coverage: >-
+      Addresses all three sub-problems — Stabilization, Optimization, Adaptation — with full
+      autonomy within bounded constraints.
+    frontier_to_next: null
+    transition_criteria: null
+
+assessment_note: >-
+  The framework assesses maturity across three vectors (Goal Decisioning, Data Veracity,
+  Feedback Intelligence) and six focus areas (Intent Management, Observation, Analytics and
+  Decisioning, Action Execution, Knowledge and Learning, Governance and Assurance). See
+  vectors.yaml for the vector → focus-area binding and questions.yaml for the instrument.

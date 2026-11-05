@@ -1,0 +1,89 @@
+# AOCL model data: Closed Loop decision models
+# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
+# (section 7.3 "Closed Loop Decision Models"). This repository covers OODA and MAPE(-K).
+# Other decision models exist in the wider literature and in the Closed-Loop-Management
+# (CLAM) service (which additionally supports CUSTOM); their selection is
+# implementation-specific and not prescribed.
+model_version: "1.0.0"
+
+compatibility_note: >-
+  OODA and MAPE-K are compatible and complementary: OODA provides the strategic framing;
+  MAPE-K provides the implementation architecture. AO platform implementations should find
+  the best fit for their transformation; these are not an exhaustive list.
+
+models:
+  - id: OODA
+    name: OODA Loop
+    origin: Military strategy (John Boyd), widely adapted to cyber-physical systems
+    steps:
+      - id: observe
+        name: Observe
+        description: >-
+          Collect data from sensors, telemetry, and external intelligence. In AO, observation
+          includes quantitative metrics and qualitative signals: customer sentiment, threat
+          intelligence, regulatory announcements.
+      - id: orient
+        name: Orient
+        description: >-
+          Analyze observed data within the context of current models, historical experience,
+          and situational awareness — where raw data becomes meaningful information. At L4–L5,
+          orientation includes ML inference, causal analysis, and anomaly detection.
+      - id: decide
+        name: Decide
+        description: >-
+          Select a course of action from the feasible set, from deterministic rule-matching
+          (L2) to generative strategy synthesis (L5). Shall incorporate risk assessment and
+          constraint checking.
+      - id: act
+        name: Act
+        description: >-
+          Execute through actuators. Actions shall be logged with expected outcomes recorded
+          to enable subsequent learning.
+    knowledge_note: The Knowledge Base is handled by "Orient".
+
+  - id: MAPE
+    name: MAPE-K Loop
+    origin: IBM autonomic computing initiative; granular decomposition suitable for software-intensive systems
+    steps:
+      - id: monitor
+        name: Monitor
+        description: >-
+          Collect, aggregate, filter, and correlate metrics and events from managed resources;
+          supports multiple temporal granularities and semantic layers.
+      - id: analyze
+        name: Analyze
+        description: >-
+          Complex event processing, pattern recognition, root-cause analysis, predictive
+          modelling — transforming monitored data into actionable insights.
+      - id: plan
+        name: Plan
+        description: >-
+          Generate or select a plan to achieve the desired state: constraint satisfaction,
+          optimization, or policy lookup. At higher maturity, strategy generation and
+          experimental design.
+      - id: execute
+        name: Execute
+        description: >-
+          Effect planned changes through actuators, orchestrators, and control interfaces.
+          Atomic where consistency is required; idempotent where retry is possible.
+    knowledge_note: The Knowledge component is the locus of organizational learning and shall support querying, reasoning, and versioning.
+
+# Selection guidance: (level band × velocity) → suggested model.
+# Derived from the source document's maturity-level descriptions of decision sophistication.
+selection_mapping:
+  - {levels: [L1, L2], velocities: [fast, tactical, slow], model: MAPE, rationale: Deterministic monitor→execute chains map directly to threshold/reactive control.}
+  - {levels: [L3], velocities: [fast, tactical, slow], model: MAPE, rationale: Predictive signals slot into Analyze/Plan without changing the architecture.}
+  - {levels: [L4, L5], velocities: [tactical, slow], model: OODA, rationale: Orientation becomes the locus of learning (ML inference, causal analysis); strategic framing dominates.}
+  - {levels: [L4, L5], velocities: [fast], model: MAPE, rationale: Sub-millisecond loops keep the deterministic Monitor→Execute skeleton; learning stays in the Slow Loops that parametrize them.}
+
+# HITL model guidance by level (from the document's value-stream maturity analyses).
+hitl_by_level:
+  L1: HITL
+  L2: HITL
+  L3: HOTL
+  L4: HOTL
+  L5: HOOTL
+hitl_definitions:
+  HITL: Human-in-the-loop — humans participate in decision-making, continuously or on exception.
+  HOTL: Human-on-the-loop — the loop acts autonomously; humans supervise and can intervene.
+  HOOTL: Human-out-of-the-loop — the loop acts with humans governing at the strategic level.

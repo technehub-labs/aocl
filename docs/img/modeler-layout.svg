@@ -1,0 +1,68 @@
+<svg viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+  <defs>
+    <marker id="arrm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <style>
+    .lane { fill:#f8fafc; stroke:#cbd5e1; stroke-width:1.2; }
+    .ent { fill:#ffffff; stroke:#334155; stroke-width:1.4; }
+    .chip { rx:6; }
+    .lbl { font-size:12px; fill:#1e293b; }
+    .hd { font-size:12.5px; font-weight:bold; }
+    .small { font-size:10px; fill:#64748b; }
+    .lanehd { font-size:11px; fill:#64748b; font-weight:bold; letter-spacing:1px; }
+  </style>
+  <text x="450" y="24" text-anchor="middle" class="hd" fill="#4c1d95">The Loop Modeler — loops placed on Processes, Capabilities, Systems, Functions</text>
+
+  <!-- 4 lanes -->
+  <rect class="lane" x="30" y="46" width="200" height="240"/>
+  <text x="130" y="66" text-anchor="middle" class="lanehd">PROCESSES</text>
+  <rect class="ent" x="42" y="80" width="176" height="88"/>
+  <text x="130" y="98" text-anchor="middle" class="lbl" font-weight="bold">Detect Anomaly Event</text>
+  <rect class="chip" x="52" y="108" width="156" height="24" fill="#dbeafe"/>
+  <text x="130" y="124" text-anchor="middle" class="lbl">L3 · fast · MAPE</text>
+  <rect class="chip" x="52" y="136" width="156" height="24" fill="#dcfce7"/>
+  <text x="130" y="152" text-anchor="middle" class="lbl">L2 · slow · MAPE</text>
+
+  <rect class="lane" x="246" y="46" width="200" height="240"/>
+  <text x="346" y="66" text-anchor="middle" class="lanehd">CAPABILITIES</text>
+  <rect class="ent" x="258" y="80" width="176" height="60"/>
+  <text x="346" y="98" text-anchor="middle" class="lbl" font-weight="bold">Slice Assurance</text>
+  <rect class="chip" x="268" y="108" width="156" height="24" fill="#ede9fe"/>
+  <text x="346" y="124" text-anchor="middle" class="lbl">L4 · tactical · OODA</text>
+
+  <rect class="lane" x="462" y="46" width="200" height="240"/>
+  <text x="562" y="66" text-anchor="middle" class="lanehd">SYSTEMS</text>
+  <rect class="ent" x="474" y="80" width="176" height="60"/>
+  <text x="562" y="98" text-anchor="middle" class="lbl" font-weight="bold">5G Standalone Core</text>
+  <rect class="chip" x="484" y="108" width="156" height="24" fill="#dcfce7"/>
+  <text x="562" y="124" text-anchor="middle" class="lbl">L4 · slow · OODA</text>
+
+  <rect class="lane" x="678" y="46" width="200" height="240"/>
+  <text x="778" y="66" text-anchor="middle" class="lanehd">FUNCTIONS</text>
+  <rect class="ent" x="690" y="80" width="176" height="60"/>
+  <text x="778" y="98" text-anchor="middle" class="lbl" font-weight="bold">HPA Autoscaler</text>
+  <rect class="chip" x="700" y="108" width="156" height="24" fill="#dbeafe"/>
+  <text x="778" y="124" text-anchor="middle" class="lbl">L2 · fast · MAPE</text>
+
+  <!-- hierarchical link -->
+  <path d="M562 168 C562 210 346 210 346 168" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrm)"/>
+  <text x="454" y="232" text-anchor="middle" class="small">HIERARCHICAL link (CLAM ClosedLoopLink)</text>
+
+  <!-- spec panel -->
+  <rect class="ent" x="30" y="310" width="400" height="130"/>
+  <text x="46" y="332" class="hd" fill="#4c1d95">Loop specification (CLAM-aligned)</text>
+  <text x="46" y="352" class="lbl">decision model: MAPE — monitor/analyze/plan/execute</text>
+  <text x="46" y="368" class="lbl">each step: ActivityRef {name, action}</text>
+  <text x="46" y="384" class="lbl">goals: {metric, value, direction: AT_LEAST|AT_MOST|EXACTLY}</text>
+  <text x="46" y="400" class="lbl">state: designed→validated→published→active (CLAM)</text>
+  <text x="46" y="416" class="lbl">+ AOCL context: velocity, level, HITL, entity kind</text>
+
+  <rect class="ent" x="450" y="310" width="428" height="130"/>
+  <text x="466" y="332" class="hd" fill="#4c1d95">Exports</text>
+  <text x="466" y="352" class="lbl">1 · aocl-loop-model.yaml — the file of record (schema-validated)</text>
+  <text x="466" y="368" class="lbl">2 · aocl-clam-export.json — POST decision models, then loops</text>
+  <text x="466" y="384" class="lbl">3 · loop ledger yaml — aocl-ledger health checks</text>
+  <text x="466" y="404" class="small">live analytics: velocity × maturity scatter recomputes on every edit</text>
+</svg>

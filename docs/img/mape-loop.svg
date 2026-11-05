@@ -1,0 +1,46 @@
+<svg viewBox="0 0 480 400" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+  <defs>
+    <marker id="arr15" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill:#ffffff; stroke:#334155; stroke-width:1.5; }
+    .kb { fill:#f5f3ff; stroke:#7c3aed; stroke-width:1.5; }
+    .hd { font-size:13px; font-weight:bold; fill:#4c1d95; }
+    .lbl { font-size:12.5px; fill:#1e293b; }
+    .flow { stroke:#334155; stroke-width:1.6; fill:none; marker-end:url(#arr15); }
+  </style>
+  <text x="240" y="22" text-anchor="middle" class="hd">MAPE-K Decision Loop (source Fig. 15)</text>
+
+  <!-- Managed resource in center -->
+  <rect class="kb" x="170" y="170" width="140" height="44"/>
+  <text x="240" y="190" text-anchor="middle" class="lbl" font-weight="bold">Managed Resource</text>
+  <text x="240" y="206" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">(the plant + its controls)</text>
+
+  <!-- M -->
+  <rect class="box" x="40" y="50" width="120" height="48"/><text x="100" y="70" text-anchor="middle" class="lbl" font-weight="bold">Monitor</text>
+  <text x="100" y="86" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">aggregate · filter · correlate</text>
+  <!-- A -->
+  <rect class="box" x="320" y="50" width="120" height="48"/><text x="380" y="70" text-anchor="middle" class="lbl" font-weight="bold">Analyze</text>
+  <text x="380" y="86" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">CEP · RCA · prediction</text>
+  <!-- P -->
+  <rect class="box" x="320" y="290" width="120" height="48"/><text x="380" y="310" text-anchor="middle" class="lbl" font-weight="bold">Plan</text>
+  <text x="380" y="326" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">optimize · policy · strategy</text>
+  <!-- E -->
+  <rect class="box" x="40" y="290" width="120" height="48"/><text x="100" y="310" text-anchor="middle" class="lbl" font-weight="bold">Execute</text>
+  <text x="100" y="326" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">atomic · idempotent</text>
+  <!-- K -->
+  <rect class="kb" x="180" y="52" width="120" height="44"/><text x="240" y="72" text-anchor="middle" class="lbl" font-weight="bold">Knowledge</text>
+  <text x="240" y="88" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">models · policies · patterns</text>
+
+  <path class="flow" d="M160 74 L180 74"/>
+  <path class="flow" d="M300 74 L320 74"/>
+  <path class="flow" d="M380 98 L380 290"/>
+  <path class="flow" d="M320 314 L160 314"/>
+  <path class="flow" d="M100 290 L100 98"/>
+  <path class="flow" d="M100 62 L180 62" stroke-dasharray="4 3"/>
+  <path class="flow" d="M240 96 L240 170" stroke-dasharray="4 3"/>
+  <path class="flow" d="M240 214 L240 290 L300 290" stroke-dasharray="4 3"/>
+  <path class="flow" d="M240 96 L100 62" stroke-dasharray="0"/>
+</svg>

@@ -1,0 +1,40 @@
+# AOCL assessment instrument: per-vector L1-L5 item text
+# DERIVED content: the source document (Autonomous_Operations_and_Closed_Loops v1.2.0) defines
+# each level's vector characteristics in prose but ships no questionnaire. These items are
+# synthesized from the document's own per-level vector characteristics and level criteria so
+# that a loop can be scored against them. Provenance: derived-from doc §3.2 vector tables.
+# Scoring rule: a vector's level is the highest n such that ALL items for levels 1..n hold.
+model_version: "1.0.0"
+
+scoring_rule: >-
+  For each vector, tick every item that demonstrably holds (evidence required at L3 and above:
+  a vector scored L3+ without recorded evidence drops one level). The vector's level is the
+  highest level whose item — and all items below it — are satisfied. The loop's overall level
+  is the weakest (minimum) of its three vector levels.
+
+questions:
+  GD:   # Goal Decisioning
+    1: Goals are fixed; the loop executes rigid rules against them.
+    2: Goals adjust after events; the loop re-evaluates against updated objectives post-hoc.
+    3: The loop anticipates scenario-based objectives and self-optimizes within its policy bounds.
+    4: Objectives are optimized by AI/ML; the loop works toward anticipatory goals.
+    5: The loop sets and revises its own goals from high-level intent and learns through experimentation.
+  DV:   # Data Veracity
+    1: Data is static; trust in it is low and unverified.
+    2: Data arrives in real time with moderate, unquantified accuracy.
+    3: Data is context-aware and held to a high consistency bar.
+    4: Data is multi-source and cleansed before use in decisions.
+    5: The loop curates its own data ecosystem, adapting sources to need.
+  FI:   # Feedback Intelligence
+    1: Feedback is basic and not integrated into control.
+    2: Feedback corrects, but with delay after the event.
+    3: Predictive analytics mitigate risk before manifestation.
+    4: Prescriptive insights drive efficiency; models learn continuously.
+    5: The loop refines and innovates autonomously — including on its own learning strategy.
+
+# Focus-area grounding per vector (Intent Management + Analytics & Decisioning = GD;
+# Observation + Governance & Assurance = DV; Action Execution + Knowledge & Learning = FI).
+focus_area_map:
+  GD: [intent_management, analytics_decisioning]
+  DV: [observation, governance_assurance]
+  FI: [action_execution, knowledge_learning]

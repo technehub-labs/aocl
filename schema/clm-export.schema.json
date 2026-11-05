@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/clm-export.schema.json",
+  "title": "AOCL → CLAM provisioning export",
+  "description": "Emitted by `aocl-model export-clam`: CLAM-shaped provisioning payloads (Closed-Loop-Management data model 1.0, emmanuel-a-otchere/Closed-Loop-Management) plus AOCL context. See docs/clm-alignment.md for the POST sequence.",
+  "type": "object",
+  "required": ["export_format", "export_version", "source_model_version", "decision_models", "closed_loops"],
+  "properties": {
+    "export_format": { "const": "aocl-clam-export" },
+    "export_version": { "const": "1.0.0" },
+    "source_model_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "decision_models": {
+      "type": "array",
+      "description": "POST these to /decisionModel first; capture returned ids for decisionModelRef.",
+      "items": {
+        "type": "object",
+        "required": ["kind", "name"],
+        "properties": {
+          "kind": { "enum": ["OODA", "MAPE", "CUSTOM"] },
+          "name": { "type": "string" },
+          "observe": { "$ref": "#/$defs/activity" },
+          "orient": { "$ref": "#/$defs/activity" },
+          "decide": { "$ref": "#/$defs/activity" },
+          "act": { "$ref": "#/$defs/activity" },
+          "monitor": { "$ref": "#/$defs/activity" },
+          "analyze": { "$ref": "#/$defs/activity" },
+          "plan": { "$ref": "#/$defs/activity" },
+          "execute": { "$ref": "#/$defs/activity" },
+          "steps": {
+            "type": "array",
+            "items": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" } } }
+          }
+        },
+        "allOf": [
+          { "if": { "properties": { "kind": { "const": "OODA" } } }, "then": { "required": ["observe", "orient", "decide", "act"] } },
+          { "if": { "properties": { "kind": { "const": "MAPE" } } }, "then": { "required": ["monitor", "analyze", "plan", "execute"] } }
+        ]
+      }
+    },
+    "closed_loops": {
+      "type": "array",
+      "description": "POST bodies for /closedLoop after decision models are registered (decision_model_ref filled from the created decision model).",
+      "items": {
+        "type": "object",
+        "required": ["name", "decision_model", "aocl"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": ["string", "null"] },
+          "decision_model": { "type": "string", "description": "name of an entry in decision_models[]" — resolved to decisionModelRef {id, kind} at provisioning." },
+          "goals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "target"],
+              "properties": {
+                "name": { "type": "string" },
+                "target": {
+                  "type": "object",
+                  "required": ["metric", "value"],
+                  "properties": {
+                    "metric": { "type": "string" },
+                    "value": { "type": "number" },
+                    "unit": { "type": ["string", "null"] },
+                    "direction": { "enum": ["AT_LEAST", "AT_MOST", "EXACTLY"] }
+                  }
+                },
+                "scope": { "enum": ["CLOSED_LOOP", "WORKFLOW", "ACTIVITY"] }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["source", "target", "kind"],
+              "properties": {
+                "source": { "type": "string", "description": "loop name" },
+                "target": { "type": "string", "description": "loop name" },
+                "kind": { "enum": ["DAISY_CHAIN", "HIERARCHICAL", "FEEDBACK"] },
+                "condition": { "type": ["string", "null"] }
+              }
+            }
+          },
+          "aocl": {
+            "type": "object",
+            "description": "AOCL context carried alongside the CLAM payload (not part of CLAM).",
+            "required": ["entity", "entity_kind", "velocity", "level"],
+            "properties": {
+              "entity": { "type": "string" },
+              "entity_kind": { "enum": ["process", "capability", "system", "function"] },
+              "velocity": { "enum": ["fast", "tactical", "slow"] },
+              "level": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "vector_levels": {
+                "type": "object",
+                "properties": {
+                  "GD": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "DV": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "FI": { "type": "integer", "minimum": 1, "maximum": 5 }
+                }
+              },
+              "hitl": { "enum": ["HITL", "HOTL", "HOOTL"] },
+              "source_loop_id": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,96 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (runtime dep: pyyaml)
+        run: python -m pip install --disable-pip-version-check pyyaml
+      - name: Engine self-tests (via zero-install shims)
+        run: |
+          python3 tools/aocl_score.py --self-test
+          python3 tools/aocl_realization.py --self-test
+          python3 tools/aocl_ledger.py --self-test
+          python3 tools/aocl_model.py --self-test
+      - name: Golden corpus (Python engine)
+        run: python3 tools/corpus_check.py
+      - name: CLI smoke
+        run: |
+          python3 tools/aocl_score.py 3 4 2 --velocity slow
+          python3 tools/aocl_score.py 3 3 3 --current 3 --json
+          python3 tools/aocl_realization.py --E 0.6 --C 0.8 --Vd 0.9 --json
+          python3 tools/aocl_realization.py --Ed 0.3 --Em 0.3 --Eo 0.3 --Ex 0.3 --Cs 0.4 --Cd 0.4 --Cm 0.4 --Cc 0.4 --json
+          python3 tools/aocl_realization.py --E 0.6 --target 1.0
+      - name: Example ledger health (deterministic)
+        run: |
+          python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-11-05 --json > /dev/null
+          # expects findings (intentional staleness) -> exit 1
+          if python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-10-01 --json > /dev/null; then
+            echo "expected staleness finding with 2026-11-05, none before 2026-10-01"; exit 1
+          fi
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Site self-test (engine + modeler + parity + scope check)
+        run: node tools/site_selftest.js
+      - name: Golden corpus (JS engine)
+        run: node tools/corpus_check.js
+
+  schemas-and-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate JSON Schemas and model/example files
+        run: |
+          python -m pip install --disable-pip-version-check pyyaml jsonschema
+          python - <<'PY'
+          import json, yaml, pathlib
+          from jsonschema import Draft202012Validator
+          for s in sorted(pathlib.Path("schema").glob("*.json")):
+              Draft202012Validator.check_schema(json.loads(s.read_text()))
+              print(f"ok   schema {s.name}")
+          for m in sorted(pathlib.Path("model").glob("*.yaml")):
+              yaml.safe_load(m.read_text()); print(f"ok   model  {m.name}")
+          # example ledger against its schema
+          schema = json.loads(pathlib.Path("schema/loop-ledger.schema.json").read_text())
+          data = yaml.safe_load(pathlib.Path("examples/loops.yaml").read_text())
+          Draft202012Validator(schema).validate(data)
+          print("ok   examples/loops.yaml validates against loop-ledger.schema.json")
+          PY
+      - name: Docs link check (relative links resolve)
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          broken = []
+          for md in pathlib.Path(".").rglob("*.md"):
+              if "node_modules" in str(md) or "assets/figures" in str(md): continue
+              text = md.read_text(encoding="utf-8")
+              for target in re.findall(r"\]\(([^)#\s]+)(?:#[^)]*)?\)", text):
+                  if target.startswith(("http://", "https://", "mailto:")): continue
+                  if not (md.parent / target).exists():
+                      broken.append(f"{md}: {target}")
+          if broken:
+              print("BROKEN LINKS:"); [print(" ", b) for b in broken]; raise SystemExit(1)
+          print("ok   all relative markdown links resolve")
+          PY

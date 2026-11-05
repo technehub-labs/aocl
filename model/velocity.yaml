@@ -1,0 +1,138 @@
+# AOCL model data: Closed Loop velocity taxonomy
+# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
+# (section 5 "Taxonomy of Closed Loop Velocity", Tables 2 and 3).
+model_version: "1.0.0"
+
+velocity_definition: >-
+  The velocity of a loop is the inverse of its cycle time from observation through actuation.
+  It is a primary architectural parameter determining suitable domain, technology stack, and
+  governance model.
+
+classes:
+  - id: fast
+    name: Fast Loops
+    attributes:
+      cycle_time: Sub-second to seconds
+      data_granularity: High-frequency telemetry
+      decision_complexity: Single-parameter, deterministic
+      governance_model: Automated, policy-enforced
+      technology: [Embedded controllers, FPGA, eBPF]
+      failure_mode: Localised, recoverable
+      typical_domain: [RAN optimization, Traffic engineering]
+    characteristics:
+      latency_sensitivity: >-
+        Must meet strict latency budgets; a loop controlling radio link adaptation completes
+        its cycle within the coherence time of the channel, often milliseconds.
+      deterministic_behaviour: >-
+        Deterministic or bounded-probabilistic behaviour required. Non-deterministic AI
+        inference is generally unsuitable for sub-millisecond loops unless implemented in
+        specialized hardware with guaranteed inference times.
+      local_scope: >-
+        Controls a single parameter or a tightly coupled parameter set within a bounded
+        domain (a single cell, link, or microservice instance).
+      imperative_actions: >-
+        Decisions are imperative and reversible — a power adjustment, routing-table update,
+        or congestion-window modification can be undone if subsequent observations indicate
+        an adverse outcome.
+    examples:
+      - Radio link adaptation in 5G NR adjusting modulation and coding from CQI feedback
+      - TCP congestion control adjusting send rates from ACK timing
+      - Kubernetes Horizontal Pod Autoscaler scaling replicas on CPU/memory metrics
+      - Load balancer traffic distribution algorithms
+
+  - id: tactical
+    name: Tactical Loops
+    attributes:
+      cycle_time: Minutes to hours
+      data_granularity: Aggregated metrics, session events
+      decision_complexity: Multi-parameter, bounded optimization
+      governance_model: Policy-enforced with human notification
+      technology: [Orchestration platforms, Stream analytics]
+      failure_mode: Contained, recoverable with escalation
+      typical_domain: [Service assurance, Capacity fulfilment]
+    note: >-
+      The source document's latency-budget table (Table 3) defines three loop classes —
+      Fast, Tactical, Slow — while its taxonomy prose elaborates the Fast and Slow ends.
+      The Tactical class is carried here as the middle band defined by Table 3's budgets.
+
+  - id: slow
+    name: Slow Loops
+    attributes:
+      cycle_time: Minutes to months
+      data_granularity: Aggregated metrics, events
+      decision_complexity: Multi-objective, strategic
+      governance_model: Human-reviewed, intent-driven
+      technology: [AI/ML platforms, Digital twins]
+      failure_mode: Systemic, consequential
+      typical_domain: [Capacity planning, Policy evolution]
+    characteristics:
+      strategic_scope: >-
+        Cross-domain, multi-objective problems: a capacity planning loop considers financial
+        constraints, customer growth projections, energy efficiency goals, and regulatory
+        requirements simultaneously.
+      cognitive_sophistication: >-
+        May employ complex AI/ML reasoning, digital twin simulation, causal inference, and
+        generative modelling; latency constraints are relaxed, permitting deeper analysis.
+      human_collaboration: >-
+        Should incorporate human review for strategic decisions: the loop may generate
+        recommendations autonomously, but deployment of new policies, architectural changes,
+        or business-model adjustments typically requires human approval.
+      policy_generation: >-
+        The primary output is not an imperative actuation command but a policy, constraint,
+        or model update that parametrizes Fast Loop behaviour.
+    examples:
+      - Network capacity planning loops analyzing traffic growth and authorizing build-outs
+      - Customer experience management loops correlating NPS with network KPIs to adjust prioritisation policies
+      - Security governance loops analyzing threat intelligence and updating zero-trust policies
+      - Business optimization loops adjusting pricing, bundling, and go-to-market strategy
+
+# Table 3 — illustrative latency budgets and SLOs (reference template, not normative definitions)
+latency_budgets:
+  - class: fast
+    observation_latency: "< 10 ms"
+    decision_latency: "< 10 ms"
+    actuation_latency: "< 10 ms"
+    end_to_end_budget: "< 100 ms"
+    availability_slo: 99.999%
+  - class: tactical
+    observation_latency: "< 1 min"
+    decision_latency: "< 5 min"
+    actuation_latency: "< 1 min"
+    end_to_end_budget: "< 10 min"
+    availability_slo: 99.99%
+  - class: slow
+    observation_latency: "< 1 hour"
+    decision_latency: "< 24 hours"
+    actuation_latency: "< 4 hours"
+    end_to_end_budget: "< 7 days"
+    availability_slo: 99.9%
+  note: >-
+    When defined, these budgets are architectural constraints: loops that consistently violate
+    them shall be decomposed, optimized, or downgraded in maturity.
+
+orchestration_principles:
+  - id: separation_of_concerns
+    rule: >-
+      Fast Loops manage local stability and performance; Slow Loops manage global optimization
+      and strategic alignment. A Fast Loop shall not make decisions that violate Slow Loop
+      policies; a Slow Loop shall not micromanage Fast Loop cycle times.
+  - id: policy_downflow
+    rule: >-
+      Slow Loops generate policies that constrain Fast Loop decision spaces (an energy budget,
+      a QoS class mapping). Downflow shall be implemented through policy distribution with
+      guaranteed propagation times.
+  - id: exception_upflow
+    rule: >-
+      Fast Loops escalate exceptions exceeding their authority or capability to Slow Loops:
+      a novel failure mode not covered by the playbook is buffered and notified for analysis
+      and policy update.
+  - id: temporal_decoupling
+    rule: >-
+      Fast and Slow Loops are decoupled through buffering and aggregation layers. A Fast Loop
+      shall not block waiting for Slow Loop decisions; a Slow Loop shall not assume real-time
+      observability of every Fast Loop cycle.
+  - id: coherence_guarantees
+    rule: >-
+      On Slow Loop policy updates, transient coherence is maintained: Fast Loops shall not
+      operate under conflicting policies during propagation. Versioned policy snapshots and
+      atomic update mechanisms should be employed.

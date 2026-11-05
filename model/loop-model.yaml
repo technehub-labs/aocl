@@ -1,0 +1,64 @@
+# AOCL model data: the loop modeler model — entities and their closed loops
+# This is the file format produced by the site's Loop Modeler view and consumed by the
+# `aocl-ledger` CLI and the modeler export. Loop specifications are ALIGNED with the
+# Closed-Loop-Management (CLAM) data model 1.0
+# (https://github.com/emmanuel-a-otchere/Closed-Loop-Management) — see schema/clm-export.schema.json
+# and docs/clm-alignment.md for the mapping and provisioning sequence.
+model_version: "1.0.0"
+
+# --- Entity kinds: the things loops are applied to ---------------------------------
+entity_kinds:
+  - id: process
+    name: Process
+    description: A value-stream stage or operational workflow (e.g. "Detect and Handle Anomaly Event").
+  - id: capability
+    name: Capability
+    description: An organizational or technical capability (e.g. "Slice Assurance Capability").
+  - id: system
+    name: System
+    description: A platform, network domain, or application (e.g. "5G Core", "Cloud Region").
+  - id: function
+    name: Function
+    description: A discrete technical function or service (e.g. "AMF Session Management", "Autoscaler").
+
+# --- Model file shape (see schema/loop-model.schema.json) --------------------------
+example: |
+  format: aocl-loop-model
+  model_version: "1.0.0"
+  ruleset_version: "1.0.0"
+  entities:
+    - id: proc-anomaly-detect
+      kind: process
+      name: Detect Anomaly Event
+      domain: service-assurance
+      description: Real-time identification of network/service deterioration.
+  loops:
+    - id: loop-anomaly-detect-v1
+      entity: proc-anomaly-detect
+      velocity: fast
+      level: 3
+      vector_scores: {GD: 3, DV: 3, FI: 2}   # overall = min = L2 if FI lags
+      decision_model:
+        kind: MAPE
+        monitor: {name: read-kpis, action: kpi.stream}
+        analyze: {name: trend-forecast, action: forecast.v1}
+        plan: {name: scale-plan, action: planner.v1}
+        execute: {name: apply-scale, action: orchestrator.scale}
+      goals:
+        - name: detection-latency
+          target: {metric: detection_latency_ms, value: 10000, direction: AT_MOST}
+      hitl: HOTL
+      state: designed
+
+# --- Field notes -------------------------------------------------------------------
+# entity:    id of an entity in `entities` (required)
+# velocity:  fast | tactical | slow (per velocity.yaml)
+# level:     1..5 target/assessed CLA maturity level (levels.yaml)
+# vector_scores: optional {GD, DV, FI} each 0..5; when present, overall = min
+# decision_model: CLAM-aligned discriminated union —
+#     kind OODA: observe/orient/decide/act; kind MAPE: monitor/analyze/plan/execute;
+#     kind CUSTOM: steps[] — each step {name, action} (CLAM ActivityRef shape)
+# goals:     CLAM Goal shape — {name, target:{metric, value, unit?, direction: AT_LEAST|AT_MOST|EXACTLY}, scope?}
+# hitl:      HITL | HOTL | HOOTL (defaults from decision-models.yaml hitl_by_level)
+# state:     CLAM lifecycle state — designed | validated | published | active | paused | error | retired
+# links:     optional CLAM ClosedLoopLink list — {source, target, kind: DAISY_CHAIN|HIERARCHICAL|FEEDBACK, condition?}

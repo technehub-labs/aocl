@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/loop-model.schema.json",
+  "title": "AOCL loop model (entities + closed loops)",
+  "description": "The file format produced by the AOCL Loop Modeler and consumed by the aocl-ledger CLI. Loop specifications are aligned with the Closed-Loop-Management (CLAM) data model 1.0; see docs/clm-alignment.md.",
+  "type": "object",
+  "required": ["format", "model_version", "ruleset_version", "entities", "loops"],
+  "properties": {
+    "format": { "const": "aocl-loop-model" },
+    "model_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "ruleset_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "entities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entity" }
+    },
+    "loops": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/loop" }
+    },
+    "links": {
+      "type": "array",
+      "description": "Optional inter-loop links (CLAM ClosedLoopLink shape).",
+      "items": { "$ref": "#/$defs/link" }
+    }
+  },
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "required": ["id", "kind", "name"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "kind": { "enum": ["process", "capability", "system", "function"] },
+        "name": { "type": "string", "minLength": 1 },
+        "domain": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "activity": {
+      "type": "object",
+      "description": "CLAM ActivityRef-aligned step: a unit of work with its implementation reference.",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "action": { "type": "string", "description": "Reference to the underlying implementation (HTTP endpoint, function name, workflow id)." },
+        "inputs": { "type": "array", "items": { "type": "string" } },
+        "outputs": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "decision_model": {
+      "type": "object",
+      "description": "CLAM DecisionModel discriminated union (kind: OODA | MAPE | CUSTOM).",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["OODA", "MAPE", "CUSTOM"] },
+        "observe": { "$ref": "#/$defs/activity" },
+        "orient": { "$ref": "#/$defs/activity" },
+        "decide": { "$ref": "#/$defs/activity" },
+        "act": { "$ref": "#/$defs/activity" },
+        "monitor": { "$ref": "#/$defs/activity" },
+        "analyze": { "$ref": "#/$defs/activity" },
+        "plan": { "$ref": "#/$defs/activity" },
+        "execute": { "$ref": "#/$defs/activity" },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "activity": { "$ref": "#/$defs/activity" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "OODA" } } },
+          "then": { "required": ["observe", "orient", "decide", "act"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "MAPE" } } },
+          "then": { "required": ["monitor", "analyze", "plan", "execute"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "CUSTOM" } } },
+          "then": { "required": ["steps"] }
+        }
+      ]
+    },
+    "goal": {
+      "type": "object",
+      "description": "CLAM Goal shape.",
+      "required": ["name", "target"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "target": {
+          "type": "object",
+          "required": ["metric", "value"],
+          "properties": {
+            "metric": { "type": "string" },
+            "value": { "type": "number" },
+            "unit": { "type": ["string", "null"] },
+            "direction": { "enum": ["AT_LEAST", "AT_MOST", "EXACTLY"], "default": "AT_LEAST" }
+          },
+          "additionalProperties": false
+        },
+        "scope": { "enum": ["CLOSED_LOOP", "WORKFLOW", "ACTIVITY"], "default": "CLOSED_LOOP" },
+        "scope_ref": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "loop": {
+      "type": "object",
+      "required": ["id", "entity", "velocity", "level", "decision_model"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "entity": { "type": "string", "description": "id of an entity in entities[]" },
+        "velocity": { "enum": ["fast", "tactical", "slow"] },
+        "level": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "vector_scores": {
+          "type": "object",
+          "description": "Optional per-vector levels; overall level = min when present.",
+          "properties": {
+            "GD": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "DV": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "FI": { "type": "integer", "minimum": 1, "maximum": 5 }
+          },
+          "additionalProperties": false
+        },
+        "decision_model": { "$ref": "#/$defs/decision_model" },
+        "goals": { "type": "array", "items": { "$ref": "#/$defs/goal" } },
+        "hitl": { "enum": ["HITL", "HOTL", "HOOTL"] },
+        "state": { "enum": ["designed", "validated", "published", "active", "paused", "error", "retired"], "default": "designed" },
+        "owner": { "type": "string", "description": "Accountable owner (ledger-style)." },
+        "last_review": { "type": "string", "format": "date" },
+        "review_cadence_days": { "type": "integer", "exclusiveMinimum": 0, "default": 90 },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "link": {
+      "type": "object",
+      "description": "CLAM ClosedLoopLink shape.",
+      "required": ["source", "target", "kind"],
+      "properties": {
+        "source": { "type": "string" },
+        "target": { "type": "string" },
+        "kind": { "enum": ["DAISY_CHAIN", "HIERARCHICAL", "FEEDBACK"] },
+        "condition": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,35 @@
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+  <defs>
+    <marker id="arrf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill:#ffffff; stroke:#334155; stroke-width:1.4; }
+    .lane { fill:#eff6ff; stroke:#2563eb; stroke-width:1.5; }
+    .lbl { font-size:12px; fill:#1e293b; }
+    .hd { font-size:12.5px; font-weight:bold; }
+    .flow { stroke:#334155; stroke-width:1.3; fill:none; marker-end:url(#arrf); }
+  </style>
+  <text x="450" y="22" text-anchor="middle" class="hd" fill="#1e40af">Fast Loop architecture — embedded in the data/control plane (source Fig. 9)</text>
+
+  <rect class="lane" x="70" y="50" width="760" height="120"/>
+  <text x="450" y="72" text-anchor="middle" class="hd" fill="#1e40af">cycle time: sub-second → seconds · single parameter · deterministic · reversible</text>
+
+  <rect class="box" x="100" y="92" width="150" height="52"/>
+  <text x="175" y="113" text-anchor="middle" class="lbl" font-weight="bold">Sensor</text>
+  <text x="175" y="130" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">high-frequency telemetry</text>
+
+  <rect class="box" x="330" y="92" width="150" height="52"/>
+  <text x="405" y="113" text-anchor="middle" class="lbl" font-weight="bold">Controller</text>
+  <text x="405" y="130" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">FPGA / eBPF / embedded logic</text>
+
+  <rect class="box" x="560" y="92" width="150" height="52"/>
+  <text x="635" y="113" text-anchor="middle" class="lbl" font-weight="bold">Actuator</text>
+  <text x="635" y="130" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">bounded, reversible action</text>
+
+  <path class="flow" d="M250 118 L330 118"/>
+  <path class="flow" d="M480 118 L560 118"/>
+  <path class="flow" d="M635 144 L635 210 L175 210 L175 144"/>
+  <text x="405" y="228" text-anchor="middle" class="lbl" fill="#475569">examples: 5G NR link adaptation (CQI) · TCP congestion control · Kubernetes HPA · load balancing</text>
+</svg>

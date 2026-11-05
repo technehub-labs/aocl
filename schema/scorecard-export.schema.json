@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/scorecard-export.schema.json",
+  "title": "AOCL loop assessment export",
+  "description": "Versioned export of a loop maturity assessment (parity with the CLI --json output).",
+  "type": "object",
+  "required": ["export_format", "export_version", "ruleset_version", "linkage", "assessment"],
+  "properties": {
+    "export_format": { "const": "aocl-scorecard-export" },
+    "export_version": { "const": "1.0.0" },
+    "ruleset_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "linkage": {
+      "type": "object",
+      "required": ["entity", "loop"],
+      "properties": {
+        "entity": { "type": "string", "description": "Entity id (process/capability/system/function) from the loop model." },
+        "loop": { "type": "string", "description": "Loop id from the loop model." },
+        "velocity": { "enum": ["fast", "tactical", "slow"] },
+        "owner": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "assessment": {
+      "type": "object",
+      "required": ["vector_levels", "level", "notes"],
+      "properties": {
+        "vector_levels": {
+          "type": "object",
+          "required": ["GD", "DV", "FI"],
+          "properties": {
+            "GD": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "DV": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "FI": { "type": "integer", "minimum": 1, "maximum": 5 }
+          },
+          "additionalProperties": false
+        },
+        "level": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "notes": { "type": "array", "items": { "type": "string" } },
+        "frontier": { "type": ["string", "null"], "description": "Name of the frontier to the next level, or null at L5." },
+        "recommended_decision_model": { "enum": ["OODA", "MAPE"] },
+        "hitl": { "enum": ["HITL", "HOTL", "HOOTL"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

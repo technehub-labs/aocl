@@ -1,0 +1,40 @@
+<svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill:#ffffff; stroke:#334155; stroke-width:1.4; }
+    .lbl { font-size:12.5px; fill:#1e293b; }
+    .t { font-size:13px; font-weight:bold; fill:#4c1d95; }
+    .flow { stroke:#334155; stroke-width:1.4; fill:none; marker-end:url(#arr2); }
+    .vec { font-size:12px; font-weight:bold; }
+  </style>
+
+  <text x="450" y="22" text-anchor="middle" class="t">The Closed Loop on the continuum — Plant · Sensor · Controller · Actuator · Reference</text>
+
+  <!-- feedback loop: reference -> controller -> actuator -> plant -> sensor -> back -->
+  <rect class="box" x="40" y="120" width="110" height="44"/><text x="95" y="139" text-anchor="middle" class="lbl">Reference (R)</text><text x="95" y="155" text-anchor="middle" class="lbl" font-size="10" fill="#64748b">intent = K</text>
+  <rect class="box" x="215" y="120" width="120" height="44"/><text x="275" y="146" text-anchor="middle" class="lbl">Controller (C)</text>
+  <rect class="box" x="400" y="120" width="110" height="44"/><text x="455" y="146" text-anchor="middle" class="lbl">Actuator (A)</text>
+  <rect class="box" x="575" y="120" width="100" height="44"/><text x="625" y="146" text-anchor="middle" class="lbl">Plant (P)</text>
+  <rect class="box" x="750" y="120" width="110" height="44"/><text x="805" y="146" text-anchor="middle" class="lbl">Sensor (S)</text>
+
+  <path class="flow" d="M150 142 L215 142"/>
+  <path class="flow" d="M335 142 L400 142"/>
+  <path class="flow" d="M510 142 L575 142"/>
+  <path class="flow" d="M675 142 L750 142"/>
+  <path class="flow" d="M805 164 L805 250 L95 250 L95 164"/>
+  <text x="450" y="242" text-anchor="middle" class="lbl" fill="#64748b">measured output feeds back — deviation drives the control action</text>
+  <text x="450" y="288" text-anchor="middle" class="lbl mono" fill="#4c1d95">Output = R·C·P / (1 + C·P·S)</text>
+
+  <!-- three vectors -->
+  <text x="120" y="52" class="vec" fill="#2563eb">Goal Decisioning</text>
+  <text x="360" y="52" class="vec" fill="#dc2626">Data Veracity</text>
+  <text x="620" y="52" class="vec" fill="#16a34a">Feedback Intelligence</text>
+  <text x="120" y="70" class="lbl" font-size="10.5" fill="#475569">intent → objectives → decisions</text>
+  <text x="360" y="70" class="lbl" font-size="10.5" fill="#475569">observation · governance · assurance</text>
+  <text x="620" y="70" class="lbl" font-size="10.5" fill="#475569">action execution · knowledge &amp; learning</text>
+  <text x="450" y="98" text-anchor="middle" class="lbl" font-size="10.5" fill="#64748b">three assessment vectors × six focus areas (GB1075) — score a loop in docs/assessment.md</text>
+</svg>

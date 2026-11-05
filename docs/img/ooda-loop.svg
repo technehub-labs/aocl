@@ -1,0 +1,33 @@
+<svg viewBox="0 0 480 420" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+  <defs>
+    <marker id="arr14" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill:#ffffff; stroke:#334155; stroke-width:1.5; }
+    .hd { font-size:13px; font-weight:bold; fill:#4c1d95; }
+    .lbl { font-size:12.5px; fill:#1e293b; }
+    .flow { stroke:#334155; stroke-width:1.6; fill:none; marker-end:url(#arr14); }
+  </style>
+  <text x="240" y="22" text-anchor="middle" class="hd">OODA Loop as applied to AO (source Fig. 14)</text>
+
+  <rect class="box" x="60" y="60" width="160" height="52"/><text x="140" y="82" text-anchor="middle" class="lbl" font-weight="bold">Observe</text>
+  <text x="140" y="98" text-anchor="middle" class="lbl" font-size="10.5" fill="#64748b">sensors · telemetry · intelligence</text>
+
+  <rect class="box" x="260" y="60" width="160" height="52"/><text x="340" y="82" text-anchor="middle" class="lbl" font-weight="bold">Orient</text>
+  <text x="340" y="98" text-anchor="middle" class="lbl" font-size="10.5" fill="#64748b">models · experience · ML inference</text>
+
+  <rect class="box" x="260" y="180" width="160" height="52"/><text x="340" y="202" text-anchor="middle" class="lbl" font-weight="bold">Decide</text>
+  <text x="340" y="218" text-anchor="middle" class="lbl" font-size="10.5" fill="#64748b">rules (L2) → generative synthesis (L5)</text>
+
+  <rect class="box" x="60" y="180" width="160" height="52"/><text x="140" y="202" text-anchor="middle" class="lbl" font-weight="bold">Act</text>
+  <text x="140" y="218" text-anchor="middle" class="lbl" font-size="10.5" fill="#64748b">log actions + expected outcomes</text>
+
+  <path class="flow" d="M220 86 L260 86"/>
+  <path class="flow" d="M340 112 L340 180"/>
+  <path class="flow" d="M260 206 L220 206"/>
+  <path class="flow" d="M140 232 L140 290 L420 290 L420 86 L420 86"/>
+  <path class="flow" d="M420 290 L440 290"/>
+  <text x="250" y="284" text-anchor="middle" class="lbl" font-size="10.5" fill="#64748b">Knowledge Base lives in Orient — the locus of learning</text>
+</svg>

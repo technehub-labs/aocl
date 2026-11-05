@@ -1,0 +1,66 @@
+# Reference loop ledger — synthetic data for validation and CI
+# Validate: aocl-ledger examples/loops.yaml --today 2026-11-05
+schema: 1
+
+loops:
+  # Fast L3 loop on an assurance process — predictive signals, HOTL.
+  - id: loop-anomaly-detect-v1
+    entity: proc-anomaly-detect
+    entity_kind: process
+    velocity: fast
+    level: 3
+    vector_levels: {GD: 3, DV: 3, FI: 3}
+    decision_model: MAPE
+    hitl: HOTL
+    state: active
+    owner: assurance-lead
+    guardrails:
+      - Policy bounds enforced by the orchestrator
+      - Pre-emptive scaling capped at +20% capacity
+      - Rollback exercised monthly
+    budget_end_to_end: "< 100 ms"
+    last_review: 2026-10-20
+    review_cadence_days: 90
+    notes: >
+      Predictive signals trigger pre-emptive scaling before threshold breach.
+      Synthetic example — not a real loop.
+
+  # Slow L4 policy loop on a system — OODA, governs the fast loop above.
+  - id: loop-core-policy-v1
+    entity: sys-5g-core
+    entity_kind: system
+    velocity: slow
+    level: 4
+    vector_levels: {GD: 4, DV: 4, FI: 5}
+    decision_model: OODA
+    hitl: HOTL
+    state: active
+    owner: network-strategy
+    guardrails:
+      - Policy changes require dual approval above 10% budget impact
+      - Digital-twin trials mandatory before policy deployment
+      - Model-drift monitoring with graceful degradation
+    budget_end_to_end: "< 7 days"
+    last_review: 2026-11-01
+    review_cadence_days: 90
+    notes: >
+      Slow loop generating policies that parametrize the fast assurance loops
+      (HIERARCHICAL link in the modeler model). Synthetic example.
+
+  # Fast L2 function loop — deterministic autoscaling.
+  - id: loop-autoscale-v1
+    entity: fn-autoscaler
+    entity_kind: function
+    velocity: fast
+    level: 2
+    decision_model: MAPE
+    state: active
+    owner: platform-team
+    guardrails:
+      - Max replica ceiling enforced
+    budget_end_to_end: "< 100 ms"
+    last_review: 2026-07-01
+    review_cadence_days: 90
+    notes: >
+      Threshold-based scaling; intentionally stale at the pinned --today date
+      so CI exercises the staleness finding.

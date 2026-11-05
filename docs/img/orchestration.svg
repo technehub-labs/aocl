@@ -1,0 +1,48 @@
+<svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+  <defs>
+    <marker id="arr9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill:#ffffff; stroke:#334155; stroke-width:1.4; }
+    .fast { fill:#eff6ff; stroke:#2563eb; stroke-width:1.5; }
+    .slow { fill:#f0fdf4; stroke:#16a34a; stroke-width:1.5; }
+    .lbl { font-size:12px; fill:#1e293b; }
+    .hd { font-size:12.5px; font-weight:bold; }
+    .flow { stroke:#334155; stroke-width:1.3; fill:none; marker-end:url(#arr9); }
+    .policy { stroke:#16a34a; stroke-width:2; fill:none; marker-end:url(#arr9); }
+    .exception { stroke:#dc2626; stroke-width:2; fill:none; marker-end:url(#arr9); stroke-dasharray="6 3"; }
+  </style>
+
+  <text x="450" y="22" text-anchor="middle" class="hd" fill="#4c1d95">Inter-loop orchestration — slow loops govern, fast loops regulate (source Fig. 11)</text>
+
+  <!-- slow loop -->
+  <rect class="slow" x="90" y="50" width="720" height="70"/>
+  <text x="450" y="70" text-anchor="middle" class="hd" fill="#166534">Slow Loop (minutes → months)</text>
+  <rect class="box" x="120" y="82" width="140" height="30"/><text x="190" y="101" text-anchor="middle" class="lbl">Aggregate telemetry</text>
+  <rect class="box" x="300" y="82" width="150" height="30"/><text x="375" y="101" text-anchor="middle" class="lbl">Analytics / Digital Twin</text>
+  <rect class="box" x="490" y="82" width="130" height="30"/><text x="555" y="101" text-anchor="middle" class="lbl">Strategic decision</text>
+  <rect class="box" x="660" y="82" width="130" height="30"/><text x="725" y="101" text-anchor="middle" class="lbl">Policy deployment</text>
+  <path class="flow" d="M260 97 L300 97"/><path class="flow" d="M450 97 L490 97"/><path class="flow" d="M620 97 L660 97"/>
+
+  <!-- policy downflow -->
+  <path class="policy" d="M725 112 L725 150 L450 150 L450 168"/>
+  <text x="596" y="143" class="lbl" fill="#166534" font-size="11">policy downflow (constrains decision space) →</text>
+
+  <!-- fast loop -->
+  <rect class="fast" x="90" y="168" width="720" height="70"/>
+  <text x="450" y="188" text-anchor="middle" class="hd" fill="#1e40af">Fast Loop (sub-second → seconds)</text>
+  <rect class="box" x="120" y="200" width="140" height="30"/><text x="190" y="219" text-anchor="middle" class="lbl">Sense (telemetry)</text>
+  <rect class="box" x="300" y="200" width="150" height="30"/><text x="375" y="219" text-anchor="middle" class="lbl">Decide (deterministic)</text>
+  <rect class="box" x="490" y="200" width="130" height="30"/><text x="555" y="219" text-anchor="middle" class="lbl">Act (reversible)</text>
+  <rect class="box" x="660" y="200" width="130" height="30"/><text x="725" y="219" text-anchor="middle" class="lbl">Observe outcome</text>
+  <path class="flow" d="M260 215 L300 215"/><path class="flow" d="M450 215 L490 215"/><path class="flow" d="M620 215 L660 215"/>
+  <path class="flow" d="M725 230 L725 258 L190 258 L190 230"/>
+
+  <!-- exception upflow -->
+  <path class="exception" d="M375 200 L375 150"/>
+  <text x="120" y="160" class="lbl" fill="#b91c1c" font-size="11">exception upflow (novel failure modes) →</text>
+
+  <text x="450" y="286" text-anchor="middle" class="lbl" fill="#475569">principles: separation of concerns · policy downflow · exception upflow · temporal decoupling · coherence guarantees</text>
+</svg>
