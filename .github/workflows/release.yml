@@ -70,7 +70,7 @@ jobs:
         shell: bash
         run: |
           EXT="${{ runner.os == 'Windows' && '.exe' || '' }}"
-          SUFFIX="${{ matrix.os == 'macos-latest' && 'macos-arm64' || (runner.os == 'ubuntu-latest' && 'linux-x86_64' || 'windows-x86_64') }}"
+          SUFFIX="${{ matrix.os == 'macos-latest' && 'macos-arm64' || (runner.os == 'Linux' && 'linux-x86_64' || 'windows-x86_64') }}"
           mkdir out
           for bin in aocl-score aocl-realization aocl-ledger aocl-model; do
             cp "dist/${bin}${EXT}" "out/${bin}-${SUFFIX}${EXT}"
