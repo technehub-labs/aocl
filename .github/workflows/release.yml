@@ -88,11 +88,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
-          path: assets
+          path: release-assets
       - name: Prepare release assets
         run: |
-          find assets -maxdepth 1 -type f ! -name '*.exe' ! -name '*.whl' ! -name '*.tar.gz' -exec chmod +x {} +
-          cd assets && sha256sum * > SHA256SUMS.txt && cd ..
+          find release-assets -maxdepth 1 -type f ! -name '*.exe' ! -name '*.whl' ! -name '*.tar.gz' -exec chmod +x {} +
+          cd release-assets && find . -maxdepth 1 -type f -exec sha256sum {} + > SHA256SUMS.txt && cd ..
       - name: Extract release notes from the changelog
         run: |
           python3 - <<'PY'
@@ -107,4 +107,4 @@ jobs:
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" assets/* assets/SHA256SUMS.txt --notes-file notes.md
+        run: gh release create "$GITHUB_REF_NAME" release-assets/* release-assets/SHA256SUMS.txt --notes-file notes.md
