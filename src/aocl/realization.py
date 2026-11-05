@@ -173,9 +173,6 @@ def main(argv=None) -> int:
         if len(args.ccomps) != 4:
             raise SystemExit("error: --Cs --Cd --Cm --Cc (all four) required for component aggregation")
         C = complexity_from_components(*args.ccomps)
-    if E is None or C is None:
-        raise SystemExit("error: --E and --C are required (use component flags to aggregate first)")
-
     if args.target is not None:
         c_given = args.C is not None or args.ccomps is not None
         if c_given:
@@ -187,6 +184,9 @@ def main(argv=None) -> int:
         else:
             print(f"{solved['solve']} = {solved['value']}")
         return 0
+
+    if E is None or C is None:
+        raise SystemExit("error: --E and --C are required (use component flags to aggregate first)")
 
     out = assess_position(E, C, Vd, args.level)
     print(json.dumps(out, indent=2) if args.json else render(out))

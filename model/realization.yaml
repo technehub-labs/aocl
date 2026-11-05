@@ -89,8 +89,8 @@ value_models:
     L3–L4 boundary — the transition from human-designed control to machine-discovered control.
 
 limits:
-  zero_complexity: If C → 0, R → E: simple loops realize value proportional to their embedded knowledge.
-  zero_experience: If E → 0, R → C·V_d: inexperienced organisations achieve only raw complexity-matching.
+  zero_complexity: "If C → 0, R → E — simple loops realize value proportional to their embedded knowledge."
+  zero_experience: "If E → 0, R → C·V_d — inexperienced organisations achieve only raw complexity-matching."
   balanced_growth: Maximum realization efficiency occurs when E and C grow in proportion; high-C/low-E is unstable, high-E/low-C is underutilized.
 
 # Table 1.1 from the source document — theoretical illustrations, not measured benchmarks.
