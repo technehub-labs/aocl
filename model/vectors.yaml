@@ -1,6 +1,6 @@
 # AOCL model data: assessment vectors and focus areas
-# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
-# (section 2.2 "Closed Loop definition" — the GB1075 three vectors), plus the
+# Harvested from: the AOCL foundational research corpus on Autonomous Operations and Closed Loops (v1.2.0)
+# (section 2.2 "Closed Loop definition" — the three assessment vectors), plus the
 # AOCL aggregation rule (see below, documented in docs/assessment.md).
 model_version: "1.0.0"
 

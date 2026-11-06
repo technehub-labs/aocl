@@ -32,5 +32,5 @@ A maturity classification is only useful if scores are **comparable over time**.
 
 ## External compatibility
 
-- **TechNE Hub source document**: pinned at v1.2.0 in file provenance headers. A new document version is a content review, not an automatic bump.
+- **the AOCL research corpus source document**: pinned at v1.2.0 in file provenance headers. A new document version is a content review, not an automatic bump.
 - **CLAM data model**: pinned at 1.0 (see [clm-alignment.md](clm-alignment.md)). A CLAM MAJOR bump requires a changelog ADR-note + schema updates + corpus cases.

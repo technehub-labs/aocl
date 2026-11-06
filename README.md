@@ -4,7 +4,9 @@
 
 > The interlock in one line: **Autonomous Operations cannot exist without Closed Loops** — loops translate intent into action, action into observation, and observation into learning. Without formally specified, rigorously governed loops, autonomy degenerates into uncontrolled automation: efficient but brittle, capable but unaccountable, powerful but unsafe.
 
-This toolkit formalizes the TechNE Hub introductory guide *Autonomous Operations and Closed Loops* (v1.2.0) as a **versioned computational model** with three capabilities:
+This toolkit formalizes the AOCL foundational research corpus on *Autonomous Operations and Closed Loops* (v1.2.0) as a **versioned computational model** with three capabilities:
+
+> **Research basis:** Closed Loop Automation and Autonomous Operations are established as first-class concepts through the AOCL foundational research — conceived, developed and validated as this programme's own work, not adapted from external standards.
 
 1. **Assess** — score a closed loop across three vectors (Goal Decisioning, Data Veracity, Feedback Intelligence) onto the L1–L5 maturity ladder; get the weakest-link overall level, the next frontier, and the suggested decision model (OODA / MAPE) and human-interaction model (HITL/HOTL/HOOTL).
 2. **Model** — an interactive visual modeler (browser, fully local) where closed loops are placed on **Processes, Capabilities, Systems, or Functions**, specified in the [Closed-Loop-Management (CLAM)](https://github.com/emmanuel-a-otchere/Closed-Loop-Management) aligned format, and exported as provisioning payloads.
@@ -49,7 +51,7 @@ Open [`site/index.html`](https://github.com/technehub-labs/aocl/blob/main/site/i
 
 | Identity | What it is | Home |
 |---|---|---|
-| TechNE Hub **MAMA** project | The industry project (GB1040 family) that produced the source document | TechNE Hub |
+| **AOCL research corpus** | Autonomous Operations & Closed Loops (v1.2.0) | The foundational research that established Closed Loop Automation and Autonomous Operations as first-class concepts — the basis of this toolkit | this repository |
 | **`mama`** (lowercase) | The *measuring and managing autonomy* method — decision-rights grants; a **related but distinct** instrument | [`emmanuel-a-otchere/measuring-and-managing-autonomy`](https://github.com/emmanuel-a-otchere/measuring-and-managing-autonomy) |
 | **MAMA** umbrella org | Measuring Automation & Measuring Autonomy — the umbrella framework org | [Measuring-Automation-Managing-Autonomy](https://github.com/Measuring-Automation-Managing-Autonomy) |
 | **AOCL** (this repo) | Closed-loop automation maturity: loop levels, vectors, realization, modeler | here |
@@ -76,4 +78,4 @@ A loop's maturity level is **not** an autonomy grant level; the concepts interlo
 
 ## License
 
-Apache-2.0. The source document is a TechNE Hub asset; this repository holds the formalization with attribution — see [NOTICE](NOTICE) and [docs/limitations.md](https://github.com/technehub-labs/aocl/blob/main/docs/limitations.md).
+Apache-2.0. The concepts of Closed Loop Automation and Autonomous Operations are established as first-class work through the AOCL foundational research corpus; this repository holds their formalization — see [NOTICE](NOTICE) and [docs/limitations.md](https://github.com/technehub-labs/aocl/blob/main/docs/limitations.md).

@@ -1,6 +1,6 @@
 """aocl — Autonomous Operations & Closed Loops toolkit.
 
-Formalizes the TechNE Hub "Autonomous Operations and Closed Loops" guide
+Formalizes the AOCL research corpus "Autonomous Operations and Closed Loops" guide
 (v1.2.0) as a versioned, tool-supported model: L1-L5 loop maturity assessment
 across three vectors, the informative realization heuristic, loop velocity
 taxonomy, and a CLAM-aligned loop modeler format.

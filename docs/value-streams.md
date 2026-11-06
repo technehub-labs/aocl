@@ -2,7 +2,7 @@
 
 **Status:** draft (v0.1.0) · **Source:** §6.1 ("Deep Dive & Reference Cases") · **Companion:** `docs/use-cases.md`
 
-Reference to the TechNE Hub IG1291A MAMA CSP Value Stream Catalog (Assurance): an organisation's assurance value streams are the primary candidates for closed-loop integration. Each stream decomposes into **stages**, each requiring an explicit human-interaction model:
+Reference to the AOCL assurance value-stream research: an organisation's assurance value streams are the primary candidates for closed-loop integration. Each stream decomposes into **stages**, each requiring an explicit human-interaction model:
 
 - **HITL** — human-in-the-loop: humans participate in decision-making, continuously or on exception.
 - **HOTL** — human-on-the-loop: the loop acts autonomously; humans supervise and can intervene.

@@ -18,7 +18,7 @@ Five levels of Closed Loop Automation (CLA) maturity, assessed across three vect
 
 **The L3/L4 distinction** (the document's own note): L3 executes predictions *designed by humans* for known failure modes; L4 *learns new strategies from data*, including for scenarios its designers did not foresee.
 
-Vector characteristics per level (from GB1075, as carried in the source document §3.2) — e.g. Goal Decisioning: *fixed goals, rigid rules* (L1) → *dynamic goals, post-event adjustment* (L2) → *scenario-based anticipation* (L3) → *AI-driven optimization, anticipatory goals* (L4) → *self-governed goals, experimental learning* (L5). Full table: `model/levels.yaml`.
+Vector characteristics per level (from the CLA-maturity research, carried in the foundational corpus §3.2) — e.g. Goal Decisioning: *fixed goals, rigid rules* (L1) → *dynamic goals, post-event adjustment* (L2) → *scenario-based anticipation* (L3) → *AI-driven optimization, anticipatory goals* (L4) → *self-governed goals, experimental learning* (L5). Full table: `model/levels.yaml`.
 
 ## Transition criteria
 
@@ -44,7 +44,7 @@ Progression is not linear in effort or time; each crossing is a distinct transfo
 
 ## AOMM capability mapping (relevance, not equivalence)
 
-The source document maps closed-loop capability onto the six GB1042A AOMM dimensions — Party, Strategy, Technology, Operations, Culture, Data — at L1/L3/L5. It is explicitly **a relevance characterisation, not a level equivalence**. The full table: [aomm-mapping.md](aomm-mapping.md). The document's warning stands as design guidance: **advancing loop maturity without corresponding advancement in the Data and Culture dimensions is a common failure mode.**
+The source document maps closed-loop capability onto the six Autonomous Operations Maturity Model (AOMM) dimensions — Party, Strategy, Technology, Operations, Culture, Data — at L1/L3/L5. It is explicitly **a relevance characterisation, not a level equivalence**. The full table: [aomm-mapping.md](aomm-mapping.md). The document's warning stands as design guidance: **advancing loop maturity without corresponding advancement in the Data and Culture dimensions is a common failure mode.**
 
 ## Abstraction at higher levels
 

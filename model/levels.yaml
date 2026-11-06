@@ -1,9 +1,9 @@
 # AOCL model data: Closed Loop Automation maturity levels (L1-L5)
-# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
-# (TechNE Hub; sections 3.2 "Closed Loop Automation Maturity Levels" and 3.3 "Progression Dynamics")
+# Harvested from: the AOCL foundational research corpus on Autonomous Operations and Closed Loops (v1.2.0)
+# (the AOCL research corpus; sections 3.2 "Closed Loop Automation Maturity Levels" and 3.3 "Progression Dynamics")
 # Model version governs THIS file's structure; see schema/levels.schema.json and docs/versioning.md.
 model_version: "1.0.0"
-source_document: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
+source_document: the AOCL foundational research corpus on Autonomous Operations and Closed Loops (v1.2.0)
 
 levels:
   - id: L1

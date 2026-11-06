@@ -32,4 +32,4 @@ The source document is telecom/digital-service oriented (RAN, slicing, CEM, ener
 
 ## No endorsement
 
-References to TechNE Hub assets (GB1040/GB1042A/GB1054/GB1075, IG1219, IG1291A, IG1550/IG1552) are attribution of origin. No standards-body endorsement, conformity, or equivalence is claimed in either direction. CLAM alignment is a format contract, not a product integration claim.
+References to the concepts established through the AOCL foundational research corpus No standards-body endorsement, conformity, or equivalence is claimed in either direction. CLAM alignment is a format contract, not a product integration claim.

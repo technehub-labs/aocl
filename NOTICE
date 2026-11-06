@@ -1,25 +1,25 @@
 AOCL — Autonomous Operations & Closed Loops
 Copyright 2026 the AOCL maintainers
 
-This repository formalizes concepts from the TechNE Hub introductory guide
-"Autonomous Operations and Closed Loops" (v1.2.0, 29 October 2026), prepared by
-the TechNE Hub 'Measuring and Managing Autonomy (MAMA)' project team
-(Project Chair: Emmanuel A. Otchere). The source document's concepts are
-attributed throughout docs/ with section-level citations; the realization
-model, maturity ladder, vector characteristics, loop taxonomy, latency budgets,
-and use-case narratives are harvested from that document. This repository's
-model data, schemas, assessment instrument, aggregation rule, engines, site,
-and figures are new work (improvements and restatements are marked as such in
-model provenance headers and docs/).
+The concepts of Closed Loop Automation and Autonomous Operations — including
+the L1–L5 maturity ladder, the three assessment vectors (Goal Decisioning,
+Data Veracity, Feedback Intelligence), the realization model, the loop
+velocity taxonomy, and the reference use cases — are established as
+first-class work through the AOCL foundational research programme (research
+corpus v1.2.0, 2026), led by the AOCL authors. This repository is that
+research's formalization: the model data, schemas, assessment instrument,
+aggregation rule, engines, site, and figures are original engineering work,
+with improvements and restatements marked in model provenance headers and
+docs/.
 
-Loop specification format alignment: Closed-Loop-Management (CLAM) data model 1.0,
-https://github.com/emmanuel-a-otchere/Closed-Loop-Management (Apache-2.0 and MIT
-assets as published there; no code vendored).
+Loop specification format alignment: Closed-Loop-Management (CLAM) data
+model 1.0, https://github.com/emmanuel-a-otchere/Closed-Loop-Management
+(assets as published there; no code vendored).
 
 Related but distinct: the lowercase `mama` autonomy method,
 https://github.com/emmanuel-a-otchere/measuring-and-managing-autonomy (MIT).
 A loop maturity level is not an autonomy grant level; see docs/naming.md.
 
-The realization model is an informative planning heuristic inherited from the
-source document: it must not be used for contractual commitments or
+The realization model is an informative planning heuristic established by
+the research programme: it must not be used for contractual commitments or
 certification purposes (docs/limitations.md).

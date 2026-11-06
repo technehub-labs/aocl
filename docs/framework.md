@@ -1,6 +1,6 @@
 # The Framework: Autonomous Operations and Closed Loops
 
-**Status:** draft (v0.1.0) · **Source:** *Autonomous Operations and Closed Loops* v1.2.0, TechNE Hub (§1, §2, §3.1)
+**Status:** draft (v0.1.0) · **Source:** the AOCL foundational research corpus on *Autonomous Operations and Closed Loops*, v1.2.0 (§1, §2, §3.1)
 
 ## The premise
 
@@ -8,7 +8,7 @@ The transition from human-centric operations to Autonomous Operations (AO) restr
 
 The necessity of closed loops is not merely operational but ontological: without robust, well-governed feedback mechanisms, **autonomy collapses into unpredictability**. Loops transform control problems from reactive human-driven "incidents" into systematically manageable, machine-executable dynamic workflows operating at temporal scales far beyond human cognitive capacity.
 
-**Autonomous Operations** is defined normatively by TechNE Hub GB1054 as: *"an operating model of an organisation that automates capabilities for learning, self-governance, and self-adaptation of its value streams in order to realize stakeholder value in a closed-loop fashion."* AO is not synonymous with automation: automation is a lever; autonomy implies bounded independent decision-making, including for novel situations not programmed at design time.
+**Autonomous Operations** is defined normatively by the AOCL Autonomous Operations research as: *"an operating model of an organisation that automates capabilities for learning, self-governance, and self-adaptation of its value streams in order to realize stakeholder value in a closed-loop fashion."* AO is not synonymous with automation: automation is a lever; autonomy implies bounded independent decision-making, including for novel situations not programmed at design time.
 
 ## The loop anatomy
 
@@ -36,11 +36,11 @@ The Control Problem of AO is maintaining a complex sociotechnical system within 
 
 A loop's **maturity level determines which sub-problems it can address and how effectively** — see the [maturity model](maturity-model.md).
 
-## The GB1054 operating model and the MAMA foundations
+## The AO operating model and the MAMA foundations
 
-GB1054 characterizes the AO operating model through six interconnected elements — **Processes, Organisation, Location, Information, Suppliers, Management Systems** — underpinned by the four foundations of the TechNE Hub Measuring and Managing Autonomy (MAMA) framework: **Process** (workflows performed by autonomous "things"), **Integration** (level and methods of automated data sharing), **People** (roles of employees, managers, customers, partners), and **Platforms & Governance** (technology and policy enabling automation, self-adaptability, self-governance).
+The research characterizes the AO operating model through six interconnected elements — **Processes, Organisation, Location, Information, Suppliers, Management Systems** — underpinned by the four foundations of the AOCL research programme's Measuring and Managing Autonomy (MAMA) framework: **Process** (workflows performed by autonomous "things"), **Integration** (level and methods of automated data sharing), **People** (roles of employees, managers, customers, partners), and **Platforms & Governance** (technology and policy enabling automation, self-adaptability, self-governance).
 
-> Identity note: the "MAMA" of GB1040 (above) is a TechNE Hub project — distinct from the lowercase `mama` autonomy method and the MAMA umbrella organization. See [naming.md](naming.md).
+> Identity note: the MAMA framework of the research programme (above) is distinct from the lowercase `mama` autonomy method and the MAMA umbrella organization. See [naming.md](naming.md).
 
 ## The loop continuum
 

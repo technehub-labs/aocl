@@ -1,5 +1,5 @@
 # AOCL model data: Closed Loop decision models
-# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx
+# Harvested from: the AOCL foundational research corpus on Autonomous Operations and Closed Loops (v1.2.0)
 # (section 7.3 "Closed Loop Decision Models"). This repository covers OODA and MAPE(-K).
 # Other decision models exist in the wider literature and in the Closed-Loop-Management
 # (CLAM) service (which additionally supports CUSTOM); their selection is

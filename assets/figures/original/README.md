@@ -1,6 +1,6 @@
 # Harvested figures — provenance
 
-Source: `Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx` (TechNE Hub, v1.2.0, 29 Oct 2026;
+Source: `the AOCL foundational research corpus on Autonomous Operations and Closed Loops (v1.2.0)` (the AOCL research corpus, v1.2.0, 29 Oct 2026;
 project team chaired by Emmanuel A. Otchere). Extracted from the document's `word/media/` on 2026-11-05.
 
 These PNGs are the **originals as embedded in the document**, archived for provenance. They are not
@@ -13,7 +13,7 @@ rendered by this repository's docs — see `docs/img/` for the recreated SVG fig
 
 | File | Document figure | Content |
 |---|---|---|
-| image1.png | Fig. 1 | High-level AO architecture (GB1054): Business / Engine / Observation / Execution layers |
+| image1.png | Fig. 1 | High-level AO architecture (AO research): Business / Engine / Observation / Execution layers |
 | image2.png | Fig. 2 | Closed loop on the continuum (P/S/C/A/R feedback) |
 | image3.png | Fig. 3 | Closed Loop Continuum: Goal Decisioning / Feedback Intelligence / Data Veracity vectors |
 | image4.png | Fig. 4 / 4-1 | Multiple Closed Loops integration in an AO platform |

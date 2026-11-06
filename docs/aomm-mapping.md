@@ -1,12 +1,12 @@
 # AOMM Capability Mapping
 
-**Status:** draft (v0.1.0) · **Source:** §3.4 (Table 1, GB1042A AOMM mapping)
+**Status:** draft (v0.1.0) · **Source:** §3.4 (Table 1, AOMM capability mapping)
 
-TechNE Hub GB1042A (Autonomous Operations Maturity Model) defines six maturity dimensions: **Party, Strategy, Technology, Operations, Culture, Data**. The source document maps closed-loop capability onto them at L1/L3/L5 — and is explicit that this is **a relevance characterisation, not a level equivalence**.
+the AOCL maturity-model research (Autonomous Operations Maturity Model) defines six maturity dimensions: **Party, Strategy, Technology, Operations, Culture, Data**. The source document maps closed-loop capability onto them at L1/L3/L5 — and is explicit that this is **a relevance characterisation, not a level equivalence**.
 
 | AOMM dimension | L1 relevance | L3 relevance | L5 relevance |
 |---|---|---|---|
-| **Party** | Workforce executes manually | Data scientists augment operations | Digital Employees (DECUs) operate loops *(ref. IG1550)* |
+| **Party** | Workforce executes manually | Data scientists augment operations | Digital Employees (DECUs) operate loops *(per the digital-employee research, DECU)* |
 | **Strategy** | Static operational plans | Forecast-driven resource planning | Autonomous goal derivation |
 | **Technology** | Siloed tools, manual integration | Integrated observability and orchestration | Self-modifying AI/ML infrastructure |
 | **Operations** | Incident-driven firefighting | Predictive assurance | Self-optimizing, self-healing operations |

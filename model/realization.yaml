@@ -1,5 +1,5 @@
 # AOCL model data: the realization model (INFORMATIVE planning heuristic)
-# Harvested from: Autonomous_Operations_and_Closed_Loops_v1.2.0_TechNE-Hub.docx, section 4
+# Harvested from: the AOCL foundational research corpus on Autonomous Operations and Closed Loops (v1.2.0), section 4
 # "The Computational Model". The source document is explicit: Section 4 is informative;
 # the formula is a planning heuristic, NOT a normative measurement, and shall not be used
 # for contractual commitments or certification purposes. This file preserves that framing.
