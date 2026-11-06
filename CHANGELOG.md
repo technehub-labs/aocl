@@ -4,6 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-11-06
+
+### Fixed
+
+- README links are absolute GitHub URLs — PyPI renders the README in isolation, so relative links were dead on the project page (description refreshes only on a new upload, hence the version bump).
+
 ## [0.1.0] — 2026-11-05
 
 ### Added (initial release)

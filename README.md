@@ -31,7 +31,7 @@ aocl-model examples/loops.yaml --clam   # model → CLAM provisioning export
 
 ## Interactive site
 
-Open [`site/index.html`](site/index.html) in a browser — or on GitHub Pages. Tabs: **Assess** (questionnaire + scorecard + vector radar), **Realization** (sliders driving the E–C plane, realization curve, effort curve), **Loop Modeler** (place loops on processes/capabilities/systems/functions; specify each loop CLAM-style; export model YAML / CLAM payloads / ledger), **Portfolio** (velocity × maturity scatter, latency budgets). No telemetry, no CDN, no accounts — everything runs locally.
+Open [`site/index.html`](https://github.com/technehub-labs/aocl/blob/main/site/index.html) in a browser — or on GitHub Pages. Tabs: **Assess** (questionnaire + scorecard + vector radar), **Realization** (sliders driving the E–C plane, realization curve, effort curve), **Loop Modeler** (place loops on processes/capabilities/systems/functions; specify each loop CLAM-style; export model YAML / CLAM payloads / ledger), **Portfolio** (velocity × maturity scatter, latency budgets). No telemetry, no CDN, no accounts — everything runs locally.
 
 ## Naming: three different "MAMA"s — and this repo is none of them
 
@@ -42,7 +42,7 @@ Open [`site/index.html`](site/index.html) in a browser — or on GitHub Pages. T
 | **MAMA** umbrella org | Measuring Automation & Measuring Autonomy — the umbrella framework org | [Measuring-Automation-Managing-Autonomy](https://github.com/Measuring-Automation-Managing-Autonomy) |
 | **AOCL** (this repo) | Closed-loop automation maturity: loop levels, vectors, realization, modeler | here |
 
-A loop's maturity level is **not** an autonomy grant level; the concepts interlock but the scores are never merged. See [docs/naming.md](docs/naming.md).
+A loop's maturity level is **not** an autonomy grant level; the concepts interlock but the scores are never merged. See [docs/naming.md](https://github.com/technehub-labs/aocl/blob/main/docs/naming.md).
 
 ## Repository map
 
@@ -60,8 +60,8 @@ A loop's maturity level is **not** an autonomy grant level; the concepts interlo
 
 ## Documentation
 
-[Framework](docs/framework.md) · [Maturity model](docs/maturity-model.md) · [Assessment](docs/assessment.md) · [Realization model](docs/realization-model.md) · [Loop velocity](docs/loop-velocity.md) · [Decision models](docs/decision-models.md) · [Loop modeler](docs/loop-modeler.md) · [CLAM alignment](docs/clm-alignment.md) · [Value streams](docs/value-streams.md) · [Use cases](docs/use-cases.md) · [AO-ready assumptions](docs/assumptions.md) · [AOMM mapping](docs/aomm-mapping.md) · [Ledger format](docs/ledger-format.md) · [Versioning](docs/versioning.md) · [Naming](docs/naming.md) · [Limitations](docs/limitations.md)
+[Framework](https://github.com/technehub-labs/aocl/blob/main/docs/framework.md) · [Maturity model](https://github.com/technehub-labs/aocl/blob/main/docs/maturity-model.md) · [Assessment](https://github.com/technehub-labs/aocl/blob/main/docs/assessment.md) · [Realization model](https://github.com/technehub-labs/aocl/blob/main/docs/realization-model.md) · [Loop velocity](https://github.com/technehub-labs/aocl/blob/main/docs/loop-velocity.md) · [Decision models](https://github.com/technehub-labs/aocl/blob/main/docs/decision-models.md) · [Loop modeler](https://github.com/technehub-labs/aocl/blob/main/docs/loop-modeler.md) · [CLAM alignment](https://github.com/technehub-labs/aocl/blob/main/docs/clm-alignment.md) · [Value streams](https://github.com/technehub-labs/aocl/blob/main/docs/value-streams.md) · [Use cases](https://github.com/technehub-labs/aocl/blob/main/docs/use-cases.md) · [AO-ready assumptions](https://github.com/technehub-labs/aocl/blob/main/docs/assumptions.md) · [AOMM mapping](https://github.com/technehub-labs/aocl/blob/main/docs/aomm-mapping.md) · [Ledger format](https://github.com/technehub-labs/aocl/blob/main/docs/ledger-format.md) · [Versioning](https://github.com/technehub-labs/aocl/blob/main/docs/versioning.md) · [Naming](https://github.com/technehub-labs/aocl/blob/main/docs/naming.md) · [Limitations](https://github.com/technehub-labs/aocl/blob/main/docs/limitations.md)
 
 ## License
 
-Apache-2.0. The source document is a TechNE Hub asset; this repository holds the formalization with attribution — see [NOTICE](NOTICE) and [docs/limitations.md](docs/limitations.md).
+Apache-2.0. The source document is a TechNE Hub asset; this repository holds the formalization with attribution — see [NOTICE](NOTICE) and [docs/limitations.md](https://github.com/technehub-labs/aocl/blob/main/docs/limitations.md).
