@@ -4,6 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+### Added
+
+- **Simulation canvas** (`site/simulation.html`, `site/sim.js`): deterministic discrete-event simulation testing the level→policy mapping — vector-driven semantics (GD goals, DV observation quality incl. wrong-direction actions, FI learning), playbook pre-emption, novel containment, sandboxed experimentation, humans by HITL/HOTL/HOOTL, governance (exception upflow → playbook conversion). Parity-verified against the Python engine.
+- **Batch invariant runner** (`tools/sim_check.py`): 7 plausibility invariants (restoration monotonicity, burden collapse, novel-mode discriminator, velocity orthogonality, sandboxing, policy downflow, veracity multiplier) + 4 formal-model findings — all 7 hold at the default seed; run in CI.
+- **`model/behavior.yaml`** — the behavioral semantics under test (informative), and **`docs/simulation.md`** — the findings report.
+
 ## [0.1.1] — 2026-11-06
 
 ### Fixed

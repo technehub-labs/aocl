@@ -1,0 +1,174 @@
+# AOCL behavioral semantics — the level→policy mapping UNDER TEST
+# Status: informative hypothesis (NOT normative). This file encodes the behavioral
+# parameters the simulation canvas (site/simulation.html, tools/sim_check.py) uses to
+# make a loop at a given level ACT. It is the artifact we are testing with the
+# simulation; findings feed formal model changes (see docs/simulation.md).
+# Provenance: derived from Autonomous_Operations_and_Closed_Loops v1.2.0 §3.2 level
+# descriptions, human-role statements, and §5 velocity taxonomy. The numeric
+# parameters are simulation choices, not measurements.
+model_version: "1.0.0-sim"
+status: informative
+
+# --- Vector roles in behavior -------------------------------------------------
+# Each assessment vector drives a DIFFERENT behavioral aspect (this is the semantics
+# being tested — in particular whether min(GD,DV,FI) aggregation predicts outcomes):
+vector_roles:
+  GD: goal_decisioning   # how the reference/setpoint is managed
+  DV: data_veracity      # how trustworthy the loop's observations are
+  FI: feedback_intelligence  # how fast the loop learns modes and adapts actions
+
+per_vector:
+  DV:                     # Data Veracity → observation quality
+    sensor_noise_factor: [1.00, 0.70, 0.45, 0.25, 0.10]   # × environment noise, by DV 1..5
+    misdetection_probability: [0.35, 0.20, 0.10, 0.04, 0.01]  # P(miss an excursion)
+    false_alarm_rate: [0.02, 0.015, 0.01, 0.005, 0.002]   # P(act on phantom deviation)
+    note: >-
+      Low DV does not merely slow the loop — it corrupts what the loop sees. This
+      encodes the document's claim that data veracity multiplies effective capability.
+
+  FI:                     # Feedback Intelligence → learning speed and adaptation
+    mode_learning_occurrences: [null, null, 3, 2, 1]      # spikes of a mode seen before pre-emption unlocks
+    gain_adaptation: [false, false, false, true, true]    # tune action strength from outcomes
+    exploration_rate: [0.0, 0.0, 0.0, 0.02, 0.08]         # per-cycle probability of an experimental action (L4 small, L5 generative)
+    note: >-
+      FI 1-2 never learns modes (reactive only). FI 3 learns known modes after 3
+      occurrences — consistent with "human-designed forecasts for known failure
+      modes". FI 4-5 learn from data (2 or 1 occurrence).
+
+  GD:                     # Goal Decisioning → reference management
+    setpoint_adaptation: [false, false, false, false, true]  # GD 5 (L5): self-set goals within policy bounds
+    anticipatory_goals: [false, false, true, true, true]     # GD 3+: schedule-aware setpoints
+    note: >-
+      Goal Decisioning is the reference axis (K), not an additive term in the
+      realization formula — behaviorally, it governs what the loop is TRYING to do.
+
+# --- Level → decision policy (the mapping under test) --------------------------
+level_policy:
+  L1:
+    automated_action: none
+    detection: informational_only
+    human_role: HITL           # every excursion is resolved by a human
+    policy: >-
+      Humans perform all control functions. Technology presents data only. Excursion
+      duration = human response time.
+  L2:
+    automated_action: fixed_response      # predefined counteraction, fixed strength
+    detection: static_threshold
+    threshold_sigma: 2.0                  # breach when |obs - ref| > 2σ of plant noise
+    action_gain: 0.6                      # fixed counteraction strength
+    escalation: after_failed_action       # escalate to human if the fixed action is insufficient
+    human_role: HITL                      # humans design playbooks and handle exceptions
+    policy: >-
+      Same trigger, same action. Reacts only after breach. No prediction.
+  L3:
+    automated_action: preemptive_known    # tested playbook cancels the spike in flight (~93%+)
+    detection: static_threshold
+    threshold_sigma: 2.0
+    action_gain: 0.8
+    playbook_cancellation: 0.93           # a tested playbook cancels what it knows (sim-validated)
+    novel_handling: react_after_breach    # the L3/L4 discriminator: novel modes are not anticipated
+    human_role: HOTL                      # approves risky pre-emptive actions, handles escalations
+    policy: >-
+      Anticipation limited to known, recurring failure modes via human-designed
+      forecasts. Begins optimization via anticipatory scaling.
+  L4:
+    automated_action: adaptive            # action strength tuned by outcomes
+    detection: learned_baseline
+    threshold_sigma: 1.5
+    action_gain: 0.9
+    novel_handling: partial_containment   # learned baselines partially catch novel modes
+    novel_containment_authority: 0.5      # half the impulse is cancelable → novel depth ~halved (sim-validated)
+    human_role: HOTL
+    policy: >-
+      ML discovers patterns and refines its own strategies, including partially
+      novel scenarios not anticipated at design time.
+  L5:
+    automated_action: adaptive_sandboxed  # experimentation is SANDBOXED (assumption 7 — load-bearing)
+    detection: predictive
+    threshold_sigma: 1.2
+    action_gain: 1.0
+    novel_handling: preemptive_generative # near-full containment of novel modes (authority 0.85)
+    novel_containment_authority: 0.85
+    sandbox_experiments: true             # experiments never perturb production (sim: zero self-inflicted)
+    human_role: HOOTL                     # engaged only for novel/unprecedented events
+    policy: >-
+      Self-governed goals within policy bounds, generative experimentation (with an
+      honest exploration cost), causal discovery, self-modification.
+
+# --- Velocity semantics (orthogonal to level — a collapse the sim must expose) --
+velocity:
+  fast:
+    cycle_interval: 1        # acts every tick
+    action_cap_per_cycle: 4.0
+  tactical:
+    cycle_interval: 10
+    action_cap_per_cycle: 12.0
+  slow:
+    cycle_interval: 100
+    action_cap_per_cycle: 40.0
+  note: >-
+    A slow loop cannot see or correct a fast disturbance regardless of its maturity
+    level — level and velocity are different axes (the document's non-collapse rule).
+
+# --- Human model ----------------------------------------------------------------
+human:
+  response_time_ticks: 30    # default; slider in the canvas
+  resolves_any_excursion: true
+  hotl_escalation_window_ticks: 10   # EQUAL at L3/L4 — escalation wait is policy, not maturity
+  hootl_engagement: novelty_only     # HOOTL humans engage for novel/unprecedented events only
+  note: >-
+    Sim finding: giving L4 a shorter escalation window than L3 made burden NON-monotone.
+    The escalation wait is an engagement-policy choice and must be level-independent in the
+    mapping; maturity changes HOW OFTEN the window is hit, not how long it is.
+
+# --- Plant / environment defaults (canvas sliders override) ----------------------
+plant:
+  setpoint: 0.0
+  x_initial: 0.0
+  plant_return_rate: 0.15    # natural decay toward setpoint
+  control_lag_ticks: 1
+environment:
+  horizon_ticks: 3000
+  noise_sigma: 1.0
+  excursion_tolerance: 3.0   # |x - ref| beyond this is an excursion
+  drift: {start: 1200, end: 2400, magnitude: 18.0}     # slow ramp the loop must counter
+  known_modes:                                     # recurring, learnable spike signatures
+    - {name: A, period: 420, magnitude: 26.0, duration: 6}
+    - {name: B, period: 730, magnitude: 17.0, duration: 4}
+  novel_rate_per_1000_ticks: 6.0                   # one-shot, unique signatures
+  novel_magnitude_range: [15.0, 30.0]
+
+# --- Plausibility invariants the simulation checks -------------------------------
+invariants:
+  - id: restoration-monotonicity
+    statement: Mean excursion duration and peak severity do not increase with overall level (L1→L5, fast velocity, clean data).
+  - id: human-burden-monotonicity
+    statement: Total human intervention time does not increase with overall level.
+  - id: novel-mode-gap
+    statement: >-
+      On KNOWN recurring modes L3 clearly beats L2; on NOVEL one-shot events L3 ≈ L2
+      while L4 > L3 — the document's L3/L4 discriminator must appear in behavior.
+  - id: veracity-dominance
+    statement: >-
+      A loop with vectors (GD5, DV1, FI5) must NOT outperform a pure L1 loop — blind
+      data should make sophisticated decision-making worthless or harmful. Tests
+      whether min-aggregation is too generous when DV is the weak vector.
+  - id: velocity-orthogonality
+    statement: >-
+      Raising level L1→L5 does NOT fix a slow loop's handling of fast disturbances —
+      only velocity does (level and velocity are different axes).
+  - id: exploration-cost
+    statement: >-
+      L5 experimentation is SANDBOXED (assumption 7): zero self-inflicted production
+      excursions. An earlier sim iteration without sandboxing raised L5's human burden
+      ABOVE L4's — assumption 7 is load-bearing for L5's HOOTL semantics.
+  - id: policy-downflow
+    statement: >-
+      Exception UPFLOW (the fast loop reports novel signatures) → policy DOWNFLOW (the
+      slow loop converts them into fast-loop playbook entries) cuts the fast loop's
+      post-retune excursion count by >=30% (sim: 50% mean over 8 seeds). The gain/threshold
+      retune alone did NOTHING — the conversion is the load-bearing mechanism.
+  - id: veracity-multiplier
+    statement: >-
+      Cutting DV from 5 to 2 at high level degrades restoration metrics materially
+      (≥ 20%) — supporting V_d as a multiplier on effective capability.

@@ -27,6 +27,8 @@ jobs:
           python3 tools/aocl_model.py --self-test
       - name: Golden corpus (Python engine)
         run: python3 tools/corpus_check.py
+      - name: Simulation invariants (level→policy plausibility)
+        run: python3 tools/sim_check.py
       - name: CLI smoke
         run: |
           python3 tools/aocl_score.py 3 4 2 --velocity slow

@@ -80,6 +80,8 @@ check("python RULESET_VERSION parity", m && m[1] === AOCL.RULESET_VERSION);
 
 /* --- site sanity --- */
 const html = fs.readFileSync(path.join(__dirname, "..", "site", "index.html"), "utf-8");
+const simHtml = fs.readFileSync(path.join(__dirname, "..", "site", "simulation.html"), "utf-8");
+check("simulation.html exists with canvas + controls", simHtml.includes('id="trace"') && simHtml.includes("sim.js"));
 for (const needle of ['id="quiz"', 'id="lanes"', 'id="loopEditor"', "scoring.js", "charts.js", "modeler.js", "Loop Modeler"]) {
   check(`index.html contains ${needle}`, html.includes(needle));
 }

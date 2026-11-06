@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AOCL — Simulation Canvas</title>
+<style>
+  :root { --ink:#1e293b; --muted:#64748b; --accent:#7c3aed; --bg:#f8fafc; --card:#fff; --line:#e2e8f0; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:linear-gradient(135deg,#1e1b4b,#4c1d95); color:#fff; padding:16px 24px; }
+  header h1 { margin:0; font-size:17px; } header p { margin:4px 0 0; font-size:12px; opacity:.85; }
+  main { max-width:1240px; margin:0 auto; padding:18px 16px 60px; }
+  .banner { border:1px solid #fde68a; background:#fffbeb; color:#92400e; border-radius:8px; padding:9px 13px; font-size:12px; margin-bottom:14px; }
+  .grid { display:grid; gap:14px; grid-template-columns:340px 1fr; }
+  @media (max-width:980px){ .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .card h3 { margin:0 0 8px; font-size:13.5px; }
+  label { font-size:11.5px; color:var(--muted); display:block; margin:8px 0 3px; }
+  select, input[type=number] { width:100%; border:1px solid var(--line); border-radius:6px; padding:5px 7px; font-size:12.5px; background:#fff; }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  button.primary { background:var(--accent); color:#fff; border:0; border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; margin-top:12px; }
+  button.ghost { background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 10px; font-size:11.5px; cursor:pointer; }
+  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0; }
+  .m { background:#f1f5f9; border-radius:8px; padding:8px; text-align:center; }
+  .m b { display:block; font-size:17px; color:var(--accent); }
+  .m span { font-size:10px; color:var(--muted); }
+  canvas { width:100%; height:auto; display:block; }
+  .legend { font-size:11px; color:var(--muted); margin-top:6px; display:flex; gap:14px; flex-wrap:wrap; }
+  .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
+  table { border-collapse:collapse; width:100%; font-size:11.5px; margin-top:8px; }
+  th, td { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-size:10.5px; }
+  .note { font-size:11px; color:var(--muted); margin-top:8px; line-height:1.45; }
+  code { font-family:ui-monospace,Menlo,monospace; font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AOCL Simulation Canvas</h1>
+  <p>Does the level→policy mapping produce plausible behavior? Run a loop against a live plant — <span class="mono">model/behavior.yaml</span> semantics, seeded, local.</p>
+</header>
+<main>
+  <div class="banner"><strong>Informative instrument.</strong> The behavioral semantics are hypotheses under test (docs/simulation.md) — not the formal model, and not a claim about real plants. Deterministic: a seed always reproduces the same run.</div>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>Loop under test</h3>
+        <div class="row3">
+          <div><label>GD</label><select id="GD"></select></div>
+          <div><label>DV</label><select id="DV"></select></div>
+          <div><label>FI</label><select id="FI"></select></div>
+        </div>
+        <label>Velocity</label>
+        <select id="velocity"><option value="fast" selected>fast (every tick)</option><option value="tactical">tactical (every 10)</option><option value="slow">slow (every 100)</option></select>
+        <label>Scenario</label>
+        <select id="scenario">
+          <option value="baseline" selected>baseline (noise + drift + known modes + novel)</option>
+          <option value="drift">drift only (governance test)</option>
+          <option value="fastdist">fast disturbances only (orthogonality test)</option>
+          <option value="quiet">quiet (exploration test)</option>
+        </select>
+        <label>Human response time (ticks) — <span id="hrVal">30</span></label>
+        <input type="range" id="humanResponse" min="5" max="90" step="5" value="30">
+        <label>Seed</label>
+        <input type="number" id="seed" value="2026">
+        <label style="margin-top:10px"><input type="checkbox" id="slowGoverns" style="width:auto"> A governing slow loop retunes this loop at the epoch boundary (exception upflow → policy downflow)</label>
+        <button class="primary" id="runBtn">Run simulation</button>
+        <div class="note" id="runNote"></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Level ladder (same scenario, fast)</h3>
+        <p class="note" style="margin:0">Runs L1–L5 on this scenario/seed for comparison — the plausibility view: does the ladder behave?</p>
+        <button class="ghost" id="ladderBtn" style="margin-top:8px">Run the ladder</button>
+        <div id="ladderOut"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="metrics" id="metrics"></div>
+        <canvas id="trace" width="860" height="300"></canvas>
+        <div class="legend">
+          <span><span class="sw" style="background:#1e293b"></span>plant x</span>
+          <span><span class="sw" style="background:#94a3b8"></span>setpoint (intent K)</span>
+          <span><span class="sw" style="background:#f59e0b"></span>known-mode impulse</span>
+          <span><span class="sw" style="background:#dc2626"></span>novel impulse</span>
+          <span><span class="sw" style="background:#7c3aed"></span>human engaged</span>
+          <span><span class="sw" style="background:rgba(220,38,38,.15)"></span>excursion (|x| &gt; 3)</span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Reading the run</h3>
+        <div id="reading" class="note">Run a simulation to see the interpretation against the framework's claims.</div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="scoring.js"></script>
+<script src="sim.js"></script>
+<script>
+(function () {
+  "use strict";
+  const A = window.AOCL, S = window.AOCLSim;
+  const $ = (id) => document.getElementById(id);
+  for (const id of ["GD", "DV", "FI"]) {
+    const sel = $(id);
+    for (const l of [1, 2, 3, 4, 5]) {
+      const o = document.createElement("option");
+      o.value = l; o.textContent = "L" + l + " — " + A.LEVEL_NAMES[l] + (id === "GD" ? " (goal decisioning)" : id === "DV" ? " (data veracity)" : " (feedback intelligence)");
+      if (l === 3) o.selected = true;
+      sel.appendChild(o);
+    }
+  }
+  $("humanResponse").addEventListener("input", (e) => { $("hrVal").textContent = e.target.value; });
+
+  function drawTrace(run) {
+    const cv = $("trace"), ctx = cv.getContext("2d");
+    const W = cv.width, H = cv.height, padL = 40, padR = 10, padT = 12, padB = 24;
+    ctx.clearRect(0, 0, W, H);
+    const n = run.trace.length;
+    const maxAbs = Math.max(40, ...run.trace.map((p) => Math.abs(p.x))) * 1.05;
+    const X = (t) => padL + (t / (n - 1)) * (W - padL - padR);
+    const Y = (v) => padT + (1 - (v + maxAbs) / (2 * maxAbs)) * (H - padT - padB);
+    // excursion shading
+    for (const e of run.excursions) {
+      ctx.fillStyle = "rgba(220,38,38,0.12)";
+      ctx.fillRect(X(e.start), padT, X(e.end || n - 1) - X(e.start), H - padT - padB);
+    }
+    // tolerance band
+    ctx.strokeStyle = "#fca5a5"; ctx.setLineDash([4, 3]);
+    for (const v of [A.TOLERANCE, -A.TOLERANCE]) {
+      ctx.beginPath(); ctx.moveTo(padL, Y(v)); ctx.lineTo(W - padR, Y(v)); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // setpoint
+    ctx.strokeStyle = "#94a3b8"; ctx.beginPath();
+    run.trace.forEach((p, i) => { const x = X(p.t), y = Y(0); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke();
+    // impulses (stems from midline)
+    for (const p of run.trace) {
+      if (p.imp > 0.05) {
+        ctx.strokeStyle = "rgba(245,158,11,0.55)";
+        ctx.beginPath(); ctx.moveTo(X(p.t), Y(0)); ctx.lineTo(X(p.t), Y(p.imp * 1.4)); ctx.stroke();
+      }
+    }
+    // plant trace
+    ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 1.4; ctx.beginPath();
+    run.trace.forEach((p, i) => { const x = X(p.t), y = Y(p.x); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke(); ctx.lineWidth = 1;
+    // human bars
+    for (const p of run.trace) {
+      if (p.human) { ctx.fillStyle = "rgba(124,58,237,0.5)"; ctx.fillRect(X(p.t) - 0.5, H - padB - 8, 1.6, 8); }
+    }
+    // axes
+    ctx.strokeStyle = "#334155"; ctx.beginPath();
+    ctx.moveTo(padL, padT); ctx.lineTo(padL, H - padB); ctx.lineTo(W - padR, H - padB); ctx.stroke();
+    ctx.fillStyle = "#64748b"; ctx.font = "10px ui-monospace,monospace";
+    ctx.fillText("+" + maxAbs.toFixed(0), 6, Y(maxAbs) + 4);
+    ctx.fillText("0", 24, Y(0) + 4);
+    ctx.fillText("-" + maxAbs.toFixed(0), 6, Y(-maxAbs) + 4);
+    ctx.fillText("t=0", padL, H - 8);
+    ctx.fillText("t=" + n, W - padR - 30, H - 8);
+  }
+
+  function reading(run) {
+    const L = run.level, claims = [];
+    claims.push("Weakest-link overall: <strong>L" + L + " " + A.LEVEL_NAMES[L] + "</strong> from GD=" + run.vectors.GD + ", DV=" + run.vectors.DV + ", FI=" + run.vectors.FI + ".");
+    if (L >= 3) claims.push("Playbook pre-emption contains known recurring modes (the ladder study shows known-mode excursions falling 19→3 at L3).");
+    if (L >= 4) claims.push("Novel-mode containment halves impact depth — the L3/L4 discriminator (L3 reacts after breach; L4 learned baselines catch novel patterns partially).");
+    if (L === 5) claims.push("Experimentation is sandboxed (assumption 7): zero self-inflicted production excursions; humans engage only for novel/unprecedented events.");
+    if (run.velocity === "slow") claims.push("<strong>Velocity mismatch on display:</strong> prevention fraction " + (run.preventedFraction * 100).toFixed(0) + "% — no maturity level prevents fast disturbances on a slow loop. Level and velocity are different axes.");
+    if (run.slowGoverns) claims.push("Governance: epoch-2 excursion count " + run.epoch2Count + " with the slow loop's playbook conversion (compare the ungoverned ladder run).");
+    claims.push("Human burden " + run.humanTicks + " ticks (" + run.humanInterventions + " engagements, " + (HITL_LABEL[run.level] || run.level) + " semantics) — E_sim = " + run.ESim + ".");
+    return "<ul style='margin:0;padding-left:16px'><li>" + claims.join("</li><li>") + "</li></ul>";
+  }
+  const HITL_LABEL = { 1: "HITL", 2: "HITL", 3: "HOTL", 4: "HOTL", 5: "HOOTL" };
+
+  function run() {
+    const params = {
+      GD: +$("GD").value, DV: +$("DV").value, FI: +$("FI").value,
+      velocity: $("velocity").value, scenario: $("scenario").value,
+      seed: (+$("seed").value) >>> 0, slowGoverns: $("slowGoverns").checked,
+      humanResponse: +$("humanResponse").value,
+    };
+    const run = S.simulate(params);
+    $("metrics").innerHTML =
+      "<div class='m'><b>L" + run.level + "</b><span>" + A.LEVEL_NAMES[run.level] + "</span></div>" +
+      "<div class='m'><b>" + run.excursions + "</b><span>excursions</span></div>" +
+      "<div class='m'><b>" + run.mttr + "</b><span>mean duration</span></div>" +
+      "<div class='m'><b>" + run.humanTicks + "</b><span>human ticks</span></div>";
+    drawTrace(run);
+    $("reading").innerHTML = reading(run);
+    $("runNote").innerHTML = "E_sim = 1 − human_ticks/horizon (the realization model's E, measured live). R = √(E² + (C·V_d)²) connects on the Realization tab.";
+  }
+
+  $("runBtn").addEventListener("click", run);
+
+  $("ladderBtn").addEventListener("click", function () {
+    const scenario = $("scenario").value, seed = (+$("seed").value) >>> 0, hr = +$("humanResponse").value;
+    let rows = "<table><tr><th>level</th><th>exc</th><th>mttr</th><th>peak</th><th>human</th></tr>";
+    const ladds = [];
+    for (let lvl = 1; lvl <= 5; lvl++) {
+      const r = S.simulate({ GD: lvl, DV: lvl, FI: lvl, velocity: "fast", seed: seed + lvl, scenario, humanResponse: hr });
+      ladds.push(r);
+      rows += "<tr><td><strong>L" + lvl + "</strong> " + A.LEVEL_NAMES[lvl] + "</td><td>" + r.excursions + "</td><td>" + r.mttr + "</td><td>" + r.peak + "</td><td>" + r.humanTicks + "</td></tr>";
+    }
+    rows += "</table>";
+    const peaks = ladds.map((r) => r.peak);
+    const mono = peaks.every((v, i) => i === 0 || v <= peaks[i - 1] * 1.1 + 1);
+    rows += "<div class='note'>Peak severity monotone across the ladder: <strong>" + (mono ? "yes — plausible" : "NO — a formal-model finding") + "</strong>. MTTR is human-policy-driven in the HITL/HOTL band (burden shifts, see docs/simulation.md).</div>";
+    $("ladderOut").innerHTML = rows;
+  });
+
+  run();
+})();
+</script>
+</body>
+</html>

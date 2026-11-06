@@ -29,6 +29,14 @@ aocl-ledger examples/loops.yaml         # loop registry health (staleness, guard
 aocl-model examples/loops.yaml --clam   # model → CLAM provisioning export
 ```
 
+## Simulation canvas
+
+The level→policy mapping is tested, not just asserted: a deterministic discrete-event simulation runs a loop at a chosen (GD, DV, FI) against a live plant (noise, drift, learnable known modes, novel one-shots, humans with response times). Seven plausibility invariants are checked in CI — monotone restoration, burden collapse, the L3/L4 novel-mode discriminator, velocity orthogonality, sandboxed experimentation, policy downflow (exception upflow → playbook conversion, 50% excursion cut), and the veracity multiplier. Findings and formal-model change candidates: [docs/simulation.md](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md).
+
+```bash
+python3 tools/sim_check.py   # batch + invariants
+```
+
 ## Interactive site
 
 Open [`site/index.html`](https://github.com/technehub-labs/aocl/blob/main/site/index.html) in a browser — or on GitHub Pages. Tabs: **Assess** (questionnaire + scorecard + vector radar), **Realization** (sliders driving the E–C plane, realization curve, effort curve), **Loop Modeler** (place loops on processes/capabilities/systems/functions; specify each loop CLAM-style; export model YAML / CLAM payloads / ledger), **Portfolio** (velocity × maturity scatter, latency budgets). No telemetry, no CDN, no accounts — everything runs locally.
@@ -60,7 +68,7 @@ A loop's maturity level is **not** an autonomy grant level; the concepts interlo
 
 ## Documentation
 
-[Framework](https://github.com/technehub-labs/aocl/blob/main/docs/framework.md) · [Maturity model](https://github.com/technehub-labs/aocl/blob/main/docs/maturity-model.md) · [Assessment](https://github.com/technehub-labs/aocl/blob/main/docs/assessment.md) · [Realization model](https://github.com/technehub-labs/aocl/blob/main/docs/realization-model.md) · [Loop velocity](https://github.com/technehub-labs/aocl/blob/main/docs/loop-velocity.md) · [Decision models](https://github.com/technehub-labs/aocl/blob/main/docs/decision-models.md) · [Loop modeler](https://github.com/technehub-labs/aocl/blob/main/docs/loop-modeler.md) · [CLAM alignment](https://github.com/technehub-labs/aocl/blob/main/docs/clm-alignment.md) · [Value streams](https://github.com/technehub-labs/aocl/blob/main/docs/value-streams.md) · [Use cases](https://github.com/technehub-labs/aocl/blob/main/docs/use-cases.md) · [AO-ready assumptions](https://github.com/technehub-labs/aocl/blob/main/docs/assumptions.md) · [AOMM mapping](https://github.com/technehub-labs/aocl/blob/main/docs/aomm-mapping.md) · [Ledger format](https://github.com/technehub-labs/aocl/blob/main/docs/ledger-format.md) · [Versioning](https://github.com/technehub-labs/aocl/blob/main/docs/versioning.md) · [Naming](https://github.com/technehub-labs/aocl/blob/main/docs/naming.md) · [Limitations](https://github.com/technehub-labs/aocl/blob/main/docs/limitations.md)
+[Framework](https://github.com/technehub-labs/aocl/blob/main/docs/framework.md) · [Maturity model](https://github.com/technehub-labs/aocl/blob/main/docs/maturity-model.md) · [Assessment](https://github.com/technehub-labs/aocl/blob/main/docs/assessment.md) · [Realization model](https://github.com/technehub-labs/aocl/blob/main/docs/realization-model.md) · [Loop velocity](https://github.com/technehub-labs/aocl/blob/main/docs/loop-velocity.md) · [Decision models](https://github.com/technehub-labs/aocl/blob/main/docs/decision-models.md) · [Loop modeler](https://github.com/technehub-labs/aocl/blob/main/docs/loop-modeler.md) · [CLAM alignment](https://github.com/technehub-labs/aocl/blob/main/docs/clm-alignment.md) · [Value streams](https://github.com/technehub-labs/aocl/blob/main/docs/value-streams.md) · [Use cases](https://github.com/technehub-labs/aocl/blob/main/docs/use-cases.md) · [Simulation](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md) · [AO-ready assumptions](https://github.com/technehub-labs/aocl/blob/main/docs/assumptions.md) · [AOMM mapping](https://github.com/technehub-labs/aocl/blob/main/docs/aomm-mapping.md) · [Ledger format](https://github.com/technehub-labs/aocl/blob/main/docs/ledger-format.md) · [Versioning](https://github.com/technehub-labs/aocl/blob/main/docs/versioning.md) · [Naming](https://github.com/technehub-labs/aocl/blob/main/docs/naming.md) · [Limitations](https://github.com/technehub-labs/aocl/blob/main/docs/limitations.md)
 
 ## License
 
