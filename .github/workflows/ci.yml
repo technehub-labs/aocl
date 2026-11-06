@@ -36,6 +36,12 @@ jobs:
           python3 tools/aocl_realization.py --E 0.6 --C 0.8 --Vd 0.9 --json
           python3 tools/aocl_realization.py --Ed 0.3 --Em 0.3 --Eo 0.3 --Ex 0.3 --Cs 0.4 --Cd 0.4 --Cm 0.4 --Cc 0.4 --json
           python3 tools/aocl_realization.py --E 0.6 --target 1.0
+      - name: Canonical metamodel validator + migration (CR-002)
+        run: |
+          python3 tools/aocl_metamodel.py --self-test
+          python3 tools/aocl_metamodel.py examples/canonical-loop.yaml --json > /dev/null
+          python3 tools/aocl_metamodel.py --migrate examples/loop-modeler-model.yaml --json > /dev/null
+          echo "canonical example valid; migration round-trip ok"
       - name: Example ledger health (deterministic)
         run: |
           python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
@@ -73,6 +79,10 @@ jobs:
           for s in sorted(pathlib.Path("schema").glob("*.json")):
               Draft202012Validator.check_schema(json.loads(s.read_text()))
               print(f"ok   schema {s.name}")
+          # CR-002 acceptance: the illustrative canonical instance validates against the metamodel schema
+          Draft202012Validator(json.loads(pathlib.Path("schema/canonical-loop.schema.json").read_text()))
+              .validate(yaml.safe_load(pathlib.Path("examples/canonical-loop.yaml").read_text()))
+          print("ok   examples/canonical-loop.yaml validates against canonical-loop.schema.json")
           for m in sorted(pathlib.Path("model").glob("*.yaml")):
               yaml.safe_load(m.read_text()); print(f"ok   model  {m.name}")
           # example ledger against its schema

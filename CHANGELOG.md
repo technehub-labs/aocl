@@ -10,6 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ### Added
 
+- **CR-002 implementation tranche delivered**: `schema/canonical-loop.schema.json` (the canonical ClosedLoop contract), `src/aocl/metamodel.py` + `aocl-metamodel` CLI (structural + semantic validation implementing MM-001..018, lifecycle-vs-runtime separation, ADR-006 binding rule, and modeler→canonical migration per §11 — gaps inventoried, never fabricated), and the validated illustrative instance (`examples/canonical-loop.yaml`). CI validates the example against both the JSON Schema and the native validator.
 - **AOCL-CR-002 queued** ([docs/architecture/AOCL-CR-002.md](docs/architecture/AOCL-CR-002.md)): Canonical Closed-Loop Metamodel — the ClosedLoop aggregate, intent/goals/reference-conditions/constraints, bindings and enterprise references, model lifecycle vs runtime status, validation rules MM-001..018, and migration requirements. Carries the [ADR-006](docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md) dispositions (§4a): the aggregation-binding rule (F1) as must-resolve, velocity-fit fields (F4), and experimentation containment (F3).
 
 ### Added

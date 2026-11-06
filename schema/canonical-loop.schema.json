@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/canonical-loop.schema.json",
+  "title": "AOCL canonical ClosedLoop document (AOCL-CR-002)",
+  "description": "The canonical, technology-independent ClosedLoop aggregate established by AOCL-CR-002: identity and metadata, operational context and scope, intent specification (goals, reference conditions, control constraints), controlled-system bindings with velocity-fit inputs (ADR-006 F4), enterprise references, assessment vectors as first-class behavioral attributes (ADR-006 F1 disposition: vectors are the behavioral first-class; 'level' is derived reporting), and provenance. Structural validation rules MM-001..018 are expressed here and enforced natively by src/aocl/metamodel.py (which adds referential-integrity and lifecycle rules beyond JSON Schema).",
+  "type": "object",
+  "required": ["schemaVersion", "modelVersion", "closedLoop"],
+  "properties": {
+    "schemaVersion": { "const": "0.1", "description": "Metamodel contract version (MM-014: independent of modelVersion)." },
+    "modelVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "closedLoop": { "$ref": "#/$defs/ClosedLoop" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "description": "Common identity and metadata contract (CR-002 §5).",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "minLength": 3, "description": "Stable identifier; opaque, not derived from mutable names (MM-001)." },
+        "type": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string" },
+        "description": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "ClosedLoop": {
+      "type": "object",
+      "required": ["id", "type", "name", "definition", "modelVersion", "lifecycleStatus", "context", "scope", "intent", "controlledSystems", "provenance"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^urn:aocl:loop:[a-z0-9][a-z0-9-]*$" },
+        "type": { "const": "ClosedLoop" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "modelVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "schemaVersion": { "type": "string", "const": "0.1" },
+        "lifecycleStatus": {
+          "enum": ["Draft", "InReview", "Approved", "Deprecated", "Retired"],
+          "description": "Model lifecycle (MM-016): runtime statuses (Running/Suspended/Failed/Active...) are rejected — they belong to execution representations."
+        },
+        "context": { "$ref": "#/$defs/OperationalContext" },
+        "scope": { "$ref": "#/$defs/OperationalScope" },
+        "intent": { "$ref": "#/$defs/IntentSpecification" },
+        "controlledSystems": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ControlledSystemBinding" }
+        },
+        "enterpriseReferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EnterpriseReference" }
+        },
+        "architectureBindings": {
+          "type": "array",
+          "description": "Extension bindings — populated from CR-004 onward. Optional during initial definition.",
+          "items": { "$ref": "#/$defs/Binding" }
+        },
+        "behavioralBindings": {
+          "type": "array",
+          "description": "Extension bindings — populated from CR-003 onward. Optional during initial definition.",
+          "items": { "$ref": "#/$defs/Binding" }
+        },
+        "assessment": {
+          "type": "object",
+          "description": "Maturity vectors as first-class behavioral attributes (ADR-006 F1 disposition). 'level' is derived reporting: it MUST equal min(GD, DV, FI) when present.",
+          "required": ["vectors", "level", "method"],
+          "properties": {
+            "vectors": {
+              "type": "object",
+              "required": ["GD", "DV", "FI"],
+              "properties": {
+                "GD": { "type": "integer", "minimum": 1, "maximum": 5 },
+                "DV": { "type": "integer", "minimum": 1, "maximum": 5 },
+                "FI": { "type": "integer", "minimum": 1, "maximum": 5 }
+              },
+              "additionalProperties": false
+            },
+            "level": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "method": { "type": "string", "minLength": 1 },
+            "assessedAt": { "type": "string", "format": "date" },
+            "evidenceRef": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "changeHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["date", "change"],
+            "properties": {
+              "date": { "type": "string", "format": "date" },
+              "change": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "OperationalContext": {
+      "type": "object",
+      "required": ["contextId", "domain"],
+      "properties": {
+        "contextId": { "type": "string", "minLength": 1 },
+        "domain": { "type": "string", "minLength": 1 },
+        "operatingEnvironment": { "type": "string" },
+        "description": { "type": "string" },
+        "stakeholders": { "type": "array", "items": { "type": "string" } },
+        "assumptions": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "OperationalScope": {
+      "type": "object",
+      "required": ["scopeId", "boundaryDefinition"],
+      "properties": {
+        "scopeId": { "type": "string", "minLength": 1 },
+        "boundaryDefinition": { "type": "string", "minLength": 1 },
+        "inclusions": { "type": "array", "items": { "type": "string" } },
+        "exclusions": { "type": "array", "items": { "type": "string" } },
+        "assumptions": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "IntentSpecification": {
+      "type": "object",
+      "required": ["intentId", "statement", "goals"],
+      "properties": {
+        "intentId": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "goals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["goalId", "name", "definition"],
+            "properties": {
+              "goalId": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "definition": { "type": "string", "minLength": 1 },
+              "priority": { "type": "integer", "minimum": 1 },
+              "successCriteria": { "type": "string" },
+              "referenceConditions": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/ReferenceCondition" }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ControlConstraint" }
+        },
+        "successCriteria": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ReferenceCondition": {
+      "type": "object",
+      "required": ["conditionId", "variable", "operator", "targetValue"],
+      "properties": {
+        "conditionId": { "type": "string", "minLength": 1 },
+        "variable": { "type": "string", "minLength": 1 },
+        "operator": {
+          "enum": ["lessThan", "lessThanOrEqual", "greaterThan", "greaterThanOrEqual", "equals", "within", "outside", "present"]
+        },
+        "targetValue": { "type": ["number", "string"] },
+        "unit": { "type": "string" },
+        "tolerance": { "type": "number" },
+        "evaluationMethod": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ControlConstraint": {
+      "type": "object",
+      "required": ["constraintId", "name", "constraintType", "expression"],
+      "properties": {
+        "constraintId": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "constraintType": {
+          "enum": ["Safety", "Operational", "Regulatory", "Financial", "Resource", "Temporal", "Authorization", "Technical"]
+        },
+        "expression": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ControlledSystemBinding": {
+      "type": "object",
+      "description": "References the controlled system. Velocity-fit inputs (ADR-006 F4) are carried for CR-004/CR-007 evaluation.",
+      "required": ["bindingId", "targetReference", "systemRole"],
+      "properties": {
+        "bindingId": { "type": "string", "minLength": 1 },
+        "targetReference": {
+          "type": "object",
+          "required": ["targetId", "targetType", "sourceSystem"],
+          "properties": {
+            "targetId": { "type": "string", "minLength": 1 },
+            "targetType": { "type": "string", "minLength": 1 },
+            "sourceSystem": { "type": "string", "minLength": 1, "description": "Source-qualified reference (MM-012): the authoritative system of record." }
+          },
+          "additionalProperties": false
+        },
+        "systemRole": {
+          "enum": ["ControlledSystem", "MonitoredSystem", "SupportingSystem", "IndirectlyAffectedSystem"],
+          "description": "Distinguishes controlled from merely monitored or supporting systems (CR-002 §4.8)."
+        },
+        "cycleIntervalTicks": { "type": "number", "exclusiveMinimum": 0, "description": "Velocity-fit input (ADR-006 F4): observation/actuation cycle interval." },
+        "actuationAuthorityPerCycle": { "type": "number", "minimum": 0, "description": "Velocity-fit input (ADR-006 F4): actuation authority per cycle." }
+      },
+      "additionalProperties": false
+    },
+    "EnterpriseReference": {
+      "type": "object",
+      "required": ["referenceId", "targetId", "targetType", "sourceSystem", "relationshipRole"],
+      "properties": {
+        "referenceId": { "type": "string", "minLength": 1 },
+        "targetId": { "type": "string", "minLength": 1 },
+        "targetType": {
+          "enum": ["Capability", "Process", "Activity", "System", "Function", "Service", "Resource", "InformationEntity", "DataEntity", "Goal", "Outcome", "Metric"]
+        },
+        "sourceSystem": { "type": "string", "minLength": 1, "description": "Source-qualified (MM-012): references preserve the authoritative identity and source." },
+        "relationshipRole": { "enum": ["Realizes", "DependsOn", "Monitors", "Controls", "ContributesTo"] }
+      },
+      "additionalProperties": false
+    },
+    "Binding": {
+      "type": "object",
+      "required": ["bindingRef", "version"],
+      "properties": {
+        "bindingRef": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "type": "object",
+      "required": ["source", "authority", "createdAt"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "authority": { "type": "string", "minLength": 1 },
+        "createdAt": { "type": "string", "format": "date" },
+        "updatedAt": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,31 @@
+# A modeler-format loop model used as the CR-002 §11 migration source:
+# python3 tools/aocl_metamodel.py --migrate examples/loop-modeler-model.yaml
+format: aocl-loop-model
+model_version: "1.0.0"
+ruleset_version: "1.0.0"
+
+entities:
+  - id: proc-anomaly-detect
+    kind: process
+    name: Detect Anomaly Event
+    domain: service-assurance
+    description: Real-time identification of network/service deterioration.
+
+loops:
+  - id: loop-anomaly-detect-v1
+    entity: proc-anomaly-detect
+    velocity: fast
+    level: 3
+    decision_model:
+      kind: MAPE
+      monitor: {name: read-kpis, action: kpi.stream}
+      analyze: {name: trend-forecast, action: forecast.v1}
+      plan: {name: scale-plan, action: planner.v1}
+      execute: {name: apply-scale, action: orchestrator.scale}
+    goals:
+      - name: detection-latency
+        target: {metric: detection_latency_ms, value: 10000, direction: AT_MOST}
+    owner: assurance-lead
+    state: active
+    notes: >
+      Predictive signals trigger pre-emptive scaling before threshold breach.

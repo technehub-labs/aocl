@@ -1,0 +1,103 @@
+schemaVersion: "0.1"
+modelVersion: "1.0.0"
+
+closedLoop:
+  id: "urn:aocl:loop:service-assurance-001"
+  type: "ClosedLoop"
+  name: "Network Service Assurance"
+  modelVersion: "1.0.0"
+  definition: >
+    Maintains network service performance within declared operational
+    thresholds through observation, decision and controlled intervention.
+  lifecycleStatus: "Draft"
+
+  context:
+    contextId: "service-assurance-context"
+    domain: "Network Operations"
+    operatingEnvironment: "Telecommunications"
+    stakeholders:
+      - "Service Operations"
+      - "Network Engineering"
+
+  scope:
+    scopeId: "network-service-scope"
+    boundaryDefinition: >
+      Network service latency and traffic management within the defined
+      service boundary.
+    inclusions:
+      - "Service latency"
+      - "Traffic routing"
+    exclusions:
+      - "Physical infrastructure replacement"
+
+  intent:
+    intentId: "service-assurance-intent"
+    statement: >
+      Maintain service latency within the agreed operational threshold.
+    goals:
+      - goalId: "latency-goal"
+        name: "Maintain Service Latency"
+        definition: >
+          Maintain measured service latency below the operational threshold.
+        priority: 1
+        successCriteria: >
+          Measured service latency remains below the declared threshold for
+          the evaluation window, verified by post-intervention observation.
+        referenceConditions:
+          - conditionId: "latency-reference"
+            variable: "service.latency"
+            operator: "lessThan"
+            targetValue: 50
+            unit: "ms"
+            evaluationMethod: "p95 over the evaluation window"
+    constraints:
+      - constraintId: "routing-safety"
+        name: "Routing Safety Constraint"
+        constraintType: "Safety"
+        expression: >
+          Do not execute a routing change that violates the declared
+          network safety policy.
+        severity: "critical"
+      - constraintId: "change-rate"
+        name: "Change Rate Limit"
+        constraintType: "Operational"
+        expression: >
+          At most one traffic-engineering intervention per five-minute
+          window unless escalated.
+        severity: "high"
+
+  controlledSystems:
+    - bindingId: "network-service-binding"
+      targetReference:
+        targetId: "network-service-001"
+        targetType: "System"
+        sourceSystem: "Enterprise Architecture"
+      systemRole: "ControlledSystem"
+      cycleIntervalTicks: 1
+      actuationAuthorityPerCycle: 10
+
+  enterpriseReferences:
+    - referenceId: "network-operations-capability"
+      targetId: "network-operations-capability"
+      targetType: "Capability"
+      sourceSystem: "Enterprise Architecture"
+      relationshipRole: "Realizes"
+
+  assessment:
+    vectors:
+      GD: 3
+      DV: 3
+      FI: 3
+    level: 3
+    method: "aocl-assessment (weakest-link over GD/DV/FI)"
+    assessedAt: "2026-11-07"
+
+  provenance:
+    source: "AOCL Engineering Model"
+    authority: "Model Owner"
+    createdAt: "2026-11-07"
+    updatedAt: "2026-11-07"
+
+  changeHistory:
+    - date: "2026-11-07"
+      change: "Illustrative canonical instance for AOCL-CR-002 acceptance (AC: the instance passes structural and semantic validation)."
