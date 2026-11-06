@@ -41,6 +41,10 @@ python3 tools/sim_check.py   # batch + invariants
 
 Open [`site/index.html`](https://github.com/technehub-labs/aocl/blob/main/site/index.html) in a browser — or on GitHub Pages. Tabs: **Assess** (questionnaire + scorecard + vector radar), **Realization** (sliders driving the E–C plane, realization curve, effort curve), **Loop Modeler** (place loops on processes/capabilities/systems/functions; specify each loop CLAM-style; export model YAML / CLAM payloads / ledger), **Portfolio** (velocity × maturity scatter, latency budgets). No telemetry, no CDN, no accounts — everything runs locally.
 
+## Architecture baseline
+
+[AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility.
+
 ## Naming: three different "MAMA"s — and this repo is none of them
 
 | Identity | What it is | Home |

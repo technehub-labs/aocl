@@ -61,6 +61,25 @@ Level policy parameters (gain, thresholds, lead times) are velocity-independent.
 
 The known/novel discriminator (L3: human-designed forecasts for known modes; L4: learns novel patterns) reproduced cleanly: L3 pre-empts known modes 84% but novel depth ≈ L2; L4 halves novel depth. This is the mapping's strongest validated structural element.
 
+## ARCH-001 corroboration and critique
+
+The simulation was subsequently reviewed against [AOCL-ARCH-001](architecture/AOCL-ARCH-001.md) (the normative architecture baseline) and its preceding [architectural review](architecture/AOCL-ARCH-REVIEW-INPUT.md). Full analysis and dispositions: [ADR-006](decisions/adr-006-simulation-evidence-and-architecture-alignment.md). Summary:
+
+**Corroborated by the simulation:** P03 (observable vs actual state — the DV semantics and the 13× veracity-multiplier result are the quantitative proof of the review's warning about conflating them); P06 (bounded autonomy via HITL/HOTL/HOOTL); P11 (the governance study is a working two-loop composition); P12 (seeded, cross-engine exact parity); §7.2's state-based simulation feasibility; §10's failure-path demand (the invariant suite *is* a failure-path battery).
+
+**Criticized by ARCH-001:** the simulated loop has **no Verify stage (S6)** — excursion detection is the simulator's judgment, not a loop-owned expected-vs-actual mechanism (REQ-010 untestable in the current sim); **no governed learning (S7)** — FI learning is automatic, and finding F1 (capability leak past the level gate) is itself evidence for REQ-011's governance; **no behavioral specification** — the loop is a level-parameterized policy, so P09 is only partially honored; **no explicit temporal model**; **no intent model (P02)** beyond a constant setpoint.
+
+**The disposition:** the canvas is designated the prototype of ARCH-001's state-based simulation mode (§10.2); its migration path is to execute the CR-003 behavioral specification, gaining S6 and governed S7; the findings F1–F4 are disposed against the CR sequence (F1 → must-resolve in CR-002; F2 → CR-003 burden-shift framing; F3 → CR-004 sandbox conformance attribute; F4 → CR-002/CR-004 velocity fit + temporal model). See ADR-006.
+
+## The two simulation modes
+
+ARCH-001 adopts **hybrid simulation** (ADR-002), and both modes now exist:
+
+- **Logical mode** — [`site/simulation.html`](../site/simulation.html): the seven-stage behavioral lifecycle executed visually, with failure-path probes (verification bypass, broken feedback, policy mismatch, stale telemetry, actuator faults) and per-level decision-authority configuration. This is where behavioral/governance semantics are explored and conformance-probed.
+- **State-based mode** — this document's engine (`tools/sim_check.py`, `site/sim.js`): numeric plant state, sensor error channels, disturbance regimes, and the invariant suite, with Python↔JS parity pinned in `tests/sim-parity.json`.
+
+Semantics graduate from logical exploration to state-based validation; both engines assert parity on whatever they share (P09, P12).
+
 ## How to reproduce
 
 ```bash

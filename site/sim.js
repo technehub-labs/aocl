@@ -269,6 +269,7 @@
     return {
       level, vectors: { GD: g, DV: d, FI: f }, velocity: p.velocity || "fast",
       excursions: excursions.length,
+      excursionList: excursions,
       mttr: +mean(excursions, "dur").toFixed(2),
       peak: +Math.max(...excursions.map((e) => e.peak), 0).toFixed(2),
       humanTicks: humanTicks, humanInterventions: humanInterventions,
@@ -277,7 +278,7 @@
       epoch1Count: epoch1.length, epoch2Count: epoch2.length,
       ESim: +(1 - humanTicks / horizon).toFixed(4),
       preventedFraction: prevented === null ? null : +prevented.toFixed(3),
-      trace, excursions,
+      trace,
     };
     function evDur(events, et) { const ev = events.find((e) => e[0] === et); return ev ? ev[2] || ev[3] : 0; }
   }

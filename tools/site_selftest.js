@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const AOCL = require("../site/scoring.js");
 const Modeler = require("../site/modeler.js");
+const AOCLSim = require("../site/sim.js");
 
 let failures = 0;
 function check(name, cond) {
@@ -81,7 +82,18 @@ check("python RULESET_VERSION parity", m && m[1] === AOCL.RULESET_VERSION);
 /* --- site sanity --- */
 const html = fs.readFileSync(path.join(__dirname, "..", "site", "index.html"), "utf-8");
 const simHtml = fs.readFileSync(path.join(__dirname, "..", "site", "simulation.html"), "utf-8");
-check("simulation.html exists with canvas + controls", simHtml.includes('id="trace"') && simHtml.includes("sim.js"));
+check("simulation.html: logical simulation canvas (seven stages)", simHtml.includes("stageData") && simHtml.includes("Verify") && simHtml.includes("Learn"));
+check("simulation.html: failure-path probes present", simHtml.includes("Stale telemetry") && simHtml.includes("Policy mismatch") && simHtml.includes("Broken feedback"));
+// state-based engine parity: sim.js must reproduce the Python-pinned fixture exactly
+const parity = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "tests", "sim-parity.json"), "utf-8"));
+if (parity.ruleset_version !== AOCL.RULESET_VERSION) { check("sim parity ruleset match", false); }
+for (const c of parity.cases) {
+  const r = AOCLSim.simulate({ GD: c.vectors.GD, DV: c.vectors.DV, FI: c.vectors.FI, velocity: c.velocity,
+    seed: c.seed, scenario: c.scenario || "baseline", slowGoverns: !!c.slow_governs });
+  for (const [k, v] of Object.entries(c.expect)) {
+    check(`sim parity ${c.case}.${k}`, r[k] === v);
+  }
+}
 for (const needle of ['id="quiz"', 'id="lanes"', 'id="loopEditor"', "scoring.js", "charts.js", "modeler.js", "Loop Modeler"]) {
   check(`index.html contains ${needle}`, html.includes(needle));
 }

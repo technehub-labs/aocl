@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ### Added
 
+- **Architecture baseline committed** ([ADR-006](docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)): AOCL-ARCH-001 (normative foundation — 7-stage behavioral lifecycle, hybrid simulation, P01–P12), AOCL-CR-001 (adoption CR), and the preceding architectural review, under `docs/architecture/`. The simulation is designated the prototype of ARCH-001's state-based simulation mode; findings F1–F4 are disposed against the CR sequence (F1 aggregation-binding → must-resolve in CR-002).
 - **Simulation canvas** (`site/simulation.html`, `site/sim.js`): deterministic discrete-event simulation testing the level→policy mapping — vector-driven semantics (GD goals, DV observation quality incl. wrong-direction actions, FI learning), playbook pre-emption, novel containment, sandboxed experimentation, humans by HITL/HOTL/HOOTL, governance (exception upflow → playbook conversion). Parity-verified against the Python engine.
 - **Batch invariant runner** (`tools/sim_check.py`): 7 plausibility invariants (restoration monotonicity, burden collapse, novel-mode discriminator, velocity orthogonality, sandboxing, policy downflow, veracity multiplier) + 4 formal-model findings — all 7 hold at the default seed; run in CI.
 - **`model/behavior.yaml`** — the behavioral semantics under test (informative), and **`docs/simulation.md`** — the findings report.

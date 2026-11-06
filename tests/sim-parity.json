@@ -1,0 +1,122 @@
+{
+  "parity_version": "1.0.0",
+  "ruleset_version": "1.0.0",
+  "description": "Python-pinned simulation metrics for cross-engine parity (site/sim.js). Keys use the JS surface (camelCase). Regenerate from tools/sim_check.py after any engine change.",
+  "cases": [
+    {
+      "case": "L1-fast",
+      "vectors": {
+        "GD": 1,
+        "DV": 1,
+        "FI": 1
+      },
+      "velocity": "fast",
+      "seed": 2027,
+      "scenario": "baseline",
+      "expect": {
+        "excursions": 97,
+        "mttr": 25.73,
+        "peak": 78.14,
+        "humanTicks": 2280
+      }
+    },
+    {
+      "case": "L2-fast",
+      "vectors": {
+        "GD": 2,
+        "DV": 2,
+        "FI": 2
+      },
+      "velocity": "fast",
+      "seed": 2028,
+      "scenario": "baseline",
+      "expect": {
+        "excursions": 63,
+        "mttr": 10.6,
+        "peak": 46.82,
+        "humanTicks": 870
+      }
+    },
+    {
+      "case": "L3-fast",
+      "vectors": {
+        "GD": 3,
+        "DV": 3,
+        "FI": 3
+      },
+      "velocity": "fast",
+      "seed": 2029,
+      "scenario": "baseline",
+      "expect": {
+        "excursions": 24,
+        "mttr": 4.25,
+        "peak": 20.71,
+        "humanTicks": 0
+      }
+    },
+    {
+      "case": "L4-fast",
+      "vectors": {
+        "GD": 4,
+        "DV": 4,
+        "FI": 4
+      },
+      "velocity": "fast",
+      "seed": 2030,
+      "scenario": "baseline",
+      "expect": {
+        "excursions": 38,
+        "mttr": 1.97,
+        "peak": 15.9,
+        "humanTicks": 0
+      }
+    },
+    {
+      "case": "L5-fast",
+      "vectors": {
+        "GD": 5,
+        "DV": 5,
+        "FI": 5
+      },
+      "velocity": "fast",
+      "seed": 2031,
+      "scenario": "baseline",
+      "expect": {
+        "excursions": 30,
+        "mttr": 3.07,
+        "peak": 8.12,
+        "humanTicks": 60
+      }
+    },
+    {
+      "case": "S6-governed",
+      "vectors": {
+        "GD": 3,
+        "DV": 3,
+        "FI": 3
+      },
+      "velocity": "fast",
+      "seed": 2043,
+      "scenario": "baseline",
+      "slow_governs": true,
+      "expect": {
+        "epoch2Count": 3
+      }
+    },
+    {
+      "case": "S6-ungoverned",
+      "vectors": {
+        "GD": 3,
+        "DV": 3,
+        "FI": 3
+      },
+      "velocity": "fast",
+      "seed": 2043,
+      "scenario": "baseline",
+      "slow_governs": false,
+      "expect": {
+        "epoch2Count": 19
+      }
+    }
+  ]
+}
