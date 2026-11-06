@@ -1,4 +1,4 @@
-# aocl — Autonomous Operations & Closed Loops
+# Autonomous Operations & Closed Loops - aocl
 
 **Status:** `draft` (v0.1.0) · **License:** Apache-2.0 · **Model ruleset:** 1.0.0
 
