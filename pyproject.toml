@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aocl"
-version = "0.1.1"
+version = "0.1.2"
 description = "Autonomous Operations & Closed Loops: closed-loop automation maturity assessment (L1-L5 across three vectors), the informative realization heuristic, loop velocity taxonomy, and CLAM-aligned loop modeling. Formalizes the AOCL foundational research corpus on Autonomous Operations and Closed Loops (v1.2.0)."
 readme = "README.md"
 requires-python = ">=3.9"
