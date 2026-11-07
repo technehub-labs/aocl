@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ### Changed
 
+- **ADR-007 — realization promoted to the core decision instrument** ([docs/decisions/adr-007-realization-cost-benefit-instrument.md](docs/decisions/adr-007-realization-cost-benefit-instrument.md)): the cost-benefit thesis (exponential realization effort, diminishing incremental gains, the L3–L4 inflection) is articulated as the organizing premise; `aocl-realization --decide` ships the marginal effort-vs-value decision table with the L3→L4 inflection gate; E/C/V_d measurement anchors bind into CR-006's behavioral specification; the L3 investment gate governs L4–L5 tooling and investment. Informative status preserved for uncalibrated use.
+### Changed
+
 - **Research framing (breaking for external attribution):** Closed Loop Automation and Autonomous Operations are now stated as first-class concepts established through the AOCL foundational research corpus — all external registry citations have been paraphrased away across docs, model provenance, NOTICE, and packaging metadata. The concepts stand on the programme's own research.
 
 ### Added

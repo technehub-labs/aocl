@@ -4,13 +4,15 @@
 
 > The interlock in one line: **Autonomous Operations cannot exist without Closed Loops** — loops translate intent into action, action into observation, and observation into learning. Without formally specified, rigorously governed loops, autonomy degenerates into uncontrolled automation: efficient but brittle, capable but unaccountable, powerful but unsafe.
 
+**The core premise:** organizations invest in automating the adaptability, self-governance and decisioning of operational processes and systems — pursuing the Self-X mode with humans out of the loop except *on-the-loop* (policy setting, observability, intent provisioning). The research corpus's central postulate is a **cost-benefit law**: the engineering cost of realizing higher loop maturity grows exponentially with sophistication (data-fusion requirements, decisioning models, interwoven loops), while incremental gains diminish until the L3–L4 boundary — where value inflects from logarithmic to compounding. AOCL exists to make that investment decision evidence-based, per loop.
+
 This toolkit formalizes the AOCL foundational research corpus on *Autonomous Operations and Closed Loops* (v1.2.0) as a **versioned computational model** with three capabilities:
 
 > **Research basis:** Closed Loop Automation and Autonomous Operations are established as first-class concepts through the AOCL foundational research — conceived, developed and validated as this programme's own work, not adapted from external standards.
 
 1. **Assess** — score a closed loop across three vectors (Goal Decisioning, Data Veracity, Feedback Intelligence) onto the L1–L5 maturity ladder; get the weakest-link overall level, the next frontier, and the suggested decision model (OODA / MAPE) and human-interaction model (HITL/HOTL/HOOTL).
 2. **Model** — an interactive visual modeler (browser, fully local) where closed loops are placed on **Processes, Capabilities, Systems, or Functions**, specified in the [Closed-Loop-Management (CLAM)](https://github.com/emmanuel-a-otchere/Closed-Loop-Management) aligned format, and exported as provisioning payloads.
-3. **Realize** — the informative realization heuristic `R = √(E² + (C·V_d)²)` with four-vector decompositions, sensitivity, inverse solvers, and graphed analytics.
+3. **Decide** — the cost-benefit instrument: the realization model `R = √(E² + (C·V_d)²)` with four-vector decompositions, sensitivity, inverse solvers, marginal effort-vs-value analysis per level transition, and the L3–L4 investment gate (`aocl-realization --decide`).
 
 ## Install
 

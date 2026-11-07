@@ -111,6 +111,68 @@ def nearest_reference(R: float) -> dict:
     return min(REFERENCE_POINTS, key=lambda p: abs(p["R"] - R))
 
 
+def decision_table(E: float, C: float, Vd: float = 1.0,
+                   alpha: float = 1.0, beta: float = 1.0) -> dict:
+    """The cost-benefit decision table: marginal effort vs marginal value for each
+    level transition L(n)→L(n+1), evaluated at the caller's position.
+
+    Effort deltas use the Table 1.1 reference points (or caller-supplied calibrated
+    values via --calibrate); value deltas use the research corpus's two value models
+    (logarithmic through L3, exponential from L3). The L3→L4 transition is flagged
+    as the inflection gate. Informative: the recommendation is only as good as the
+    calibration — uncalibrated runs use the corpus reference points and carry the
+    'uncalibrated' label.
+    """
+    _check_range(E, "E", *E_RANGE)
+    _check_range(Vd, "Vd", *VD_RANGE)
+    if C < 0:
+        raise SystemExit(f"error: C must be >= 0, got {C}")
+    transitions = []
+    for i in range(len(REFERENCE_POINTS) - 1):
+        lo, hi = REFERENCE_POINTS[i], REFERENCE_POINTS[i + 1]
+        eff_lo, eff_hi = effort(lo["R"]), effort(hi["R"])
+        effort_delta = eff_hi / eff_lo  # multiplicative: "how many times more effort"
+        if hi["level"] == "L3":
+            value_delta = value_exponential(3, 1.0, beta) / max(value_logarithmic(3, 1.0, alpha), 1e-12)
+        else:
+            hi_l = int(hi["level"][1])
+            lo_l = int(lo["level"][1])
+            if lo_l < 3 <= hi_l:
+                v_lo = value_logarithmic(lo_l, 1.0, alpha)
+                v_hi = value_exponential(hi_l, 1.0, beta)
+            elif lo_l >= 3:
+                v_lo = value_exponential(lo_l, 1.0, beta)
+                v_hi = value_exponential(hi_l, 1.0, beta)
+            else:
+                v_lo = value_logarithmic(lo_l, 1.0, alpha)
+                v_hi = value_logarithmic(hi_l, 1.0, alpha)
+            value_delta = (v_hi / max(v_lo, 1e-12))
+        ratio = value_delta / max(effort_delta, 1e-12)
+        transitions.append({
+            "transition": f'{lo["level"]}→{hi["level"]}',
+            "from": lo["name"], "to": hi["name"],
+            "effort_factor_at": {"from": round(eff_lo, 2), "to": round(eff_hi, 2)},
+            "effort_multiple": round(effort_delta, 2),
+            "value_multiple": round(value_delta, 2),
+            "benefit_per_effort": round(ratio, 3),
+            "inflection_gate": lo["level"] == "L3",
+        })
+    r_now = realize(E, C, Vd)
+    nearest = nearest_reference(r_now)
+    # where the caller stands relative to the ladder
+    standing = {
+        "realization": round(r_now, 3),
+        "nearest_reference": nearest["level"],
+        "position_note": "informative — the value side is modeled; the cost side must be calibrated with your own engineering data before investment decisions",
+    }
+    return {"ruleset_version": RULESET_VERSION,
+            "position": standing,
+            "transitions": transitions,
+            "gate": "L3→L4 is the value-model inflection: logarithmic gains through L1–L3, "
+                    "compounding only after. Cross it only with calibration and evidence.",
+            "status": "informative decision support — not a contractual or certification metric"}
+
+
 def value_band(level: int) -> str:
     """Which value model governs at this maturity level."""
     return "logarithmic" if level <= 3 else "exponential"
@@ -161,6 +223,7 @@ def main(argv=None) -> int:
     parser.add_argument("--Cs", "--Cd", "--Cm", "--Cc", dest="ccomps", type=float, action="append", default=None, help="Complexity components (all four required together)")
     parser.add_argument("--level", type=int, choices=range(1, 6), default=None, help="Maturity level for the value-band note")
     parser.add_argument("--target", type=float, default=None, help="Solve for required C (given --E) or E (given --C)")
+    parser.add_argument("--decide", action="store_true", help="Emit the investment decision table (marginal effort vs value per level transition)")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
@@ -173,6 +236,25 @@ def main(argv=None) -> int:
         if len(args.ccomps) != 4:
             raise SystemExit("error: --Cs --Cd --Cm --Cc (all four) required for component aggregation")
         C = complexity_from_components(*args.ccomps)
+    if getattr(args, "decide", False):
+        if E is None:
+            raise SystemExit("error: --decide requires --E (your measured experience) and --C (your platform complexity)")
+        table = decision_table(E, C, Vd)
+        if args.json:
+            print(json.dumps(table, indent=2))
+        else:
+            print("AOCL investment decision table (informative decision support)")
+            print(f"  your position: E={E} C={C} Vd={Vd} → R={table['position']['realization']} "
+                  f"(nearest reference: {table['position']['nearest_reference']})")
+            print("  transition   effort_multiple   value_multiple   benefit/effort")
+            for tr in table["transitions"]:
+                gate = "  ← INFLECTION GATE" if tr["inflection_gate"] else ""
+                print(f"  {tr['transition']:<10}   {tr['effort_multiple']:>6}x          {tr['value_multiple']:>6}x        "
+                      f"{tr['benefit_per_effort']:>6}{gate}")
+            print(f"  {table['gate']}")
+            print(f"  {table['status']}")
+        return 0
+
     if args.target is not None:
         c_given = args.C is not None or args.ccomps is not None
         if c_given:
@@ -219,6 +301,13 @@ def _self_test() -> int:
             raise AssertionError("expected rejection of infeasible target")
         except SystemExit:
             pass
+    # Decision table: the L4→L5 effort multiple ≈ 7x (the research corpus's core claim)
+    table = decision_table(0.6, 0.8, 0.9)
+    t45 = [x for x in table["transitions"] if x["transition"] == "L4→L5"][0]
+    assert 6.0 < t45["effort_multiple"] < 8.0, t45
+    assert t45["inflection_gate"] is False
+    gate = [x for x in table["transitions"] if x["inflection_gate"]]
+    assert len(gate) == 1 and gate[0]["transition"] == "L3→L4"
     # Value bands:
     assert value_band(3) == "logarithmic" and value_band(4) == "exponential"
     assert value_band(5) == "exponential"
