@@ -1,0 +1,465 @@
+# AOCL canonical BehavioralSpecification — illustrative instance (AOCL-CR-006, AC-24)
+#
+# Validates against schema/behavioral-spec.schema.json (structural) and
+# src/aocl/behavior_spec.py (semantic, BSS-001..036 + ADR-007 anchor integrity).
+# Demonstrates the eight reference behavioral patterns of CR-006 §19:
+#   A  standard feedback cycle ......... obs → sync → analyze → assess → decide → approve →
+#                                        execute → wait → verify → learn; r17 RepeatsTo (continuous)
+#   B  conditional remediation ......... r08/r09 BranchesTo from decide-remediation
+#   C  human approval .................. approve-reroute + hp-approve-reroute; r10/r11 grant/reject branches
+#   D  failed execution ................ r18 HandlesException; r19 retry; r20 EscalatesTo
+#   E  unsuccessful outcome ............ r22 ReturnsTo verify → analyze (independent verification failed)
+#   F  parallel observation ............ r23 ExecutesInParallelWith + r03 SynchronizesWith (WaitForAll)
+#   G  asynchronous dependency ......... wait-actuator resumed by r13 Triggers (evt-actuator-complete);
+#                                        exc-actuator-timeout bounds the wait
+#   H  governed learning ............... learn-playbook under learningBoundaries (BSS-030):
+#                                        recording is free; policy change requires authorization
+# Carries the ADR-007 decision-3 E/C/V_d measurement anchors (measurementAnchors).
+# No executable expressions, scheduling or state-transition semantics — those are CR-007/CR-010.
+schemaVersion: "0.1"
+specVersion: "1.0.0"
+
+behavioralSpecification:
+  id: urn:aocl:spec:network-assurance-001
+  type: BehavioralSpecification
+  name: Network Service Assurance Behavior
+  definition: >-
+    Observes service latency and traffic in parallel, fuses and analyzes them, decides remediation
+    within authorization, executes via governed actuators, verifies the outcome through an
+    independent observation path, and records learning within approved boundaries.
+  description: Reference behavioral specification for the CR-006 acceptance patterns.
+  lifecycleStatus: Draft
+
+  closedLoopRef:
+    loopId: urn:aocl:loop:network-assurance-001
+    sourceSystem: AOCL
+    modelBaselineRef: baseline-2026-11
+
+  decisionArchitectureRef:
+    kind: MAPE
+    source: preserved selection from loop registration aocl-loop-network-assurance-001
+
+  objectives:
+    - objectiveId: obj-maintain-latency
+      goalRef: goal-service-latency
+      description: Maintain service latency within the defined threshold.
+    - objectiveId: obj-preserve-availability
+      goalRef: goal-service-availability
+      description: Remediate without reducing service availability.
+
+  stageCoverage:
+    - {stage: Intent,  status: Realized}
+    - {stage: Observe, status: Realized}
+    - {stage: Analyze, status: Realized}
+    - {stage: Decide,  status: Realized}
+    - {stage: Execute, status: Realized}
+    - {stage: Verify,  status: Realized}
+    - {stage: Learn,   status: Realized}
+
+  entry:
+    conditions: [cond-continuous-monitoring]
+    description: >-
+      Each loop invocation begins with a monitoring cycle; loop termination is distinct from
+      invocation termination (§8.3) — the loop operates continuously.
+
+  termination:
+    outcomes: [VerifiedCompletion, Escalation, SafeStateTransition, Suspended]
+    description: An invocation ends verified, escalated, in a safe state, or suspended on an external event.
+
+  elements:
+    - id: intent-goals
+      type: IntentReference
+      name: Governing intent
+      stages: [Intent]
+      goalRefs: [goal-service-latency, goal-service-availability]
+      provenance: {source: loop intent, authority: Service Owner}
+
+    - id: obs-latency
+      type: Observation
+      name: Observe service latency
+      stages: [Observe]
+      outputs: [latency-observation]
+      parallelGroup: pg-obs
+      controlArchitectureRef: {sensorRef: sensor-latency-probe}
+
+    - id: obs-traffic
+      type: Observation
+      name: Observe traffic matrix
+      stages: [Observe]
+      outputs: [traffic-observation]
+      parallelGroup: pg-obs
+      controlArchitectureRef: {sensorRef: sensor-traffic-probe}
+
+    - id: sync-obs
+      type: Synchronization
+      name: Fuse parallel observations
+      stages: [Observe]
+      inputs: [latency-observation, traffic-observation]
+      outputs: [fused-observation]
+      syncPattern: WaitForAll
+
+    - id: sub-telemetry
+      type: SubSpecification
+      name: Telemetry fusion behavior
+      stages: [Observe]
+      invokedSpecRef: urn:aocl:spec:telemetry-fusion-001
+
+    - id: analyze-congestion
+      type: Analysis
+      name: Analyze congestion
+      stages: [Analyze]
+      inputs: [fused-observation]
+      outputs: [congestion-assessment]
+
+    - id: assess-service
+      type: Assessment
+      name: Assess service state
+      stages: [Analyze]
+      inputs: [congestion-assessment]
+      outputs: [service-assessment]
+
+    - id: decide-remediation
+      type: Decision
+      name: Decide remediation
+      stages: [Decide]
+      inputs: [service-assessment]
+      outputs: [remediation-decision]
+      conditionRefs: [cond-reroute-appropriate, cond-congestion-severe]
+      constraintRefs: [pol-routing-safety]
+
+    - id: approve-reroute
+      type: Approval
+      name: Approve traffic reroute
+      stages: [Decide, Execute]
+      inputs: [remediation-decision]
+      outputs: [reroute-authorization]
+      participationRefs: [hp-approve-reroute]
+      conditionRefs: [cond-approval-granted, cond-approval-rejected, cond-approval-timeout]
+
+    - id: execute-reroute
+      type: Action
+      name: Reroute traffic
+      stages: [Execute]
+      inputs: [reroute-authorization]
+      outputs: [reroute-result]
+      controlArchitectureRef: {controllerRef: controller-assurance, actuatorRef: actuator-traffic-engineering}
+
+    - id: execute-throttle
+      type: Action
+      name: Throttle non-critical flows
+      stages: [Execute]
+      inputs: [remediation-decision]
+      outputs: [throttle-result]
+      controlArchitectureRef: {actuatorRef: actuator-rate-limiter}
+
+    - id: wait-actuator
+      type: Wait
+      name: Await actuator completion
+      stages: [Execute]
+      inputs: [reroute-result]
+      outputs: [actuator-settled]
+      resumeEventRef: evt-actuator-complete
+
+    - id: evt-actuator-complete
+      type: Event
+      name: Actuator completion notification
+      definition: Asynchronous notification that the traffic-engineering actuator finished (§8.7).
+
+    - id: verify-latency
+      type: Verification
+      name: Verify latency outcome
+      stages: [Verify]
+      inputs: [actuator-settled, post-latency-observation]
+      outputs: [verification-result]
+      participationRefs: [hp-notify-ops]
+
+    - id: obs-post-latency
+      type: Observation
+      name: Independent post-action latency probe
+      stages: [Verify]
+      outputs: [post-latency-observation]
+      controlArchitectureRef: {sensorRef: sensor-latency-probe}
+
+    - id: learn-playbook
+      type: Learning
+      name: Record remediation experience
+      stages: [Learn]
+      inputs: [verification-result]
+      outputs: [playbook-record]
+
+    - id: handler-exec
+      type: ExceptionHandler
+      name: Handle execution failure
+      stages: [Execute]
+      inputs: [reroute-result]
+      outputs: [exception-report]
+
+    - id: esc-ops
+      type: Escalation
+      name: Escalate to operations
+      stages: [Decide]
+      inputs: [exception-report]
+      outputs: [escalation-request]
+
+    - id: safe-degraded
+      type: SafeState
+      name: Degraded routing safe state
+      stages: [Execute, Verify]
+
+  relationships:
+    # F — parallel observation + synchronization
+    - {relationshipId: r01, type: FlowsTo, source: obs-latency, target: sync-obs}
+    - {relationshipId: r02, type: FlowsTo, source: obs-traffic, target: sync-obs}
+    - {relationshipId: r03, type: SynchronizesWith, source: obs-latency, target: sync-obs, syncPattern: WaitForAll}
+    - {relationshipId: r23, type: ExecutesInParallelWith, source: obs-latency, target: obs-traffic, parallelGroup: pg-obs}
+    - {relationshipId: r24, type: Invokes, source: sub-telemetry, target: sync-obs}
+    # A — analysis → decision → execution → verification → learning
+    - {relationshipId: r04, type: FlowsTo, source: sync-obs, target: analyze-congestion}
+    - {relationshipId: r05, type: FlowsTo, source: analyze-congestion, target: assess-service}
+    - {relationshipId: r06, type: FlowsTo, source: assess-service, target: decide-remediation}
+    - {relationshipId: r07, type: FlowsTo, source: decide-remediation, target: approve-reroute}
+    # B — conditional remediation branches
+    - {relationshipId: r08, type: BranchesTo, source: decide-remediation, target: execute-reroute, conditionRef: cond-reroute-appropriate}
+    - {relationshipId: r09, type: BranchesTo, source: decide-remediation, target: execute-throttle, conditionRef: cond-congestion-severe}
+    # C — approval gate: grant executes, reject escalates, timeout handled by exception
+    - {relationshipId: r10, type: BranchesTo, source: approve-reroute, target: execute-reroute, conditionRef: cond-approval-granted}
+    - {relationshipId: r11, type: BranchesTo, source: approve-reroute, target: esc-ops, conditionRef: cond-approval-rejected}
+    # G — asynchronous actuator completion
+    - {relationshipId: r12, type: FlowsTo, source: execute-reroute, target: wait-actuator}
+    - {relationshipId: r13, type: Triggers, source: evt-actuator-complete, target: wait-actuator}
+    # A — verification and learning
+    - {relationshipId: r14, type: FlowsTo, source: wait-actuator, target: verify-latency}
+    - {relationshipId: r15, type: FlowsTo, source: obs-post-latency, target: verify-latency}
+    - {relationshipId: r16, type: FlowsTo, source: verify-latency, target: learn-playbook}
+    - {relationshipId: r17, type: RepeatsTo, source: learn-playbook, target: obs-latency, conditionRef: cond-continuous-monitoring}
+    # D — execution failure: retry once, then escalate
+    - {relationshipId: r18, type: HandlesException, source: execute-reroute, target: handler-exec}
+    - {relationshipId: r19, type: RepeatsTo, source: handler-exec, target: execute-reroute, conditionRef: cond-retry-allowed}
+    - {relationshipId: r20, type: EscalatesTo, source: handler-exec, target: esc-ops}
+    # D/C — escalation terminates in the safe state
+    - {relationshipId: r21, type: TerminatesWith, source: esc-ops, target: safe-degraded, terminationOutcome: SafeStateTransition}
+    # E — outcome not achieved: return to analysis with independent evidence
+    - {relationshipId: r22, type: ReturnsTo, source: verify-latency, target: analyze-congestion, conditionRef: cond-outcome-not-achieved}
+
+  conditions:
+    - conditionId: cond-continuous-monitoring
+      category: Temporal
+      subject: monitoring cycle
+      evaluationContext: loop scheduler tick — true at each cycle boundary of the continuously operating loop
+    - conditionId: cond-reroute-appropriate
+      category: Threshold
+      subject: congestion.level
+      operator: lessThan
+      valueRef: severe
+      evaluationContext: service-assessment evaluated by controller-assurance against the loop reference conditions
+    - conditionId: cond-congestion-severe
+      category: Threshold
+      subject: congestion.level
+      operator: greaterThanOrEqual
+      valueRef: severe
+      evaluationContext: service-assessment evaluated by controller-assurance against the loop reference conditions
+    - conditionId: cond-approval-granted
+      category: Authorization
+      subject: reroute-authorization.status
+      evaluationContext: decision recorded by hp-approve-reroute within authorization context pol-routing-auth
+    - conditionId: cond-approval-rejected
+      category: Authorization
+      subject: reroute-authorization.status
+      evaluationContext: decision recorded by hp-approve-reroute within authorization context pol-routing-auth
+    - conditionId: cond-approval-timeout
+      category: Temporal
+      subject: approval.request.age
+      operator: greaterThan
+      valueRef: PT10M
+      freshness: evaluated on the approval request clock
+      evaluationContext: no approver response within the window triggers exc-approval-timeout (§12 timeout behavior)
+    - conditionId: cond-retry-allowed
+      category: Policy
+      subject: exception.retryCount
+      operator: lessThan
+      valueRef: "1"
+      evaluationContext: retry budget from governed policy pol-retry-budget — a declared, not schema-imposed, limit (§8.5)
+    - conditionId: cond-outcome-not-achieved
+      category: State
+      subject: post-latency-observation.p95
+      operator: greaterThan
+      valueRef: goal-service-latency target
+      evaluationContext: independent verification result compared against the goal reference condition (r22)
+    - conditionId: cond-actuator-timeout
+      category: Temporal
+      subject: actuator.completion.age
+      evaluationContext: completion notification expected within the actuator SLA; breach triggers exc-actuator-timeout
+    - conditionId: cond-safe-degraded-entry
+      category: State
+      subject: routing.controlState
+      evaluationContext: unsafe or unverifiable routing state per constraint pol-routing-safety; entry criterion for safe-degraded
+
+  informationDependencies:
+    - {informationId: latency-observation, kind: Required, sourceRef: obs-latency, meaning: raw latency measurement,
+       quality: {freshnessRequirement: within one loop cycle, independentVerificationRequired: false}}
+    - {informationId: traffic-observation, kind: Required, sourceRef: obs-traffic, meaning: traffic matrix sample}
+    - {informationId: fused-observation, kind: Derived, sourceRef: sync-obs, meaning: fused multi-source view (C anchor — fusion dependency)}
+    - {informationId: congestion-assessment, kind: Derived, sourceRef: analyze-congestion}
+    - {informationId: service-assessment, kind: Derived, sourceRef: assess-service}
+    - {informationId: remediation-decision, kind: Derived, sourceRef: decide-remediation}
+    - {informationId: reroute-authorization, kind: Conditional, sourceRef: approve-reroute}
+    - {informationId: reroute-result, kind: Required, sourceRef: execute-reroute}
+    - {informationId: throttle-result, kind: Required, sourceRef: execute-throttle}
+    - {informationId: actuator-settled, kind: Required, sourceRef: wait-actuator}
+    - {informationId: post-latency-observation, kind: IndependentlyVerified, sourceRef: obs-post-latency,
+       meaning: independent post-action measurement — the verification evidence path,
+       quality: {stalenessTolerance: none — must post-date reroute-result, independentVerificationRequired: true}}
+    - {informationId: verification-result, kind: Derived, sourceRef: verify-latency}
+    - {informationId: playbook-record, kind: Derived, sourceRef: learn-playbook}
+    - {informationId: exception-report, kind: Required, sourceRef: handler-exec}
+    - {informationId: escalation-request, kind: Required, sourceRef: esc-ops}
+
+  policyRefs:
+    - policyRefId: pol-routing-auth
+      targetRef: auth-routing-changes
+      sourceSystem: Governance Registry
+      relationship: AuthorizedBy
+      appliesToRefs: [execute-reroute]
+      resolved: true
+    - policyRefId: pol-throttle-auth
+      targetRef: auth-rate-limit-changes
+      sourceSystem: Governance Registry
+      relationship: AuthorizedBy
+      appliesToRefs: [execute-throttle]
+      resolved: true
+    - policyRefId: pol-routing-safety
+      targetRef: constraint-no-unsafe-reroute
+      sourceSystem: Governance Registry
+      relationship: ConstrainedBy
+      appliesToRefs: [decide-remediation, execute-reroute]
+      resolved: true
+    - policyRefId: pol-learning-auth
+      targetRef: policy-playbook-changes
+      sourceSystem: Governance Registry
+      relationship: SubjectTo
+      appliesToRefs: [learn-playbook]
+      resolved: true
+    - policyRefId: pol-retry-budget
+      targetRef: policy-retry-budget
+      sourceSystem: Governance Registry
+      relationship: SubjectTo
+      appliesToRefs: [handler-exec]
+      resolved: true
+
+  humanParticipation:
+    - participationId: hp-approve-reroute
+      role: Approver
+      participationKind: Approval
+      stages: [Decide, Execute]
+      requiredInput: remediation-decision
+      expectedResponse: grant or reject the reroute within the approval window
+      authorizationContextRef: pol-routing-auth
+      timeoutConditionRef: cond-approval-timeout
+      escalationRef: esc-ops
+      effortAnchor:
+        measure: manual approvals per remediation invocation (E anchor, measured per stage)
+        perStage: true
+    - participationId: hp-notify-ops
+      role: Observer
+      participationKind: Notification
+      stages: [Verify]
+      requiredInput: verification-result
+      expectedResponse: none — informational only (distinct from approval, BSS-024)
+
+  exceptions:
+    - exceptionId: exc-exec-failure
+      category: ExecutionFailure
+      affectedElementRef: execute-reroute
+      handlingResponsibility: retry once via handler-exec, then escalate to operations
+      pathRef: handler-exec
+      recoveryOrEscalation: Recovery
+      criticality: Major
+      resumptionCondition: reroute-result reports success, or the retry budget is exhausted (r19/r20)
+    - exceptionId: exc-approval-timeout
+      category: Timeout
+      affectedElementRef: approve-reroute
+      triggerConditionRef: cond-approval-timeout
+      handlingResponsibility: escalate the unapproved remediation to operations
+      pathRef: esc-ops
+      recoveryOrEscalation: Escalation
+      criticality: Critical
+    - exceptionId: exc-actuator-timeout
+      category: Timeout
+      affectedElementRef: wait-actuator
+      triggerConditionRef: cond-actuator-timeout
+      handlingResponsibility: treat the actuator as failed and enter execution-failure handling
+      pathRef: handler-exec
+      recoveryOrEscalation: Recovery
+      criticality: Major
+    - exceptionId: exc-verification-failure
+      category: VerificationFailure
+      affectedElementRef: verify-latency
+      handlingResponsibility: re-analyze with the independent observation path
+      pathRef: analyze-congestion
+      recoveryOrEscalation: Recovery
+      criticality: Major
+      resumptionCondition: ReturnsTo analyze under cond-outcome-not-achieved (r22, pattern E)
+    - exceptionId: exc-human-required
+      category: HumanInterventionRequired
+      affectedElementRef: esc-ops
+      handlingResponsibility: operations assume control; the loop enters the degraded safe state
+      pathRef: safe-degraded
+      recoveryOrEscalation: SafeState
+      criticality: Critical
+
+  safeStates:
+    - safeStateId: safe-degraded-routing
+      scopeRef: network-routing-scope
+      entryConditionRef: cond-safe-degraded-entry
+      expectedOutcome: >-
+        Traffic engineered to last-known-good routes; automated remediation suspended pending operator intent.
+      responsibleAuthorityRef: controller-assurance
+      verificationRef: vr-latency-independent
+
+  verificationRefs:
+    - verificationId: vr-latency-independent
+      elementRef: verify-latency
+      independence: Independent
+      expectedOutcomeRef: goal-service-latency
+      evidenceTarget: p95 latency records from the independent post-action probe path
+    - verificationId: vr-authorization-audit
+      elementRef: verify-latency
+      independence: Delegated
+      resultContractRef: authorization audit service response contract (§9.4 delegated evaluation)
+      expectedOutcomeRef: auth-routing-changes
+      evidenceTarget: authorization audit log
+
+  learningBoundaries:
+    knowledgeRefs: [kb-mode-playbooks]
+    boundaries:
+      - record playbook candidates from verified outcomes only (pattern H)
+      - activation of a playbook requires an AuthorizedBy policy change — learning never modifies policy implicitly
+    authorizationRequiredForPolicyChange: true
+    authorizationPolicyRef: pol-learning-auth
+
+  measurementAnchors:
+    effort:
+      humanParticipationRefs: [hp-approve-reroute, hp-notify-ops]
+      measure: manual touches per behavioral invocation, per stage (approvals + notifications) — the E anchor
+    complexity:
+      architectureRefs: [sensor-latency-probe, sensor-traffic-probe, controller-assurance,
+                         actuator-traffic-engineering, actuator-rate-limiter]
+      fusionDependencies: [fused-observation]
+      dimensions: [structural, dynamic, semantic, coupling]
+    veracity:
+      informationIds: [latency-observation, post-latency-observation]
+      qualityAttributes: [freshness within one cycle, independent verification on the post-action path]
+
+  traceability:
+    intentRefs: [goal-service-latency, goal-service-availability]
+    architectureRefs: [sensor-latency-probe, sensor-traffic-probe, controller-assurance,
+                       actuator-traffic-engineering, actuator-rate-limiter]
+    requirementRefs: [REQ-004, REQ-011]
+
+  governance:
+    approvalRequired: true
+    changeHistory:
+      - version: "1.0.0"
+        date: "2026-11-07"
+        rationale: initial behavioral specification demonstrating the CR-006 reference patterns A–H
+        author: AOCL Engineering

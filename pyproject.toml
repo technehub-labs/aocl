@@ -41,6 +41,7 @@ aocl-realization = "aocl.realization:main"
 aocl-ledger = "aocl.ledger:main"
 aocl-model = "aocl.model:main"
 aocl-metamodel = "aocl.metamodel:main"
+aocl-behavior-spec = "aocl.behavior_spec:main"
 
 [project.optional-dependencies]
 dev = ["jsonschema>=4.21", "build", "pyinstaller"]

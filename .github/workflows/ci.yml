@@ -42,6 +42,12 @@ jobs:
           python3 tools/aocl_metamodel.py examples/canonical-loop.yaml --json > /dev/null
           python3 tools/aocl_metamodel.py --migrate examples/loop-modeler-model.yaml --json > /dev/null
           echo "canonical example valid; migration round-trip ok"
+      - name: Behavioral spec validator + migration (CR-006)
+        run: |
+          python3 tools/aocl_behavior_spec.py --self-test
+          python3 tools/aocl_behavior_spec.py examples/behavioral-spec.yaml --json > /dev/null
+          python3 tools/aocl_behavior_spec.py --migrate examples/loop-modeler-model.yaml --json > /dev/null
+          echo "behavioral example valid (BSS-001..036); migration diagnostics ok"
       - name: Example ledger health (deterministic)
         run: |
           python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
@@ -83,6 +89,9 @@ jobs:
           cl_schema = json.loads(pathlib.Path("schema/canonical-loop.schema.json").read_text())
           Draft202012Validator(cl_schema).validate(yaml.safe_load(pathlib.Path("examples/canonical-loop.yaml").read_text()))
           print("ok   examples/canonical-loop.yaml validates against canonical-loop.schema.json")
+          bs_schema = json.loads(pathlib.Path("schema/behavioral-spec.schema.json").read_text())
+          Draft202012Validator(bs_schema).validate(yaml.safe_load(pathlib.Path("examples/behavioral-spec.yaml").read_text()))
+          print("ok   examples/behavioral-spec.yaml validates against behavioral-spec.schema.json")
           for m in sorted(pathlib.Path("model").glob("*.yaml")):
               yaml.safe_load(m.read_text()); print(f"ok   model  {m.name}")
           # example ledger against its schema

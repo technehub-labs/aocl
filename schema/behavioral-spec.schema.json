@@ -1,0 +1,480 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/behavioral-spec.schema.json",
+  "title": "AOCL Behavioral Specification document (AOCL-CR-006)",
+  "description": "The canonical, technology-independent BehavioralSpecification established by AOCL-CR-006: specification identity and lifecycle (BSS-001..004, BSS-034), context binding to a ClosedLoop (BSS-002), behavioral objectives (BSS-004), stage coverage over the seven canonical responsibilities (BSS-008/009), typed behavioral elements over a directed graph (BSS-005..007, BSS-012..018), conditions and guards (BSS-014/021), information dependencies (BSS-019/020), policy and authority references (BSS-022/023), human participation with E/C/V_d measurement anchors (ADR-007 decision 3, BSS-024), exception/recovery/safe-state model (BSS-025..027), verification responsibilities (BSS-028/029), governed learning boundaries (BSS-030), traceability (BSS-031/032) and governance. Structural rules are expressed here and enforced natively by src/aocl/behavior_spec.py, which adds referential integrity, behavioral conformance and simulation-readiness distinctions (BSS-035/036). Execution semantics are out of scope (CR-010).",
+  "type": "object",
+  "required": ["schemaVersion", "specVersion", "behavioralSpecification"],
+  "properties": {
+    "schemaVersion": { "const": "0.1", "description": "Schema contract version (independent of specVersion, BSS-003)." },
+    "specVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "description": "The specification's own independent version (BSS-003)." },
+    "behavioralSpecification": { "$ref": "#/$defs/BehavioralSpecification" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Stage": {
+      "enum": ["Intent", "Observe", "Analyze", "Decide", "Execute", "Verify", "Learn"],
+      "description": "The seven canonical behavioral responsibilities (CR-006 §7.3)."
+    },
+    "StageCoverage": {
+      "type": "object",
+      "required": ["stage", "status"],
+      "properties": {
+        "stage": { "$ref": "#/$defs/Stage" },
+        "status": {
+          "enum": ["Required", "Realized", "PartiallyRealized", "NotApplicable", "Deferred"],
+          "description": "Declared coverage status (BSS-008). NotApplicable requires justification (BSS-009)."
+        },
+        "justification": { "type": "string", "description": "Mandatory rationale when status is NotApplicable (BSS-009)." }
+      },
+      "additionalProperties": false
+    },
+    "ControlArchitectureRef": {
+      "type": "object",
+      "description": "Traceability to governed CR-004 control-architecture components (BSS-031) — also the C measurement anchor material (ADR-007 decision 3). References, not duplicated definitions.",
+      "properties": {
+        "plantRef": { "type": "string", "minLength": 1 },
+        "sensorRef": { "type": "string", "minLength": 1 },
+        "controllerRef": { "type": "string", "minLength": 1 },
+        "actuatorRef": { "type": "string", "minLength": 1 },
+        "knowledgeRef": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "Element": {
+      "type": "object",
+      "required": ["id", "type", "name"],
+      "properties": {
+        "id": { "type": "string", "minLength": 3, "description": "Unique within the specification (BSS-005)." },
+        "type": {
+          "enum": ["IntentReference", "Observation", "Analysis", "Assessment", "Decision", "Approval",
+                   "Action", "Verification", "Learning", "Event", "Condition", "Wait", "Synchronization",
+                   "Escalation", "ExceptionHandler", "SafeState", "SubSpecification"],
+          "description": "Canonical element vocabulary (CR-006 §7.2, BSS-006); extensions must not redefine canonical semantics."
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string" },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Stage" },
+          "description": "Many-to-many stage association (BSS-007); substantive elements require at least one."
+        },
+        "elementStatus": { "enum": ["Proposed", "Active", "Deprecated"] },
+        "inputs": { "type": "array", "items": { "type": "string" }, "description": "Consumed information ids (BSS-019)." },
+        "outputs": { "type": "array", "items": { "type": "string" }, "description": "Produced information ids, traceable to this element (§10.2)." },
+        "conditionRefs": { "type": "array", "items": { "type": "string" } },
+        "constraintRefs": { "type": "array", "items": { "type": "string" } },
+        "participationRefs": { "type": "array", "items": { "type": "string" }, "description": "Human-participation entries realizing this element (BSS-024)." },
+        "controlArchitectureRef": { "$ref": "#/$defs/ControlArchitectureRef" },
+        "goalRefs": { "type": "array", "items": { "type": "string" }, "description": "Intent/goal traceability (BSS-032)." },
+        "resumeEventRef": { "type": "string", "description": "Wait elements: the event that resumes the suspended path (BSS-018)." },
+        "resumeConditionRef": { "type": "string", "description": "Wait elements: alternative resume condition (BSS-018)." },
+        "parallelGroup": { "type": "string", "description": "Parallel-path group id (BSS-016)." },
+        "syncPattern": {
+          "enum": ["WaitForAll", "WaitForAny", "WaitForSubset", "Conditional", "Timeout"],
+          "description": "Synchronization coordination requirement (BSS-017)."
+        },
+        "syncSubsetSize": { "type": "integer", "minimum": 1 },
+        "syncTimeoutConditionRef": { "type": "string" },
+        "invokedSpecRef": { "type": "string", "description": "SubSpecification: separately governed behavioral specification (§7.2)." },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "source": { "type": "string" },
+            "authority": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "extensions": { "type": "object", "description": "Controlled extension point — canonical semantics must not be overridden (§7.2, §22)." }
+      },
+      "additionalProperties": false
+    },
+    "Relationship": {
+      "type": "object",
+      "required": ["relationshipId", "type", "source", "target"],
+      "properties": {
+        "relationshipId": { "type": "string", "minLength": 3, "description": "Distinct namespace from element ids (BSS-033)." },
+        "type": {
+          "enum": ["FlowsTo", "BranchesTo", "Triggers", "DependsOn", "ExecutesInParallelWith", "SynchronizesWith",
+                   "RepeatsTo", "ReturnsTo", "EscalatesTo", "HandlesException", "TerminatesWith", "Invokes"],
+          "description": "Behavioral relationship vocabulary (CR-006 §8.2, BSS-013) — distinct from CR-005 structural relationships (BSS-033)."
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "target": { "type": "string", "minLength": 1 },
+        "conditionRef": { "type": "string", "description": "Governing condition — mandatory for BranchesTo (BSS-014) and RepeatsTo (BSS-015)." },
+        "parallelGroup": { "type": "string", "description": "Mandatory for ExecutesInParallelWith (BSS-016)." },
+        "syncPattern": { "enum": ["WaitForAll", "WaitForAny", "WaitForSubset", "Conditional", "Timeout"], "description": "Mandatory for SynchronizesWith (BSS-017)." },
+        "terminationOutcome": {
+          "enum": ["SuccessfulCompletion", "VerifiedCompletion", "ControlledTermination", "Cancellation",
+                   "Escalation", "SafeStateTransition", "Failure", "Suspended"],
+          "description": "For TerminatesWith edges (§8.3)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Condition": {
+      "type": "object",
+      "required": ["conditionId", "category", "evaluationContext"],
+      "properties": {
+        "conditionId": { "type": "string", "minLength": 3 },
+        "category": {
+          "enum": ["State", "Threshold", "Temporal", "Event", "Authorization", "Policy", "DataQuality", "Composite"],
+          "description": "Condition categories (CR-006 §9.3)."
+        },
+        "subject": { "type": "string", "description": "Referenced variable or circumstance (§9.2)." },
+        "operator": { "type": "string" },
+        "valueRef": { "type": "string" },
+        "unit": { "type": "string" },
+        "evaluationContext": { "type": "string", "minLength": 1, "description": "Where/how the predicate is evaluated (BSS-021) — external evaluation must name the responsible reference (§9.4)." },
+        "freshness": { "type": "string", "description": "Applicable time/freshness requirement (§9.2)." },
+        "resultInterpretation": { "type": "string" },
+        "memberConditionRefs": { "type": "array", "items": { "type": "string" }, "description": "Composite conditions reference their members." },
+        "provenance": { "type": "object", "properties": { "source": { "type": "string" }, "authority": { "type": "string" } }, "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "InformationDependency": {
+      "type": "object",
+      "required": ["informationId", "kind"],
+      "properties": {
+        "informationId": { "type": "string", "minLength": 3 },
+        "kind": {
+          "enum": ["Required", "Optional", "Conditional", "PotentiallyStale", "Derived", "IndependentlyVerified"],
+          "description": "Information-dependency distinction (CR-006 §10.3, BSS-020)."
+        },
+        "sourceRef": { "type": "string", "description": "Producing element or external source." },
+        "meaning": { "type": "string", "description": "Expected meaning relative to the behavioral responsibility (§10.3)." },
+        "quality": {
+          "type": "object",
+          "description": "Observation-quality declaration — the V_d measurement anchor material (ADR-007 decision 3).",
+          "properties": {
+            "freshnessRequirement": { "type": "string" },
+            "stalenessTolerance": { "type": "string" },
+            "independentVerificationRequired": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "PolicyRef": {
+      "type": "object",
+      "required": ["policyRefId", "targetRef", "relationship"],
+      "properties": {
+        "policyRefId": { "type": "string", "minLength": 3 },
+        "targetRef": { "type": "string", "minLength": 1, "description": "Governed goal/constraint/policy/authorization reference — referenced, never duplicated (§11)." },
+        "sourceSystem": { "type": "string" },
+        "relationship": {
+          "enum": ["SubjectTo", "AuthorizedBy", "ConstrainedBy", "Informs"],
+          "description": "Relationship between behavioral elements and the applicable constraint (§11); Actions require an AuthorizedBy reference (BSS-023)."
+        },
+        "appliesToRefs": { "type": "array", "items": { "type": "string" }, "description": "Element ids the reference applies to." },
+        "resolved": { "type": "boolean", "default": true, "description": "False requires resolutionNote (BSS-022)." },
+        "resolutionNote": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "HumanParticipation": {
+      "type": "object",
+      "required": ["participationId", "role", "participationKind"],
+      "properties": {
+        "participationId": { "type": "string", "minLength": 3 },
+        "role": {
+          "enum": ["DecisionMaker", "Approver", "Operator", "Observer", "Supervisor", "ExceptionHandler", "VerificationAuthority"],
+          "description": "Human participation roles (CR-006 §12)."
+        },
+        "participationKind": {
+          "enum": ["Approval", "Notification", "Intervention", "Verification"],
+          "description": "Approval must be distinguishable from notification (BSS-024)."
+        },
+        "stages": { "type": "array", "items": { "$ref": "#/$defs/Stage" } },
+        "requiredInput": { "type": "string" },
+        "expectedResponse": { "type": "string", "description": "Required human responsibility and expected response (§12)." },
+        "authorizationContextRef": { "type": "string", "description": "Applicable authorization context (§12)." },
+        "timeoutConditionRef": { "type": "string", "description": "Timeout/escalation/fallback when no response arrives (§12)." },
+        "escalationRef": { "type": "string" },
+        "fallbackRef": { "type": "string" },
+        "effortAnchor": {
+          "type": "object",
+          "description": "The E measurement anchor (ADR-007 decision 3): manual-touch measurement per stage.",
+          "required": ["measure"],
+          "properties": {
+            "measure": { "type": "string", "minLength": 1 },
+            "perStage": { "type": "boolean" },
+            "touchesPerInvocation": { "type": "number", "description": "Calibrated manual-touch count; informative until measured." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExceptionPath": {
+      "type": "object",
+      "required": ["exceptionId", "category", "affectedElementRef", "handlingResponsibility", "criticality"],
+      "properties": {
+        "exceptionId": { "type": "string", "minLength": 3 },
+        "category": {
+          "enum": ["ObservationFailure", "DataQualityFailure", "AnalysisFailure", "DecisionFailure", "AuthorizationFailure",
+                   "ExecutionFailure", "VerificationFailure", "Timeout", "DependencyFailure", "ConstraintViolation",
+                   "UnexpectedState", "ExternalServiceFailure", "HumanInterventionRequired"],
+          "description": "Exception categories (CR-006 §13.2, BSS-025)."
+        },
+        "affectedElementRef": { "type": "string", "minLength": 1 },
+        "triggerConditionRef": { "type": "string" },
+        "handlingResponsibility": { "type": "string", "minLength": 1 },
+        "pathRef": { "type": "string", "description": "Recovery/escalation path target element (§13.3)." },
+        "recoveryOrEscalation": { "enum": ["Recovery", "Escalation", "SafeState", "Unresolved"], "description": "Unresolved critical exceptions prevent behavioral conformance (BSS-026)." },
+        "criticality": { "enum": ["Critical", "Major", "Minor"] },
+        "resumptionCondition": { "type": "string", "description": "Expected termination or resumption condition (§13.3)." }
+      },
+      "additionalProperties": false
+    },
+    "SafeState": {
+      "type": "object",
+      "required": ["safeStateId", "scopeRef", "entryConditionRef", "expectedOutcome", "responsibleAuthorityRef", "verificationRef"],
+      "properties": {
+        "safeStateId": { "type": "string", "minLength": 3 },
+        "scopeRef": { "type": "string", "description": "Relevant controlled scope (§13.4)." },
+        "entryConditionRef": { "type": "string", "minLength": 1 },
+        "expectedOutcome": { "type": "string", "minLength": 1 },
+        "responsibleAuthorityRef": { "type": "string", "minLength": 1 },
+        "verificationRef": { "type": "string", "minLength": 1, "description": "Verification responsibility for the safe state (§13.4)." }
+      },
+      "additionalProperties": false
+    },
+    "VerificationRef": {
+      "type": "object",
+      "required": ["verificationId", "elementRef", "independence"],
+      "properties": {
+        "verificationId": { "type": "string", "minLength": 3 },
+        "elementRef": { "type": "string", "minLength": 1, "description": "The Verification-typed element (BSS-028)." },
+        "independence": {
+          "enum": ["Independent", "Delegated", "SamePath"],
+          "description": "SamePath is rejected (BSS-029): action completion is never proof of outcome verification. Delegated requires resultContractRef (§9.4)."
+        },
+        "resultContractRef": { "type": "string", "description": "Expected result contract when evaluation is delegated." },
+        "expectedOutcomeRef": { "type": "string", "description": "Goal or expected outcome this verification establishes (§14)." },
+        "evidenceTarget": { "type": "string", "description": "Where evidence is expected (AOCL-P25) — consumed by CR-008." }
+      },
+      "additionalProperties": false
+    },
+    "LearningBoundaries": {
+      "type": "object",
+      "required": ["authorizationRequiredForPolicyChange"],
+      "properties": {
+        "knowledgeRefs": { "type": "array", "items": { "type": "string" }, "description": "Knowledge resources learning draws on (§14)." },
+        "boundaries": { "type": "array", "items": { "type": "string" }, "description": "Approved adaptation boundaries (BSS-030)." },
+        "authorizationRequiredForPolicyChange": { "type": "boolean", "description": "Must be true: learning never implicitly changes authority, constraints or approved policy (BSS-030, AOCL-P26)." },
+        "authorizationPolicyRef": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "MeasurementAnchors": {
+      "type": "object",
+      "description": "E/C/V_d measurement anchors (ADR-007 decision 3): the specification is measurable by construction.",
+      "properties": {
+        "effort": {
+          "type": "object",
+          "description": "E anchor — manual-touch measurement via human participation.",
+          "required": ["humanParticipationRefs", "measure"],
+          "properties": {
+            "humanParticipationRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "measure": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "complexity": {
+          "type": "object",
+          "description": "C anchor — control-architecture components and fusion/dependency declarations.",
+          "required": ["architectureRefs", "dimensions"],
+          "properties": {
+            "architectureRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "fusionDependencies": { "type": "array", "items": { "type": "string" } },
+            "dimensions": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "enum": ["structural", "dynamic", "semantic", "coupling"] }
+            }
+          },
+          "additionalProperties": false
+        },
+        "veracity": {
+          "type": "object",
+          "description": "V_d anchor — observation-quality declarations.",
+          "required": ["informationIds"],
+          "properties": {
+            "informationIds": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "qualityAttributes": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "BehavioralSpecification": {
+      "type": "object",
+      "required": ["id", "type", "name", "definition", "lifecycleStatus", "closedLoopRef", "objectives",
+                   "stageCoverage", "entry", "termination", "elements", "relationships", "conditions",
+                   "informationDependencies", "policyRefs", "humanParticipation", "exceptions", "safeStates",
+                   "verificationRefs", "traceability", "governance"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^urn:aocl:spec:[a-z0-9][a-z0-9-]*$", "description": "Stable identity (BSS-001); opaque, not derived from names." },
+        "type": { "const": "BehavioralSpecification" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "lifecycleStatus": {
+          "enum": ["Draft", "InReview", "Approved", "Deprecated", "Retired"],
+          "description": "Specification lifecycle distinct from runtime execution (CR-006 §15, BSS-034)."
+        },
+        "closedLoopRef": {
+          "type": "object",
+          "description": "Association with a ClosedLoop through the CR-002 binding mechanism (BSS-002).",
+          "required": ["loopId", "sourceSystem"],
+          "properties": {
+            "loopId": { "type": "string", "pattern": "^urn:aocl:loop:[a-z0-9][a-z0-9-]*$" },
+            "sourceSystem": { "type": "string", "minLength": 1 },
+            "modelBaselineRef": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "decisionArchitectureRef": {
+          "type": "object",
+          "description": "Governed mapping of an existing OODA/MAPE/CUSTOM decision-model selection (CR-006 §20) — a reference, never a substitute for the specification.",
+          "required": ["kind", "source"],
+          "properties": {
+            "kind": { "enum": ["OODA", "MAPE", "CUSTOM"] },
+            "source": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["objectiveId", "goalRef", "description"],
+            "properties": {
+              "objectiveId": { "type": "string", "minLength": 3 },
+              "goalRef": { "type": "string", "minLength": 1, "description": "Traceability to intent/goals (BSS-032)." },
+              "description": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          },
+          "description": "Behavioral outcomes and responsibilities to be realized (BSS-004)."
+        },
+        "stageCoverage": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": { "$ref": "#/$defs/StageCoverage" },
+          "description": "Explicit declaration for each of the seven canonical responsibilities (BSS-008)."
+        },
+        "entry": {
+          "type": "object",
+          "required": ["conditions"],
+          "properties": {
+            "conditions": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "description": { "type": "string" }
+          },
+          "additionalProperties": false,
+          "description": "Entry conditions (BSS-010)."
+        },
+        "termination": {
+          "type": "object",
+          "required": ["outcomes"],
+          "properties": {
+            "outcomes": { "type": "array", "minItems": 1, "items": { "enum": ["SuccessfulCompletion", "VerifiedCompletion", "ControlledTermination", "Cancellation", "Escalation", "SafeStateTransition", "Failure", "Suspended"] } },
+            "description": { "type": "string", "description": "Distinguish invocation termination from loop termination (§8.3)." }
+          },
+          "additionalProperties": false,
+          "description": "Applicable termination outcomes (BSS-011)."
+        },
+        "elements": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Element" } },
+        "relationships": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Relationship" } },
+        "conditions": { "type": "array", "items": { "$ref": "#/$defs/Condition" } },
+        "informationDependencies": { "type": "array", "items": { "$ref": "#/$defs/InformationDependency" } },
+        "policyRefs": { "type": "array", "items": { "$ref": "#/$defs/PolicyRef" } },
+        "humanParticipation": { "type": "array", "items": { "$ref": "#/$defs/HumanParticipation" } },
+        "exceptions": { "type": "array", "items": { "$ref": "#/$defs/ExceptionPath" } },
+        "safeStates": { "type": "array", "items": { "$ref": "#/$defs/SafeState" } },
+        "verificationRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/VerificationRef" } },
+        "learningBoundaries": { "$ref": "#/$defs/LearningBoundaries" },
+        "measurementAnchors": { "$ref": "#/$defs/MeasurementAnchors" },
+        "traceability": {
+          "type": "object",
+          "description": "Specification-level traceability supporting impact analysis (§14, BSS-031/032); per-element refs complement it.",
+          "properties": {
+            "intentRefs": { "type": "array", "items": { "type": "string" } },
+            "architectureRefs": { "type": "array", "items": { "type": "string" } },
+            "requirementRefs": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "controlContractBindings": {
+          "type": "array",
+          "description": "Bindings to CR-007 control contracts — required for simulation readiness, not for behavioral conformance (BSS-036).",
+          "items": {
+            "type": "object",
+            "required": ["bindingId", "contractRef"],
+            "properties": {
+              "bindingId": { "type": "string", "minLength": 3 },
+              "contractRef": { "type": "string", "minLength": 1 },
+              "elementRef": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "scenarioBindings": {
+          "type": "array",
+          "description": "Bindings to CR-009 simulation scenarios — required for simulation readiness (BSS-036).",
+          "items": {
+            "type": "object",
+            "required": ["bindingId", "scenarioRef"],
+            "properties": {
+              "bindingId": { "type": "string", "minLength": 3 },
+              "scenarioRef": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "governance": {
+          "type": "object",
+          "required": ["approvalRequired"],
+          "properties": {
+            "approvalRequired": { "type": "boolean" },
+            "approvedBy": { "type": "string" },
+            "approvalDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+            "changeHistory": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["version", "date", "rationale"],
+                "properties": {
+                  "version": { "type": "string" },
+                  "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+                  "rationale": { "type": "string", "minLength": 1 },
+                  "author": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "supersededBy": { "type": "string", "description": "Supersession reference (§15)." }
+          },
+          "additionalProperties": false
+        },
+        "migrationNotes": {
+          "type": "object",
+          "description": "Migration diagnostics (CR-006 §20): unresolved mappings inventoried, never fabricated.",
+          "properties": {
+            "missingAttributes": { "type": "array", "items": { "type": "string" } },
+            "unresolvedStageMappings": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

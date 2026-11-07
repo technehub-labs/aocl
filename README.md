@@ -54,6 +54,15 @@ aocl-metamodel examples/canonical-loop.yaml          # validate
 aocl-metamodel --migrate examples/loop-modeler-model.yaml   # modeler → canonical (Draft)
 ```
 
+## Behavioral specification (CR-006, implemented)
+
+A loop's behavior is a machine-readable artifact: [schema/behavioral-spec.schema.json](https://github.com/technehub-labs/aocl/blob/main/schema/behavioral-spec.schema.json) (contract) + [src/aocl/behavior_spec.py](https://github.com/technehub-labs/aocl/blob/main/src/aocl/behavior_spec.py) (native validator for rules BSS-001..036). Typed behavioral elements over a directed graph (branching, repetition, parallelism, async waits), stage coverage over the seven canonical responsibilities, exception/safe-state paths, human participation, and governed learning boundaries. Four conformance levels are reported separately (§17): schema / structural / behavioral / **simulation readiness** — a spec can be behaviorally complete and still not simulation-ready until CR-007 contracts and CR-009 scenarios bind (BSS-036). The [reference instance](https://github.com/technehub-labs/aocl/blob/main/examples/behavioral-spec.yaml) demonstrates the eight behavioral patterns (A–H). E/C/V_d measurement anchors (ADR-007) are validated parts of the spec, so it is measurable by construction.
+
+```bash
+aocl-behavior-spec examples/behavioral-spec.yaml     # validate (all four conformance levels)
+aocl-behavior-spec --migrate examples/loop-modeler-model.yaml   # loop registration → Draft skeleton (§20)
+```
+
 ## Architecture baseline
 
 [AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility. The full CR sequence (CR-001..009 modeling foundation, CR-010..013 engines) is tracked in the [architecture index](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/README.md).

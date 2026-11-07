@@ -4,6 +4,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+### Added
+
+- **CR-006 implementation tranche delivered** (behavioral specification schema — the first Modeling-stack tranche): `schema/behavioral-spec.schema.json` (the canonical BehavioralSpecification contract), `src/aocl/behavior_spec.py` + `aocl-behavior-spec` CLI (native validation implementing BSS-001..036 with the four conformance levels of §17 — schema / structural / behavioral / simulation readiness — reported separately per BSS-035/036), and the validated reference instance (`examples/behavioral-spec.yaml`) demonstrating all eight behavioral patterns (A–H) of §19. Carries the ADR-007 decision-3 **E/C/V_d measurement anchors** (human participation = E, control-architecture/fusion declarations = C, observation-quality declarations = V_d) with dangling-anchor rejection, plus loop-registration → Draft-spec migration per §20 (decision-model selections preserved, gaps inventoried, nothing fabricated). CI validates the example against both the JSON Schema and the native validator.
+
 ### Changed
 
 - **ADR-007 — realization promoted to the core decision instrument** ([docs/decisions/adr-007-realization-cost-benefit-instrument.md](docs/decisions/adr-007-realization-cost-benefit-instrument.md)): the cost-benefit thesis (exponential realization effort, diminishing incremental gains, the L3–L4 inflection) is articulated as the organizing premise; `aocl-realization --decide` ships the marginal effort-vs-value decision table with the L3→L4 inflection gate; E/C/V_d measurement anchors bind into CR-006's behavioral specification; the L3 investment gate governs L4–L5 tooling and investment. Informative status preserved for uncalibrated use.
