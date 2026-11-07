@@ -72,6 +72,15 @@ aocl-control-contract examples/control-contract.yaml     # validate (all seven p
 aocl-control-contract --migrate examples/canonical-loop.yaml   # canonical loop → Draft skeleton (§21)
 ```
 
+## Verification and evidence (CR-008, implemented)
+
+What can actually be *demonstrated* — not just executed: [schema/evidence-model.schema.json](https://github.com/technehub-labs/aocl/blob/main/schema/evidence-model.schema.json) (contract) + [src/aocl/evidence_model.py](https://github.com/technehub-labs/aocl/blob/main/src/aocl/evidence_model.py) (native validator for rules VER-001..050). Evidence as a first-class concept with governed types, origin classes (design / test / **simulation** / deployment / **operational** / audit) and explicit claim relationships; verifications over specific claims, criteria and methods; results whose governed outcomes keep **failure distinct from insufficient evidence** (Failed / Inconclusive / Conflicting are never collapsed into success). Enforced: execution evidence never establishes an outcome; a commanded state is not an established state; conflicts are preserved, never silently resolved; self-verification is honestly labeled; safety-critical claims need independent assurance; simulation evidence carries its run identity and never substitutes for operational evidence. The [reference model](https://github.com/technehub-labs/aocl/blob/main/examples/evidence-model.yaml) is the §21 network-assurance chain.
+
+```bash
+aocl-evidence examples/evidence-model.yaml     # validate (all nine profiles)
+aocl-evidence --migrate examples/control-contract.yaml   # control model → Draft skeleton (§22)
+```
+
 ## Architecture baseline
 
 [AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility. The full CR sequence (CR-001..009 modeling foundation, CR-010..013 engines) is tracked in the [architecture index](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/README.md).

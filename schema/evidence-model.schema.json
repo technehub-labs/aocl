@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/evidence-model.schema.json",
+  "title": "AOCL Verification and Evidence Model document (AOCL-CR-008)",
+  "description": "The canonical verification and evidence model established by AOCL-CR-008: Evidence as a first-class concept with governed types, origin classes and claim relationships (VER-001..009), provenance and integrity (VER-006/007, VER-021), multidimensional quality with freshness (VER-019/020), governed verifications over explicit claims, criteria and methods (VER-010..013), results with governed outcome classifications that distinguish failure from insufficient evidence (VER-014..018, AD-008-08), independence classes and assurance requirements (VER-026..030), and the strict separation of simulation evidence from operational evidence (VER-039..043, AD-008-11). Structural rules are expressed here and enforced natively by src/aocl/evidence_model.py, which adds referential integrity, claim-dependent evidential adequacy (execution evidence never establishes an outcome — VER-036), commanded-vs-established transition distinctions (VER-034), conflict preservation (VER-024) and explicit reporting of incomplete chains (VER-050). Evidence collection orchestration is out of scope (CR-010); maturity scoring is untouched (AD-008-13).",
+  "type": "object",
+  "required": ["schemaVersion", "modelVersion", "evidenceModel"],
+  "properties": {
+    "schemaVersion": { "const": "0.1", "description": "Schema contract version." },
+    "modelVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "evidenceModel": { "$ref": "#/$defs/EvidenceModel" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "EvidenceType": {
+      "enum": ["ObservationEvidence", "StateEvidence", "DecisionEvidence", "AuthorizationEvidence", "CommandEvidence",
+               "ExecutionEvidence", "TransitionEvidence", "OutcomeEvidence", "ConstraintEvidence", "SafetyEvidence",
+               "TestEvidence", "SimulationEvidence", "AuditEvidence", "HumanAttestation"],
+      "description": "Canonical evidence categories (CR-008 §7.1, VER-002) — command, execution, transition and outcome evidence remain distinct (AD-008-07)."
+    },
+    "OriginClass": {
+      "enum": ["DesignTime", "TestTime", "SimulationTime", "DeploymentTime", "OperationalTime", "AuditTime"],
+      "description": "Evidence origin (CR-008 §7.2, VER-008) — distinct from evidence type; simulation, test and operational contexts are never conflated (AD-008-06)."
+    },
+    "EvidenceSource": {
+      "type": "object",
+      "required": ["sourceId", "sourceType"],
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 3 },
+        "sourceType": { "enum": ["Sensor", "Telemetry", "Controller", "Actuator", "EventStream", "ExternalSystem", "SimulationEngine", "TestHarness", "HumanVerifier", "AuditMechanism"] },
+        "systemRef": { "type": "string" },
+        "component": { "type": "string" },
+        "version": { "type": "string" },
+        "authority": { "type": "string" },
+        "acquisitionInterface": { "type": "string" },
+        "calibrationRef": { "type": "string", "description": "Calibration or validation reference where applicable." },
+        "trust": { "type": "string", "description": "Trust classification — a source's existence establishes neither quality nor validity (§6.2)." }
+      },
+      "additionalProperties": false
+    },
+    "Evidence": {
+      "type": "object",
+      "required": ["evidenceId", "evidenceType", "name", "subjectRef", "originClass"],
+      "properties": {
+        "evidenceId": { "type": "string", "minLength": 3, "description": "Stable, versionable reference (VER-001, VER-047)." },
+        "evidenceType": { "$ref": "#/$defs/EvidenceType" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "sourceRef": { "type": "string", "description": "Resolves to evidenceSources (VER-003)." },
+        "sourceUnknown": { "type": "boolean", "description": "Explicit declaration that the source is unknown (VER-003) — requires a note." },
+        "sourceUnknownNote": { "type": "string" },
+        "subjectRef": { "type": "string", "minLength": 1, "description": "Subject or applicable scope (VER-005)." },
+        "originClass": { "$ref": "#/$defs/OriginClass" },
+        "temporalRef": { "type": "string", "description": "Time or interval represented (VER-004); acquisition time, not ingestion time (§11.3)." },
+        "acquisitionMethod": { "type": "string" },
+        "provenanceRef": { "type": "string", "description": "EvidenceProvenance record (VER-006)." },
+        "qualityRef": { "type": "string", "description": "EvidenceQuality assessment (VER-019)." },
+        "integrityRef": { "type": "string", "description": "EvidenceIntegrity record (VER-021)." },
+        "contextRef": { "type": "string", "description": "Operating or simulation context (VER-009, VER-041)." },
+        "modelVersionRef": { "type": "string", "description": "Model version the evidence relates to (VER-009, VER-012 basis)." },
+        "derivedFromRefs": { "type": "array", "items": { "type": "string" }, "description": "Source evidence for derived records (VER-007)." },
+        "claimRelationships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["claimRef", "role"],
+            "properties": {
+              "claimRef": { "type": "string", "minLength": 1 },
+              "role": { "enum": ["Supports", "Contradicts", "Qualifies", "Contextualizes", "Supersedes", "DerivedFrom"], "description": "Evidential role (§13.1, VER-044)." }
+            },
+            "additionalProperties": false
+          }
+        },
+        "simulationRun": {
+          "type": "object",
+          "description": "Required for SimulationEvidence (VER-039): run identity and the model versions in force.",
+          "required": ["runId", "scenarioRef", "engineVersion"],
+          "properties": {
+            "runId": { "type": "string", "minLength": 1 },
+            "scenarioRef": { "type": "string", "minLength": 1 },
+            "seed": { "type": ["string", "number"] },
+            "engineVersion": { "type": "string", "minLength": 1 },
+            "behavioralSpecVersion": { "type": "string" },
+            "controlContractVersion": { "type": "string" },
+            "initialConditionsRef": { "type": "string" },
+            "traceRef": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "lifecycleStatus": { "enum": ["Draft", "InReview", "Approved", "Deprecated", "Retired"] },
+        "supersededBy": { "type": "string", "description": "Supersession preserves the original record and reason (VER-025, AD-008-14)." },
+        "supersessionReason": { "type": "string" },
+        "unresolved": { "type": "boolean", "description": "Explicitly reported incomplete record (VER-050)." },
+        "unresolvedNote": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceProvenance": {
+      "type": "object",
+      "description": "Origin, derivation and transformation history (VER-006, AD-008-04).",
+      "required": ["provenanceId", "originSourceRef", "acquisitionTime"],
+      "properties": {
+        "provenanceId": { "type": "string", "minLength": 3 },
+        "originSourceRef": { "type": "string", "minLength": 1 },
+        "acquisitionTime": { "type": "string", "minLength": 1, "description": "Acquisition time — distinct from ingestion time (§11.3)." },
+        "processingSteps": { "type": "array", "items": { "type": "string" }, "description": "Transformations — never silently remove material provenance (§6.4)." },
+        "modelVersion": { "type": "string" },
+        "humanIntervention": { "type": "string" },
+        "integrityRefs": { "type": "array", "items": { "type": "string" } },
+        "chainOfCustody": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceQuality": {
+      "type": "object",
+      "description": "Multidimensional, claim-dependent suitability assessment (VER-019, AD-008-05) — no single numeric score (§11.1).",
+      "required": ["qualityId", "evidenceRef", "dimensions"],
+      "properties": {
+        "qualityId": { "type": "string", "minLength": 3 },
+        "evidenceRef": { "type": "string", "minLength": 1 },
+        "dimensions": {
+          "type": "object",
+          "description": "Assessed per dimension; each present dimension carries an assessment and note.",
+          "properties": {
+            "validity": { "$ref": "#/$defs/QualityDimension" },
+            "accuracy": { "$ref": "#/$defs/QualityDimension" },
+            "freshness": { "$ref": "#/$defs/QualityDimension" },
+            "completeness": { "$ref": "#/$defs/QualityDimension" },
+            "reliability": { "$ref": "#/$defs/QualityDimension" },
+            "relevance": { "$ref": "#/$defs/QualityDimension" },
+            "consistency": { "$ref": "#/$defs/QualityDimension" },
+            "resolution": { "$ref": "#/$defs/QualityDimension" },
+            "traceability": { "$ref": "#/$defs/QualityDimension" },
+            "integrity": { "$ref": "#/$defs/QualityDimension" }
+          },
+          "additionalProperties": false
+        },
+        "freshnessRequirement": { "type": "string", "description": "Temporal requirement where time sensitivity applies (VER-020, §11.3)." },
+        "applicability": { "type": "string", "description": "Context-specific applicability of this assessment (P09)." }
+      },
+      "additionalProperties": false
+    },
+    "QualityDimension": {
+      "type": "object",
+      "required": ["assessment"],
+      "properties": {
+        "assessment": { "enum": ["Sufficient", "Insufficient", "Unknown"] },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceIntegrity": {
+      "type": "object",
+      "description": "Authenticity and integrity status (VER-021) — the canonical model preserves the claim and references, not a specific mechanism (§11.2).",
+      "required": ["integrityId", "evidenceRef", "mechanism", "status"],
+      "properties": {
+        "integrityId": { "type": "string", "minLength": 3 },
+        "evidenceRef": { "type": "string", "minLength": 1 },
+        "mechanism": { "enum": ["Signature", "Hash", "SourceAuthentication", "AccessHistory", "ChainOfCustody", "ImmutableRecord", "TrustedTimestamp"] },
+        "reference": { "type": "string" },
+        "status": { "enum": ["Intact", "Unverified", "Compromised"] }
+      },
+      "additionalProperties": false
+    },
+    "VerificationClaim": {
+      "type": "object",
+      "description": "A proposition to establish, reject or qualify (VER-011, AD-008-03) — specific enough to determine what evidence is relevant (§8.2).",
+      "required": ["claimId", "subject", "proposition", "claimType"],
+      "properties": {
+        "claimId": { "type": "string", "minLength": 3 },
+        "subject": { "type": "string", "minLength": 1 },
+        "proposition": { "type": "string", "minLength": 1 },
+        "claimType": { "enum": ["Authorization", "Execution", "Transition", "Outcome", "Constraint", "Safety", "Learning", "Behavioral"], "description": "Command, execution, transition and outcome claims remain distinct (AD-008-07)." },
+        "contextRef": { "type": "string" },
+        "temporalScope": { "type": "string" },
+        "goalRef": { "type": "string", "description": "Required for Outcome claims (VER-031/046)." },
+        "successCriterionRef": { "type": "string", "description": "Required for Outcome claims (VER-031)." },
+        "contractRef": { "type": "string", "description": "Related control contract (VER-033)." },
+        "transitionRef": { "type": "string", "description": "Related state transition (VER-034)." },
+        "invariantRef": { "type": "string" },
+        "learningGovernanceRef": { "type": "string", "description": "Required for Learning claims (VER-038)." },
+        "assuranceRef": { "type": "string", "description": "Required assurance (VER-027/030)." },
+        "criticality": { "enum": ["Safety", "Regulatory", "Operational", "Performance", "Informational"], "description": "Drives adequacy evaluation (VER-030, P11)." },
+        "unresolved": { "type": "boolean" },
+        "unresolvedNote": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "VerificationCriterion": {
+      "type": "object",
+      "description": "The condition against which a claim is evaluated (VER-012) — a related KPI improving never satisfies a criterion by itself (§8.3).",
+      "required": ["criterionId", "definition", "subjectRef"],
+      "properties": {
+        "criterionId": { "type": "string", "minLength": 3 },
+        "definition": { "type": "string", "minLength": 1 },
+        "subjectRef": { "type": "string", "minLength": 1 },
+        "expected": { "type": "string" },
+        "comparison": { "type": "string" },
+        "unit": { "type": "string" },
+        "tolerance": { "type": "string" },
+        "contextRef": { "type": "string" },
+        "temporalRequirement": { "type": "string" },
+        "evidenceRequirements": { "type": "string", "description": "What evidence the criterion requires (e.g. independence, origin class)." },
+        "acceptanceCondition": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "VerificationMethod": {
+      "type": "object",
+      "description": "How evidence is evaluated against a criterion (VER-013) — assumptions and limitations identified (§8.4).",
+      "required": ["methodId", "category", "description"],
+      "properties": {
+        "methodId": { "type": "string", "minLength": 3 },
+        "category": { "enum": ["DirectMeasurement", "StateComparison", "ThresholdEvaluation", "TemporalEvaluation", "StatisticalEvaluation", "RuleBasedEvaluation", "ContractConformance", "InvariantChecking", "TestExecution", "SimulationEvaluation", "HumanInspection", "IndependentAudit", "ModelBasedVerification"] },
+        "description": { "type": "string", "minLength": 1 },
+        "assumptions": { "type": "string" },
+        "limitations": { "type": "string" },
+        "version": { "type": "string", "description": "Implementation identity material to reproducibility (P10)." }
+      },
+      "additionalProperties": false
+    },
+    "Verification": {
+      "type": "object",
+      "required": ["verificationId", "name", "verificationScope", "verificationType", "claimRefs", "criterionRefs", "methodRefs", "independenceClass"],
+      "properties": {
+        "verificationId": { "type": "string", "minLength": 3 },
+        "name": { "type": "string", "minLength": 1 },
+        "verificationScope": { "type": "string", "minLength": 1, "description": "Subject or scope verified (VER-010)." },
+        "verificationType": { "enum": ["Model", "Behavioral", "Contract", "Transition", "Outcome", "Operational"], "description": "Verification levels (CR-008 §9)." },
+        "claimRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "criterionRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "methodRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "evidenceRefs": { "type": "array", "items": { "type": "string" } },
+        "aggregation": {
+          "type": "object",
+          "description": "Declared aggregation method (§13.2) — correlated evidence must not count as independent confirmation.",
+          "required": ["method"],
+          "properties": {
+            "method": { "type": "string", "minLength": 1 },
+            "correlationNote": { "type": "string", "description": "Required when evidence shares an underlying source." }
+          },
+          "additionalProperties": false
+        },
+        "independenceClass": { "enum": ["Self", "Peer", "Supervisory", "Independent", "ExternalAssurance"], "description": "VER-026; self-verification is never represented as independent (VER-029)." },
+        "independenceRequirementRef": { "type": "string", "description": "The declared independence requirement (VER-027)." },
+        "verifierRef": { "type": "string", "description": "Responsible verifier or mechanism (§8.1)." },
+        "temporalRef": { "type": "string" },
+        "contextRef": { "type": "string" },
+        "modelVersionRef": { "type": "string" },
+        "assumptionsAndLimitations": { "type": "string", "description": "Required for simulation verifications (VER-043)." }
+      },
+      "additionalProperties": false
+    },
+    "VerificationResult": {
+      "type": "object",
+      "required": ["resultId", "verificationRef", "claimRef", "criterionRef", "outcome", "methodRef", "rationale", "evaluatedAt"],
+      "properties": {
+        "resultId": { "type": "string", "minLength": 3 },
+        "verificationRef": { "type": "string", "minLength": 1 },
+        "claimRef": { "type": "string", "minLength": 1 },
+        "criterionRef": { "type": "string", "minLength": 1 },
+        "outcome": { "enum": ["Verified", "NotVerified", "Failed", "Inconclusive", "Conflicting", "NotApplicable", "Deferred", "Invalid"], "description": "Governed classifications — failure is distinct from insufficient evidence (VER-015, AD-008-08)." },
+        "evidenceRefs": { "type": "array", "items": { "type": "string" }, "description": "Evidence considered (VER-014) — required for any positive result." },
+        "methodRef": { "type": "string", "minLength": 1, "description": "Method applied (VER-045)." },
+        "confidence": {
+          "type": "object",
+          "description": "Numeric confidence must identify meaning, scale, derivation and assumptions (VER-023); not all evidence requires numeric confidence (§11.4).",
+          "required": ["meaning", "scale"],
+          "properties": {
+            "value": { "type": "number" },
+            "meaning": { "type": "string", "minLength": 1 },
+            "scale": { "type": "string", "minLength": 1 },
+            "derivation": { "type": "string" },
+            "assumptions": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "limitations": { "type": "string" },
+        "rationale": { "type": "string", "minLength": 1, "description": "Explanation of the conclusion (P08, P10)." },
+        "evaluatedAt": { "type": "string", "minLength": 1 },
+        "validFor": { "type": "string" },
+        "invariantResults": { "type": "array", "items": { "type": "string" }, "description": "Preserved invariant/constraint results (VER-037)." }
+      },
+      "additionalProperties": false
+    },
+    "VerificationFinding": {
+      "type": "object",
+      "description": "An identified condition arising from verification (VER-016) — governed severity.",
+      "required": ["findingId", "description", "severity"],
+      "properties": {
+        "findingId": { "type": "string", "minLength": 3 },
+        "description": { "type": "string", "minLength": 1 },
+        "severity": { "enum": ["Critical", "Major", "Minor", "Observation"] },
+        "resultRef": { "type": "string" },
+        "evidenceRefs": { "type": "array", "items": { "type": "string" } },
+        "correctiveRef": { "type": "string", "description": "Corrective, investigative or escalation action." }
+      },
+      "additionalProperties": false
+    },
+    "VerificationDisposition": {
+      "type": "object",
+      "description": "Governed treatment of a result or finding — never overwrites the original result (VER-017); waivers retain authority, justification, scope and validity (§10.4).",
+      "required": ["dispositionId", "targetRef", "disposition"],
+      "properties": {
+        "dispositionId": { "type": "string", "minLength": 3 },
+        "targetRef": { "type": "string", "minLength": 1 },
+        "disposition": { "enum": ["Accept", "Reject", "Escalate", "Investigate", "Reverify", "Remediate", "Waive", "Defer"] },
+        "preservesOriginalResult": { "type": "boolean" },
+        "waiver": {
+          "type": "object",
+          "description": "Required for Waive dispositions.",
+          "required": ["authorityRef", "justification"],
+          "properties": {
+            "authorityRef": { "type": "string", "minLength": 1 },
+            "justification": { "type": "string", "minLength": 1 },
+            "scope": { "type": "string" },
+            "validity": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceConflict": {
+      "type": "object",
+      "description": "Conflicting evidence preserved, never silently resolved (VER-024, AD-008-10).",
+      "required": ["conflictId", "evidenceRefs", "description"],
+      "properties": {
+        "conflictId": { "type": "string", "minLength": 3 },
+        "evidenceRefs": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+        "description": { "type": "string", "minLength": 1 },
+        "resolutionMethod": { "type": "string" },
+        "resolutionOutcome": { "type": "string" },
+        "unresolved": { "type": "boolean", "description": "Preserving the conflict as unresolved is legitimate; silently resolving it is not." }
+      },
+      "additionalProperties": false
+    },
+    "AssuranceRequirement": {
+      "type": "object",
+      "description": "Required assurance for a claim (VER-028) — traceable to its governing basis; no universal risk scale is imposed (§12.3).",
+      "required": ["assuranceId", "basis", "description", "requiredIndependenceClass"],
+      "properties": {
+        "assuranceId": { "type": "string", "minLength": 3 },
+        "basis": { "enum": ["OperationalCriticality", "Safety", "Regulatory", "Financial", "ServiceImpact", "Reversibility", "RiskOfIncorrectConclusion"] },
+        "description": { "type": "string", "minLength": 1 },
+        "requiredIndependenceClass": { "enum": ["Self", "Peer", "Supervisory", "Independent", "ExternalAssurance"] },
+        "governingRef": { "type": "string", "minLength": 1, "description": "Governance basis (VER-028)." }
+      },
+      "additionalProperties": false
+    },
+    "CrossOriginComparison": {
+      "type": "object",
+      "description": "Cross-origin comparison preserving origin classifications (VER-042, §15.4).",
+      "required": ["comparisonId", "simulationEvidenceRefs", "operationalEvidenceRefs", "conclusion"],
+      "properties": {
+        "comparisonId": { "type": "string", "minLength": 3 },
+        "simulationEvidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "operationalEvidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "variableMappings": { "type": "array", "items": { "type": "string" } },
+        "temporalIntervals": { "type": "string" },
+        "assumptionDifferences": { "type": "string" },
+        "limitations": { "type": "string" },
+        "conclusion": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceModel": {
+      "type": "object",
+      "required": ["id", "type", "name", "definition", "closedLoopRef", "claims"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^urn:aocl:evidence:[a-z0-9][a-z0-9-]*$" },
+        "type": { "const": "EvidenceModel" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "closedLoopRef": {
+          "type": "object",
+          "required": ["loopId", "sourceSystem"],
+          "properties": {
+            "loopId": { "type": "string", "pattern": "^urn:aocl:loop:[a-z0-9][a-z0-9-]*$" },
+            "sourceSystem": { "type": "string", "minLength": 1 },
+            "modelBaselineRef": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "evidenceSources": { "type": "array", "items": { "$ref": "#/$defs/EvidenceSource" } },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/Evidence" } },
+        "provenance": { "type": "array", "items": { "$ref": "#/$defs/EvidenceProvenance" } },
+        "qualityAssessments": { "type": "array", "items": { "$ref": "#/$defs/EvidenceQuality" } },
+        "integrity": { "type": "array", "items": { "$ref": "#/$defs/EvidenceIntegrity" } },
+        "claims": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/VerificationClaim" } },
+        "criteria": { "type": "array", "items": { "$ref": "#/$defs/VerificationCriterion" } },
+        "methods": { "type": "array", "items": { "$ref": "#/$defs/VerificationMethod" } },
+        "verifications": { "type": "array", "items": { "$ref": "#/$defs/Verification" } },
+        "results": { "type": "array", "items": { "$ref": "#/$defs/VerificationResult" } },
+        "findings": { "type": "array", "items": { "$ref": "#/$defs/VerificationFinding" } },
+        "dispositions": { "type": "array", "items": { "$ref": "#/$defs/VerificationDisposition" } },
+        "conflicts": { "type": "array", "items": { "$ref": "#/$defs/EvidenceConflict" } },
+        "assurances": { "type": "array", "items": { "$ref": "#/$defs/AssuranceRequirement" } },
+        "crossOriginComparisons": { "type": "array", "items": { "$ref": "#/$defs/CrossOriginComparison" } },
+        "migrationNotes": {
+          "type": "object",
+          "properties": {
+            "missingAttributes": { "type": "array", "items": { "type": "string" } },
+            "unresolvedMappings": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

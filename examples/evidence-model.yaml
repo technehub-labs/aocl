@@ -1,0 +1,535 @@
+# AOCL Verification and Evidence Model — reference instance (AOCL-CR-008, AC-22/23)
+#
+# The CR-008 §21 network service assurance example, canonicalized: validates against
+# schema/evidence-model.schema.json (structural) and src/aocl/evidence_model.py (semantic, VER-001..050).
+#
+# Demonstrates the evidence chain and the §21 case matrix:
+#   full chain ...................... E-01..E-08: observation → decision → authorization → command →
+#                                     execution → state → outcome → constraint (§21.2)
+#   execution ≠ outcome ............. r-command/r-transition Verified while r-latency stands on E-07, the
+#                                     INDEPENDENT outcome measurement — never on E-05 (VER-036, AD-008-07)
+#   failure case (§21.4) ............ self-test mutation: execution Verified + goal Failed preserved as
+#                                     separate results with a finding
+#   inconclusive case (§21.5) ....... E-10 stale observation with an Insufficient freshness assessment →
+#                                     Inconclusive, never silently Verified (VER-018/020)
+#   conflicting case (§21.6) ........ E-09 contradicts E-07; the conflict record stays unresolved (VER-024)
+#   independence .................... v-outcome Independent via ass-latency (service-critical); the actuator
+#                                     and the sim engine label their own checks honestly as Self (VER-029)
+#   simulation evidence ............. E-SIM-1 carries run/scenario/seed/engine versions (VER-039) and never
+#                                     substitutes for operational evidence (AD-008-11)
+# The learning-record claim is Deferred — reported explicitly, not silently conformant (VER-050).
+schemaVersion: "0.1"
+modelVersion: "1.0.0"
+schemaVersion: '0.1'
+modelVersion: 1.0.0
+evidenceModel:
+  id: urn:aocl:evidence:network-assurance-001
+  type: EvidenceModel
+  name: Network Service Assurance Evidence
+  definition: Verification of the traffic-redistribution intervention against the latency goal.
+  closedLoopRef:
+    loopId: urn:aocl:loop:network-assurance-001
+    sourceSystem: AOCL
+  evidenceSources:
+  - sourceId: src-telemetry
+    sourceType: Telemetry
+    systemRef: network-telemetry
+    trust: calibrated production telemetry
+  - sourceId: src-controller
+    sourceType: Controller
+    systemRef: assurance-controller
+  - sourceId: src-approval
+    sourceType: AuditMechanism
+    systemRef: policy-approval-service
+  - sourceId: src-actuator
+    sourceType: Actuator
+    systemRef: actuator-traffic-engineering
+  - sourceId: src-independent
+    sourceType: Sensor
+    systemRef: independent-probe
+    calibrationRef: cal-2026-10
+  - sourceId: src-capacity
+    sourceType: Telemetry
+    systemRef: resource-monitor
+  - sourceId: src-sim
+    sourceType: SimulationEngine
+    systemRef: aocl-sim
+    version: 1.0.0
+  evidence:
+  - evidenceId: E-01
+    evidenceType: ObservationEvidence
+    name: Initial latency 72 ms
+    sourceRef: src-telemetry
+    subjectRef: network-service
+    temporalRef: t0
+    originClass: OperationalTime
+    contextRef: production
+    provenanceRef: prov-t0
+    qualityRef: q-obs
+    integrityRef: int-t0
+  - evidenceId: E-02
+    evidenceType: DecisionEvidence
+    name: Redistribution selected
+    sourceRef: src-controller
+    subjectRef: assurance-controller
+    originClass: OperationalTime
+    contextRef: production
+    provenanceRef: prov-prod
+  - evidenceId: E-03
+    evidenceType: AuthorizationEvidence
+    name: Intervention authorized
+    sourceRef: src-approval
+    subjectRef: assurance-controller
+    originClass: AuditTime
+    provenanceRef: prov-auth
+  - evidenceId: E-04
+    evidenceType: CommandEvidence
+    name: Command issued
+    sourceRef: src-actuator
+    subjectRef: actuator-traffic-engineering
+    originClass: OperationalTime
+    contextRef: production
+    temporalRef: t1
+    provenanceRef: prov-prod
+  - evidenceId: E-05
+    evidenceType: ExecutionEvidence
+    name: Execution reported complete
+    sourceRef: src-actuator
+    subjectRef: actuator-traffic-engineering
+    originClass: OperationalTime
+    contextRef: production
+    temporalRef: t1
+    provenanceRef: prov-prod
+  - evidenceId: E-06
+    evidenceType: StateEvidence
+    name: Allocation changed
+    sourceRef: src-telemetry
+    subjectRef: network-service
+    temporalRef: t2
+    originClass: OperationalTime
+    contextRef: production
+    provenanceRef: prov-prod
+  - evidenceId: E-07
+    evidenceType: OutcomeEvidence
+    name: Latency returned to 43 ms
+    sourceRef: src-independent
+    subjectRef: network-service
+    temporalRef: t3
+    originClass: OperationalTime
+    contextRef: production
+    provenanceRef: prov-t3
+    qualityRef: q-outcome
+  - evidenceId: E-08
+    evidenceType: ConstraintEvidence
+    name: Capacity constraints satisfied
+    sourceRef: src-capacity
+    subjectRef: network-service
+    originClass: OperationalTime
+    contextRef: production
+    provenanceRef: prov-prod
+  - evidenceId: E-09
+    evidenceType: ObservationEvidence
+    name: Second probe reports 61 ms
+    sourceRef: src-telemetry
+    subjectRef: network-service
+    temporalRef: t3
+    originClass: OperationalTime
+    contextRef: production
+    provenanceRef: prov-prod
+    claimRelationships:
+    - claimRef: c-latency-goal
+      role: Contradicts
+  - evidenceId: E-10
+    evidenceType: ObservationEvidence
+    name: Stale post-intervention observation
+    sourceRef: src-telemetry
+    subjectRef: network-service
+    temporalRef: t3 minus 12 minutes (outside freshness window)
+    originClass: OperationalTime
+    contextRef: production
+    provenanceRef: prov-prod
+    qualityRef: q-stale
+  - evidenceId: E-SIM-1
+    evidenceType: SimulationEvidence
+    name: Invariant suite run
+    sourceRef: src-sim
+    subjectRef: aocl-sim
+    originClass: SimulationTime
+    simulationRun:
+      runId: seed-2026
+      scenarioRef: urn:aocl:scenario:baseline
+      seed: 2026
+      engineVersion: 1.0.0
+      behavioralSpecVersion: 1.0.0
+      controlContractVersion: 1.0.0
+  provenance:
+  - provenanceId: prov-prod
+    originSourceRef: src-telemetry
+    acquisitionTime: '2026-11-07T10:02:00Z'
+    processingSteps:
+    - telemetry pipeline, immutable store
+    chainOfCustody: production telemetry
+  - provenanceId: prov-t0
+    originSourceRef: src-telemetry
+    acquisitionTime: '2026-11-07T10:00:00Z'
+    processingSteps:
+    - cycle aggregation
+    chainOfCustody: telemetry pipeline, immutable store
+  - provenanceId: prov-auth
+    originSourceRef: src-approval
+    acquisitionTime: '2026-11-07T10:01:00Z'
+  - provenanceId: prov-t3
+    originSourceRef: src-independent
+    acquisitionTime: '2026-11-07T10:05:00Z'
+    processingSteps:
+    - none — direct measurement
+    humanIntervention: none
+  qualityAssessments:
+  - qualityId: q-obs
+    evidenceRef: E-01
+    dimensions:
+      validity:
+        assessment: Sufficient
+      freshness:
+        assessment: Sufficient
+        note: within one cycle
+    freshnessRequirement: within one control cycle
+  - qualityId: q-outcome
+    evidenceRef: E-07
+    dimensions:
+      validity:
+        assessment: Sufficient
+      accuracy:
+        assessment: Sufficient
+      freshness:
+        assessment: Sufficient
+        note: within evaluation window
+      reliability:
+        assessment: Sufficient
+        note: calibrated independent probe
+    freshnessRequirement: within the 5-minute evaluation interval
+  - qualityId: q-stale
+    evidenceRef: E-10
+    dimensions:
+      freshness:
+        assessment: Insufficient
+        note: acquired 12 min before use
+    freshnessRequirement: within 5 minutes
+  integrity:
+  - integrityId: int-t0
+    evidenceRef: E-01
+    mechanism: ImmutableRecord
+    reference: telemetry store
+    status: Intact
+  claims:
+  - claimId: c-authorized
+    subject: assurance-controller
+    proposition: the redistribution decision was authorized
+    claimType: Authorization
+    contractRef: ctr-redistribute
+    criticality: Operational
+  - claimId: c-command
+    subject: actuator-traffic-engineering
+    proposition: the redistribution command was issued
+    claimType: Execution
+    criticality: Operational
+  - claimId: c-transition
+    subject: network-service
+    proposition: the plant state changed to the redistributed allocation
+    claimType: Transition
+    transitionRef: tr-degraded-recovering
+    criticality: Operational
+  - claimId: c-latency-goal
+    subject: network-service
+    proposition: service latency returned below 50 ms within the evaluation interval
+    claimType: Outcome
+    goalRef: goal-service-latency
+    successCriterionRef: crit-latency
+    assuranceRef: ass-latency
+    criticality: Operational
+  - claimId: c-capacity
+    subject: network-service
+    proposition: resource constraints remained satisfied
+    claimType: Constraint
+    invariantRef: inv-utilization
+    criticality: Operational
+  - claimId: c-sim-behavior
+    subject: aocl-sim
+    proposition: the modeled policy responds to the modeled disturbance per its specified logic
+    claimType: Behavioral
+    criticality: Informational
+  - claimId: c-learning
+    subject: learning-store
+    proposition: the remediation experience record is evidence-based
+    claimType: Learning
+    learningGovernanceRef: pol-learning-auth
+    criticality: Informational
+  criteria:
+  - criterionId: crit-authority
+    definition: controller authority valid at decision time
+    subjectRef: assurance-controller
+    evidenceRequirements: authorization record from the approval service
+  - criterionId: crit-command
+    definition: command record exists
+    subjectRef: actuator-traffic-engineering
+  - criterionId: crit-exec
+    definition: execution reported complete
+    subjectRef: actuator-traffic-engineering
+  - criterionId: crit-state
+    definition: traffic allocation changed
+    subjectRef: network-service
+  - criterionId: crit-latency
+    definition: p95 latency below 50 ms
+    subjectRef: network-service
+    expected: < 50
+    unit: ms
+    comparison: lessThan
+    tolerance: 0 ms
+    temporalRequirement: within 5 minutes of intervention
+  - criterionId: crit-capacity
+    definition: utilization within bounds
+    subjectRef: network-service
+  - criterionId: crit-sim
+    definition: modeled response matches the specified logic
+    subjectRef: aocl-sim
+  - criterionId: crit-learning
+    definition: learning record cites its evidence
+    subjectRef: learning-store
+  methods:
+  - methodId: m-contract
+    category: ContractConformance
+    description: authorization audit against the contract
+    assumptions: approval service records are authentic
+    version: '1.0'
+  - methodId: m-record
+    category: RuleBasedEvaluation
+    description: command record existence check
+  - methodId: m-exec
+    category: RuleBasedEvaluation
+    description: execution status check
+  - methodId: m-state
+    category: StateComparison
+    description: allocation before/after comparison
+  - methodId: m-measure
+    category: DirectMeasurement
+    description: independent calibrated latency measurement
+    limitations: single-probe measurement
+  - methodId: m-sim
+    category: SimulationEvaluation
+    description: simulation invariant suite evaluation
+    assumptions: modeled environment approximates production
+    limitations: not operational evidence
+  verifications:
+  - verificationId: v-authorized
+    name: Authorization verification
+    verificationScope: assurance-controller
+    verificationType: Contract
+    claimRefs:
+    - c-authorized
+    criterionRefs:
+    - crit-authority
+    methodRefs:
+    - m-contract
+    evidenceRefs:
+    - E-02
+    - E-03
+    independenceClass: Supervisory
+    verifierRef: policy-approval-service
+    temporalRef: t1
+  - verificationId: v-exec
+    name: Execution verification
+    verificationScope: actuator-traffic-engineering
+    verificationType: Contract
+    claimRefs:
+    - c-command
+    criterionRefs:
+    - crit-command
+    methodRefs:
+    - m-record
+    evidenceRefs:
+    - E-04
+    independenceClass: Self
+    verifierRef: actuator-traffic-engineering
+  - verificationId: v-transition
+    name: Transition verification
+    verificationScope: network-service
+    verificationType: Transition
+    claimRefs:
+    - c-transition
+    criterionRefs:
+    - crit-state
+    methodRefs:
+    - m-state
+    evidenceRefs:
+    - E-06
+    independenceClass: Supervisory
+    verifierRef: resource-monitor
+    assumptionsAndLimitations: telemetry-derived state comparison
+  - verificationId: v-outcome
+    name: Latency goal verification
+    verificationScope: network-service
+    verificationType: Outcome
+    claimRefs:
+    - c-latency-goal
+    criterionRefs:
+    - crit-latency
+    methodRefs:
+    - m-measure
+    evidenceRefs:
+    - E-07
+    independenceClass: Independent
+    verifierRef: independent-probe
+    independenceRequirementRef: ass-latency
+    temporalRef: t3
+  - verificationId: v-capacity
+    name: Constraint verification
+    verificationScope: network-service
+    verificationType: Operational
+    claimRefs:
+    - c-capacity
+    criterionRefs:
+    - crit-capacity
+    methodRefs:
+    - m-state
+    evidenceRefs:
+    - E-08
+    independenceClass: Peer
+    verifierRef: resource-monitor
+  - verificationId: v-learning
+    name: Learning record verification
+    verificationScope: learning-store
+    verificationType: Behavioral
+    claimRefs:
+    - c-learning
+    criterionRefs:
+    - crit-learning
+    methodRefs:
+    - m-record
+    independenceClass: Self
+    verifierRef: learning-store
+  - verificationId: v-sim
+    name: Simulated policy response
+    verificationScope: aocl-sim
+    verificationType: Model
+    claimRefs:
+    - c-sim-behavior
+    criterionRefs:
+    - crit-sim
+    methodRefs:
+    - m-sim
+    evidenceRefs:
+    - E-SIM-1
+    independenceClass: Self
+    verifierRef: aocl-sim
+    assumptionsAndLimitations: modeled disturbances only; does not establish operational effectiveness
+      (AD-008-11)
+  - verificationId: v-fidelity
+    name: Cross-origin model fidelity
+    verificationScope: aocl-sim vs production
+    verificationType: Operational
+    claimRefs:
+    - c-latency-goal
+    criterionRefs:
+    - crit-latency
+    methodRefs:
+    - m-sim
+    - m-measure
+    independenceClass: Independent
+    verifierRef: independent-probe
+  results:
+  - resultId: r-auth
+    verificationRef: v-authorized
+    claimRef: c-authorized
+    criterionRef: crit-authority
+    outcome: Verified
+    evidenceRefs:
+    - E-02
+    - E-03
+    methodRef: m-contract
+    rationale: authorization record present and valid
+    evaluatedAt: t1
+  - resultId: r-command
+    verificationRef: v-exec
+    claimRef: c-command
+    criterionRef: crit-command
+    outcome: Verified
+    evidenceRefs:
+    - E-04
+    methodRef: m-record
+    rationale: command record exists
+    evaluatedAt: t1
+  - resultId: r-transition
+    verificationRef: v-transition
+    claimRef: c-transition
+    criterionRef: crit-state
+    outcome: Verified
+    evidenceRefs:
+    - E-06
+    methodRef: m-state
+    rationale: observed allocation changed
+    invariantResults:
+    - inv-utilization held
+    evaluatedAt: t2
+  - resultId: r-latency
+    verificationRef: v-outcome
+    claimRef: c-latency-goal
+    criterionRef: crit-latency
+    outcome: Verified
+    evidenceRefs:
+    - E-07
+    methodRef: m-measure
+    rationale: independent measurement 43 ms within the window
+    evaluatedAt: t3
+    validFor: evaluation interval
+  - resultId: r-capacity
+    verificationRef: v-capacity
+    claimRef: c-capacity
+    criterionRef: crit-capacity
+    outcome: Verified
+    evidenceRefs:
+    - E-08
+    methodRef: m-state
+    rationale: utilization within bounds throughout
+    evaluatedAt: t3
+  - resultId: r-learning
+    verificationRef: v-learning
+    claimRef: c-learning
+    criterionRef: crit-learning
+    outcome: Deferred
+    methodRef: m-record
+    rationale: learning record verification scheduled after the review cycle
+    evaluatedAt: t3
+  - resultId: r-sim
+    verificationRef: v-sim
+    claimRef: c-sim-behavior
+    criterionRef: crit-sim
+    outcome: Verified
+    evidenceRefs:
+    - E-SIM-1
+    methodRef: m-sim
+    rationale: 7/7 invariants hold at seed 2026 — model behaves per its logic
+    limitations: simulation evidence only
+    evaluatedAt: t3
+  - resultId: r-fidelity
+    verificationRef: v-fidelity
+    claimRef: c-latency-goal
+    criterionRef: crit-latency
+    outcome: NotApplicable
+    evidenceRefs:
+    - E-SIM-1
+    - E-07
+    methodRef: m-sim
+    rationale: cross-origin fidelity comparison deferred until an operational interval pairs with a simulation
+      run
+    limitations: no paired run yet — applicability decision recorded
+    evaluatedAt: t3
+  findings: []
+  dispositions: []
+  conflicts: []
+  assurances:
+  - assuranceId: ass-latency
+    basis: ServiceImpact
+    description: latency goal is service-critical
+    requiredIndependenceClass: Independent
+    governingRef: urn:aocl:policy:assurance-latency
+  crossOriginComparisons: []
