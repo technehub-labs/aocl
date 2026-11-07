@@ -1,0 +1,439 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/control-contract.schema.json",
+  "title": "AOCL Control Contract and State-Transition Model document (AOCL-CR-007)",
+  "description": "The canonical control-contract and state-transition model established by AOCL-CR-007: typed control variables with explicit roles (CTM-001..006), the six-way state distinction — actual/observed/estimated/desired/commanded/verified (CTM-007..012), state transitions with guards and governed outcome classifications (CTM-013..018), control contracts with preconditions, explicit authority, expected effects and postconditions that separate execution results from operational outcomes (CTM-019..026), scoped authority with coordination for shared control (CTM-027..029), invariants and safe states (CTM-030..033), and traceability (CTM-034..037). Structural rules are expressed here and enforced natively by src/aocl/control_contract.py, which adds referential integrity, unit-compatibility, authority-coverage, safety-binding and evidential-strength rules, the seven conformance profiles of §19, and simulation readiness reported separately (AD-007-12). Execution semantics are out of scope (CR-010).",
+  "type": "object",
+  "required": ["schemaVersion", "modelVersion", "controlModel"],
+  "properties": {
+    "schemaVersion": { "const": "0.1", "description": "Schema contract version (CTM-039: independent of modelVersion)." },
+    "modelVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "controlModel": { "$ref": "#/$defs/ControlModel" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "VariableRole": {
+      "enum": ["Controlled", "Observed", "Estimated", "Manipulated", "State", "Disturbance", "Reference", "Constraint"],
+      "description": "Canonical variable classifications (CR-007 §6.2, CTM-005) — semantic roles, potentially multiple but each declared."
+    },
+    "ControlVariable": {
+      "type": "object",
+      "required": ["variableId", "name", "definition", "dataType", "roles"],
+      "properties": {
+        "variableId": { "type": "string", "minLength": 3, "description": "Stable identifier (CTM-001); semantic identity independent of measurement mechanism." },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1, "description": "Semantic definition (CTM-002)." },
+        "dataType": { "type": "string", "minLength": 1, "description": "Value type (CTM-002)." },
+        "unit": { "type": "string", "description": "Unit of measurement where applicable (CTM-003)." },
+        "unitless": { "type": "boolean", "description": "Explicitly dimensionless (counts, ratios) — required declaration when a quantity type carries no unit (CTM-003)." },
+        "valueDomain": { "type": "string", "description": "Permitted values or range (CTM-004)." },
+        "precision": { "type": "string" },
+        "operatingContext": { "type": "string" },
+        "roles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/VariableRole" } },
+        "plantRef": { "type": "string", "description": "Plant traceability (CTM-034) — required for Controlled/State roles." },
+        "goalRefs": { "type": "array", "items": { "type": "string" }, "description": "Intent/goal traceability (CTM-034) — required for Controlled/Reference roles." },
+        "derivedFromRefs": { "type": "array", "items": { "type": "string" }, "description": "Derivation sources for Estimated/Derived variables." },
+        "estimatorRef": { "type": "string", "description": "Model or estimator that produces this variable (CTM-012) — required for the Estimated role." },
+        "observedByRef": { "type": "string", "description": "Sensor/observation source (§6.3)." },
+        "provenance": { "type": "object", "properties": { "source": { "type": "string" }, "authority": { "type": "string" } }, "additionalProperties": false },
+        "lifecycleStatus": { "enum": ["Draft", "InReview", "Approved", "Deprecated", "Retired"] },
+        "unresolved": { "type": "boolean", "description": "Explicitly reported unresolved definition (CTM-040) — never silently conformant." },
+        "unresolvedNote": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "StateSpace": {
+      "type": "object",
+      "required": ["stateSpaceId", "subjectRef", "variables"],
+      "properties": {
+        "stateSpaceId": { "type": "string", "minLength": 3 },
+        "subjectRef": { "type": "string", "minLength": 1 },
+        "representation": { "enum": ["discrete", "continuous", "hybrid", "abstract"], "description": "State-space class (§7.3)." },
+        "variables": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["variableRef", "domain"],
+            "properties": {
+              "variableRef": { "type": "string", "minLength": 1 },
+              "domain": { "type": "string", "minLength": 1, "description": "Valid value range (CTM-009) — enumeration or predicate, not an assumed total order." }
+            },
+            "additionalProperties": false
+          }
+        },
+        "operatingModeRefs": { "type": "array", "items": { "type": "string" }, "description": "Applicable operating modes (CTM-010)." },
+        "invariantRefs": { "type": "array", "items": { "type": "string" } },
+        "safeStateRefs": { "type": "array", "items": { "type": "string" } },
+        "initialRequirements": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "OperatingMode": {
+      "type": "object",
+      "required": ["modeId", "definition"],
+      "properties": {
+        "modeId": { "type": "string", "minLength": 3 },
+        "definition": { "type": "string", "minLength": 1, "description": "Domain-defined mode semantics (§7.4, CTM-010) — never assumed universal." }
+      },
+      "additionalProperties": false
+    },
+    "State": {
+      "type": "object",
+      "required": ["stateId", "subjectRef", "classification", "stateVariables", "temporalRef", "provenance"],
+      "properties": {
+        "stateId": { "type": "string", "minLength": 3 },
+        "subjectRef": { "type": "string", "minLength": 1, "description": "Governed subject (CTM-007)." },
+        "classification": {
+          "enum": ["Actual", "Observed", "Estimated", "Desired", "Commanded", "Verified"],
+          "description": "The six-way state distinction (CTM-008, AD-007-03) — representations are not interchangeable."
+        },
+        "stateVariables": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["variableRef", "value"],
+            "properties": {
+              "variableRef": { "type": "string", "minLength": 1 },
+              "value": { "type": ["string", "number", "boolean"] },
+              "unit": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "temporalRef": { "type": "string", "minLength": 1, "description": "Time or interval represented (CTM-011)." },
+        "provenance": { "type": "string", "minLength": 1, "description": "How the state was established (CTM-011)." },
+        "operatingModeRef": { "type": "string" },
+        "confidence": { "type": "string" },
+        "estimatorRef": { "type": "string", "description": "Required for Estimated states (CTM-012): estimates are distinguishable from acquisitions." },
+        "validity": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "StateTransition": {
+      "type": "object",
+      "required": ["transitionId", "transitionType", "trigger", "contractRef"],
+      "properties": {
+        "transitionId": { "type": "string", "minLength": 3 },
+        "name": { "type": "string" },
+        "definition": { "type": "string" },
+        "sourceStateRef": { "type": "string", "description": "Source state id (CTM-013) — or sourcePredicate." },
+        "sourcePredicate": { "type": "string", "description": "Source state predicate for continuous/abstract spaces (CTM-013)." },
+        "targetStateRef": { "type": "string" },
+        "targetPredicate": { "type": "string" },
+        "guard": {
+          "type": "object",
+          "description": "TransitionGuard (§8.2, CTM-014): required for Discrete/Hybrid transitions.",
+          "required": ["evaluationContext"],
+          "properties": {
+            "conditionRefs": { "type": "array", "items": { "type": "string" } },
+            "description": { "type": "string" },
+            "evaluationContext": { "type": "string", "minLength": 1, "description": "Subject, context and condition semantics (§8.2)." }
+          },
+          "additionalProperties": false
+        },
+        "effects": {
+          "type": "array",
+          "description": "Expected changes to state variables (§8.1 transitionEffects).",
+          "items": {
+            "type": "object",
+            "required": ["variableRef", "expectedChange"],
+            "properties": {
+              "variableRef": { "type": "string", "minLength": 1 },
+              "expectedChange": { "type": "string", "minLength": 1 },
+              "unit": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "constraintRefs": { "type": "array", "items": { "type": "string" }, "description": "Applicable constraints and invariants (CTM-016) — empty only with an explicit constraintReview." },
+        "constraintReview": { "type": "string", "description": "Justification when no constraints apply (CTM-016)." },
+        "authorityRef": { "type": "string", "description": "Required authority (CTM-028) — must resolve to a declared AuthorityDefinition; disturbance-driven transitions may use a declared protective mechanism." },
+        "contractRef": { "type": "string", "description": "Governing contract (CTM-036)." },
+        "transitionType": { "enum": ["Discrete", "Continuous", "Hybrid", "Abstract"], "description": "CTM-018." },
+        "trigger": { "enum": ["AuthorizedIntervention", "PlantEvent", "Disturbance", "ExternalEvent", "HumanAction", "ScheduledPolicy"], "description": "CTM-017: disturbance- and externally-initiated transitions are representable." },
+        "possibleOutcomes": { "type": "array", "items": { "enum": ["Completed", "Rejected", "Blocked", "Failed", "Partial", "Interrupted", "Unknown", "Superseded"] }, "description": "Governed outcome classifications (§8.3, CTM-015)." },
+        "entersSafeStateRef": { "type": "string", "description": "Safe state this transition establishes — requires authority and an explicit guard (§11.3, CTM-032)." }
+      },
+      "additionalProperties": false
+    },
+    "ControlContract": {
+      "type": "object",
+      "required": ["contractId", "name", "definition", "contractType", "subjectRef", "permittedScope", "preconditions", "authorization", "expectedEffects", "postconditions", "behavioralElementRefs"],
+      "properties": {
+        "contractId": { "type": "string", "minLength": 3 },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "contractType": { "enum": ["Decision", "Action", "StateTransition", "Verification"], "description": "Contract classifications (§9.2)." },
+        "subjectRef": { "type": "string", "minLength": 1, "description": "Controller, action or controlled scope (CTM-020)." },
+        "targetRef": { "type": "string", "description": "Plant or target component." },
+        "applicableVariableRefs": { "type": "array", "items": { "type": "string" }, "description": "Variables governed by the contract." },
+        "preconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["preconditionId", "description", "governingRef"],
+            "properties": {
+              "preconditionId": { "type": "string", "minLength": 3 },
+              "description": { "type": "string", "minLength": 1 },
+              "conditionRef": { "type": "string" },
+              "governingRef": { "type": "string", "minLength": 1, "description": "Traceable to governing requirement/constraint/policy (§9.3, CTM-021)." }
+            },
+            "additionalProperties": false
+          }
+        },
+        "authorization": {
+          "type": "object",
+          "required": ["authorityRef"],
+          "properties": {
+            "authorityRef": { "type": "string", "minLength": 1, "description": "Explicit authority (CTM-022/028) — never inferred." },
+            "approvalRequired": { "type": "boolean" },
+            "approvalConditions": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "permittedScope": { "type": "string", "minLength": 1, "description": "Scope within which intervention is allowed (CTM-020)." },
+        "constraintRefs": { "type": "array", "items": { "type": "string" }, "description": "Applicable constraints, traceable (CTM-023)." },
+        "expectedEffects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["variableRef", "expectedChange"],
+            "properties": {
+              "variableRef": { "type": "string", "minLength": 1 },
+              "expectedChange": { "type": "string", "minLength": 1 },
+              "targetValue": { "type": ["string", "number", "boolean"] },
+              "targetUnit": { "type": "string", "description": "Must match the variable's declared unit when both present (CTM-006)." }
+            },
+            "additionalProperties": false
+          }
+        },
+        "postconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["postconditionId", "description", "kind"],
+            "properties": {
+              "postconditionId": { "type": "string", "minLength": 3 },
+              "description": { "type": "string", "minLength": 1 },
+              "kind": {
+                "enum": ["ExecutionResult", "OperationalOutcome", "StateEstablished", "InvariantHeld"],
+                "description": "Execution completion is distinct from operational outcome achievement (§9.4, CTM-025, AD-007-09)."
+              },
+              "evidenceSignalRef": { "type": "string", "description": "Supporting signal artifact — its evidential strength must match the claim kind (§12)." },
+              "verificationRef": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "failureConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["description", "disposition"],
+            "properties": {
+              "description": { "type": "string", "minLength": 1 },
+              "disposition": { "enum": ["Reject", "Block", "RequestApproval", "Escalate", "EnterSafeState", "Recovery", "Suspend", "RecordUnresolved"], "description": "Governed dispositions (§9.5, CTM-026)." },
+              "safeStateRef": { "type": "string" },
+              "conditionRef": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "compensationPolicyRef": { "type": "string" },
+        "behavioralElementRefs": { "type": "array", "items": { "type": "string" }, "description": "Traceability to BehavioralSpecification elements (CTM-035) — required for Action contracts (CTM-019)." },
+        "lifecycleStatus": { "enum": ["Draft", "InReview", "Approved", "Deprecated", "Retired"] },
+        "version": { "type": "string" },
+        "unresolved": { "type": "boolean" },
+        "unresolvedNote": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "AuthorityDefinition": {
+      "type": "object",
+      "required": ["authorityId", "subjectRef", "scopeRef", "permittedVariables"],
+      "properties": {
+        "authorityId": { "type": "string", "minLength": 3 },
+        "subjectRef": { "type": "string", "minLength": 1, "description": "Authorized subject (controller) (CTM-027)." },
+        "actionClasses": { "type": "array", "items": { "type": "string" } },
+        "scopeRef": { "type": "string", "minLength": 1 },
+        "permittedVariables": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["variableRef"],
+            "properties": {
+              "variableRef": { "type": "string", "minLength": 1 },
+              "controlRange": {
+                "type": "object",
+                "description": "Permitted value range (§6.4 ControlRange).",
+                "properties": { "min": { "type": "number" }, "max": { "type": "number" }, "unit": { "type": "string" } },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "operatingModeRefs": { "type": "array", "items": { "type": "string" }, "description": "Modes in which authority applies (§10.1)." },
+        "constraintRefs": { "type": "array", "items": { "type": "string" } },
+        "delegation": {
+          "type": "object",
+          "properties": { "permitted": { "type": "boolean" }, "conditions": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "approvalRequirements": { "type": "string" },
+        "validity": { "type": "string", "description": "Validity period or revocation conditions (§10.1)." },
+        "authorityClass": { "enum": ["Supervisory", "Primary", "Protective", "Limited"], "description": "Authority class for precedence semantics (§10.3) — never inferred from hierarchy." }
+      },
+      "additionalProperties": false
+    },
+    "CoordinationRule": {
+      "type": "object",
+      "description": "Explicit coordination semantics for shared or overlapping control scopes (CTM-029, §10.3).",
+      "required": ["coordinationId", "variableRefs", "precedence", "conflictDetection", "arbitration"],
+      "properties": {
+        "coordinationId": { "type": "string", "minLength": 3 },
+        "variableRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "precedence": { "type": "string", "minLength": 1, "description": "Declared priority — no implicit priority from hierarchy or model placement." },
+        "coordination": { "type": "string" },
+        "conflictDetection": { "type": "string", "minLength": 1 },
+        "arbitration": { "type": "string", "minLength": 1, "description": "Arbitration or escalation policy." }
+      },
+      "additionalProperties": false
+    },
+    "StateInvariant": {
+      "type": "object",
+      "required": ["invariantId", "subject", "statement", "priorityClass", "governingRef"],
+      "properties": {
+        "invariantId": { "type": "string", "minLength": 3 },
+        "subject": { "type": "string", "minLength": 1, "description": "Variable, plant, component, transition, scope or composite." },
+        "appliesTo": { "enum": ["Variable", "Plant", "Component", "Transition", "Scope", "Composite"] },
+        "variableRefs": { "type": "array", "items": { "type": "string" } },
+        "statement": { "type": "string", "minLength": 1 },
+        "priorityClass": { "enum": ["Safety", "Regulatory", "Operational", "Performance"], "description": "Precedence class — Safety/Regulatory constraints are binding on interventions (CTM-033)." },
+        "governingRef": { "type": "string", "minLength": 1, "description": "Traceable (CTM-030)." }
+      },
+      "additionalProperties": false
+    },
+    "SafeState": {
+      "type": "object",
+      "required": ["safeStateId", "scopeRef", "variableConditions", "operatingModeRef", "entryConditions", "authorityRef", "exitConditions", "verificationRefs"],
+      "properties": {
+        "safeStateId": { "type": "string", "minLength": 3 },
+        "scopeRef": { "type": "string", "minLength": 1 },
+        "variableConditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["variableRef", "condition"],
+            "properties": { "variableRef": { "type": "string", "minLength": 1 }, "condition": { "type": "string", "minLength": 1 } },
+            "additionalProperties": false
+          }
+        },
+        "operatingModeRef": { "type": "string", "minLength": 1 },
+        "entryConditions": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Entry conditions (CTM-032)." },
+        "authorityRef": { "type": "string", "minLength": 1, "description": "Required authority or pre-authorized protective mechanism (§11.2)." },
+        "permittedActions": { "type": "array", "items": { "type": "string" } },
+        "prohibitedActions": { "type": "array", "items": { "type": "string" } },
+        "exitConditions": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "verificationRefs": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Verification requirements (CTM-032) — a safe-state command is not a safe state achieved (§11.3)." },
+        "recoveryRef": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SignalArtifact": {
+      "type": "object",
+      "description": "Control and feedback information artifacts (§12) — different evidential strength, never interchangeable.",
+      "required": ["signalId", "kind", "producedByRef", "evidentialStrength"],
+      "properties": {
+        "signalId": { "type": "string", "minLength": 3 },
+        "kind": { "enum": ["ControlSignal", "Command", "Acknowledgement", "ExecutionStatus", "FeedbackSignal", "Observation", "StateEstimate", "VerificationEvidence"] },
+        "producedByRef": { "type": "string", "minLength": 1 },
+        "evidentialStrength": {
+          "enum": ["Instruction", "Receipt", "ExecutionReport", "Measurement", "Inference", "VerifiedOutcome"],
+          "description": "Acknowledgement ≠ execution ≠ plant state ≠ verified outcome (AD-007-09)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "VerificationReference": {
+      "type": "object",
+      "description": "Minimal verification reference (CTM-037) — claims only; the evidence model itself is owned by CR-008 and is not duplicated here.",
+      "required": ["verificationRef", "claim"],
+      "properties": {
+        "verificationRef": { "type": "string", "minLength": 3 },
+        "claim": { "type": "string", "minLength": 1 }
+      }
+    },
+    "ControlModel": {
+      "type": "object",
+      "required": ["id", "type", "name", "definition", "closedLoopRef", "controlVariables", "contracts", "authority"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^urn:aocl:control:[a-z0-9][a-z0-9-]*$" },
+        "type": { "const": "ControlModel" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "closedLoopRef": {
+          "type": "object",
+          "required": ["loopId", "sourceSystem"],
+          "properties": {
+            "loopId": { "type": "string", "pattern": "^urn:aocl:loop:[a-z0-9][a-z0-9-]*$" },
+            "sourceSystem": { "type": "string", "minLength": 1 },
+            "modelBaselineRef": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "decisionArchitectureRef": {
+          "type": "object",
+          "description": "Governed decision-architecture mapping (§15) — the contract remains authoritative regardless of architecture.",
+          "required": ["kind", "source"],
+          "properties": { "kind": { "enum": ["OODA", "MAPE", "CUSTOM"] }, "source": { "type": "string", "minLength": 1 } },
+          "additionalProperties": false
+        },
+        "controlVariables": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/ControlVariable" } },
+        "stateSpaces": { "type": "array", "items": { "$ref": "#/$defs/StateSpace" } },
+        "operatingModes": { "type": "array", "items": { "$ref": "#/$defs/OperatingMode" } },
+        "states": { "type": "array", "items": { "$ref": "#/$defs/State" } },
+        "transitions": { "type": "array", "items": { "$ref": "#/$defs/StateTransition" } },
+        "contracts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/ControlContract" } },
+        "authority": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/AuthorityDefinition" } },
+        "coordination": { "type": "array", "items": { "$ref": "#/$defs/CoordinationRule" } },
+        "invariants": { "type": "array", "items": { "$ref": "#/$defs/StateInvariant" } },
+        "safeStates": { "type": "array", "items": { "$ref": "#/$defs/SafeState" } },
+        "signals": { "type": "array", "items": { "$ref": "#/$defs/SignalArtifact" } },
+        "verificationRefs": { "type": "array", "items": { "$ref": "#/$defs/VerificationReference" } },
+        "scenarioBindings": {
+          "type": "array",
+          "description": "Bindings to CR-009 scenarios — required for simulation readiness (AD-007-12).",
+          "items": {
+            "type": "object",
+            "required": ["bindingId", "scenarioRef"],
+            "properties": { "bindingId": { "type": "string", "minLength": 3 }, "scenarioRef": { "type": "string", "minLength": 1 } },
+            "additionalProperties": false
+          }
+        },
+        "simulationIntent": {
+          "type": "object",
+          "description": "Declared simulation purpose (§19 Simulation Readiness profile).",
+          "properties": { "intendedType": { "enum": ["Logical", "StateBased", "Hybrid"] }, "requiredFidelity": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "migrationNotes": {
+          "type": "object",
+          "properties": {
+            "missingAttributes": { "type": "array", "items": { "type": "string" } },
+            "unresolvedMappings": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

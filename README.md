@@ -63,6 +63,15 @@ aocl-behavior-spec examples/behavioral-spec.yaml     # validate (all four confor
 aocl-behavior-spec --migrate examples/loop-modeler-model.yaml   # loop registration → Draft skeleton (§20)
 ```
 
+## Control contracts and state transitions (CR-007, implemented)
+
+What a loop is *permitted* to control, under what conditions, and how a transition is evaluated: [schema/control-contract.schema.json](https://github.com/technehub-labs/aocl/blob/main/schema/control-contract.schema.json) (contract) + [src/aocl/control_contract.py](https://github.com/technehub-labs/aocl/blob/main/src/aocl/control_contract.py) (native validator for rules CTM-001..040). Typed control variables with explicit roles; the six-way state distinction (actual / observed / estimated / desired / commanded / verified); transitions with guards and governed outcomes; contracts with preconditions, explicit authority, expected effects and postconditions that separate **execution completion from operational outcome** (an acknowledgement is not execution, an execution report is not plant state); scoped authority that is never inferred from relationships, with explicit coordination where scopes overlap; binding safety invariants and verified safe states. Seven conformance profiles (§19) are reported separately, with simulation readiness assessed independently (AD-007-12). The [reference model](https://github.com/technehub-labs/aocl/blob/main/examples/control-contract.yaml) is the §17 network-assurance example.
+
+```bash
+aocl-control-contract examples/control-contract.yaml     # validate (all seven profiles)
+aocl-control-contract --migrate examples/canonical-loop.yaml   # canonical loop → Draft skeleton (§21)
+```
+
 ## Architecture baseline
 
 [AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility. The full CR sequence (CR-001..009 modeling foundation, CR-010..013 engines) is tracked in the [architecture index](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/README.md).

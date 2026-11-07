@@ -1,0 +1,360 @@
+# AOCL Control Contract and State-Transition Model — reference instance (AOCL-CR-007, AC-21)
+#
+# The CR-007 §17 network service assurance example, canonicalized: validates against
+# schema/control-contract.schema.json (structural) and src/aocl/control_contract.py
+# (semantic, CTM-001..040 + AD-007-09 evidential strength).
+#
+# Demonstrates the CR's core semantic boundaries:
+#   six-way state distinction ....... st-*-obs/est/commanded (Observed vs Estimated vs Commanded, CTM-008/012)
+#   authority never inferred ........ auth-assurance / auth-supervisory / auth-protective declared explicitly;
+#                                     overlap on traffic-allocation covered by coord-allocation (CTM-027..029)
+#   execution ≠ outcome ............. ctr-redistribute postconditions separate ExecutionResult (execution
+#                                     status) from StateEstablished (observation) from OperationalOutcome
+#                                     (verification evidence) — each supported by a signal of matching
+#                                     evidential strength (AD-007-09, §12)
+#   safety binding .................. inv-availability (Safety) bound by every contract touching svc-latency (CTM-033)
+#   safe-state governance ........... safe-latency-mode entered only via pre-authorized protective authority
+#                                     and verified through vr-safe-mode — a safe-state command is not a
+#                                     safe state achieved (CTM-032, §11.3)
+#   hybrid transitions .............. discrete mode changes + continuous latency evolution (CTM-018)
+# Simulation readiness is reported separately from structural conformance (AD-007-12); the
+# scenarioBindings (CR-009) are intentionally absent, so this model is conformant but not simulation-ready.
+schemaVersion: "0.1"
+modelVersion: "1.0.0"
+
+controlModel:
+  id: urn:aocl:control:network-assurance-001
+  type: ControlModel
+  name: Network Service Assurance Control Model
+  definition: >-
+    Controls end-to-end service latency through authorized traffic-allocation interventions,
+    distinguishing commanded transitions from established ones and execution results from verified outcomes.
+  closedLoopRef:
+    loopId: urn:aocl:loop:network-assurance-001
+    sourceSystem: AOCL
+    modelBaselineRef: baseline-2026-11
+  decisionArchitectureRef:
+    kind: MAPE
+    source: preserved selection from loop registration aocl-loop-network-assurance-001
+
+  controlVariables:
+    - variableId: svc-latency
+      name: Service latency
+      definition: End-to-end service latency of the assured network service.
+      dataType: quantity
+      unit: ms
+      valueDomain: 0..10000 ms
+      precision: 1 ms
+      operatingContext: steady-state and transient measurement windows
+      roles: [Controlled]
+      plantRef: network-service
+      goalRefs: [goal-service-latency]
+      provenance: {source: AOCL control model, authority: Service Owner}
+      lifecycleStatus: Approved
+    - variableId: measured-latency
+      name: Measured latency
+      definition: Latency acquired through the latency probe.
+      dataType: quantity
+      unit: ms
+      roles: [Observed]
+      observedByRef: sensor-latency-probe
+    - variableId: predicted-latency
+      name: Predicted latency
+      definition: Latency inferred by the congestion estimator.
+      dataType: quantity
+      unit: ms
+      roles: [Estimated]
+      derivedFromRefs: [measured-latency, demand-external]
+      estimatorRef: estimator-congestion
+    - variableId: traffic-allocation
+      name: Traffic allocation
+      definition: Fraction of service traffic on the primary route.
+      dataType: quantity
+      unit: percent
+      valueDomain: 0..100 percent
+      roles: [Manipulated]
+      plantRef: network-service
+    - variableId: demand-external
+      name: External demand
+      definition: External traffic demand — an influence not controlled by this loop.
+      dataType: quantity
+      unit: Gbps
+      roles: [Disturbance]
+    - variableId: target-latency
+      name: Target latency
+      definition: Setpoint assigned from the latency reference condition (a control parameter, not the Goal itself).
+      dataType: quantity
+      unit: ms
+      roles: [Reference]
+      goalRefs: [goal-service-latency]
+    - variableId: max-utilization
+      name: Maximum permitted utilization
+      definition: Capacity boundary used to define a control limit.
+      dataType: quantity
+      unit: percent
+      valueDomain: 0..100 percent
+      roles: [Constraint]
+
+  operatingModes:
+    - {modeId: normal, definition: Nominal service operation within bounds.}
+    - {modeId: degraded, definition: Latency above the operating bound; remediation active.}
+    - {modeId: recovering, definition: Authorized redistribution in progress.}
+    - {modeId: safe-mode, definition: Governed acceptable-risk state; automated remediation suspended pending operator intent.}
+
+  stateSpaces:
+    - stateSpaceId: ss-network-service
+      subjectRef: network-service
+      representation: hybrid
+      variables:
+        - {variableRef: svc-latency, domain: "continuous, 0..10000 ms (not enumerated — §7.3)"}
+        - {variableRef: traffic-allocation, domain: "continuous, 0..100 percent"}
+        - {variableRef: demand-external, domain: "continuous, exogenous"}
+      operatingModeRefs: [normal, degraded, recovering, safe-mode]
+      invariantRefs: [inv-availability, inv-utilization]
+      safeStateRefs: [safe-latency-mode]
+      initialRequirements: service in normal mode with a valid baseline observation
+
+  states:
+    - stateId: st-normal-obs
+      subjectRef: network-service
+      classification: Observed
+      stateVariables: [{variableRef: measured-latency, value: 42, unit: ms}]
+      temporalRef: cycle t
+      provenance: acquired by sensor-latency-probe
+      operatingModeRef: normal
+      validity: fresh within one cycle
+    - stateId: st-degraded-est
+      subjectRef: network-service
+      classification: Estimated
+      stateVariables: [{variableRef: predicted-latency, value: 61, unit: ms}]
+      temporalRef: cycle t+1 (projected)
+      provenance: inferred by estimator-congestion
+      estimatorRef: estimator-congestion
+      operatingModeRef: degraded
+      confidence: estimate — distinguished from acquisition (CTM-012)
+    - stateId: st-degraded-obs
+      subjectRef: network-service
+      classification: Observed
+      stateVariables: [{variableRef: measured-latency, value: 63, unit: ms}]
+      temporalRef: cycle t+1
+      provenance: acquired by sensor-latency-probe
+      operatingModeRef: degraded
+    - stateId: st-reroute-commanded
+      subjectRef: network-service
+      classification: Commanded
+      stateVariables: [{variableRef: traffic-allocation, value: 70, unit: percent}]
+      temporalRef: cycle t
+      provenance: assurance-controller command under ctr-redistribute
+      operatingModeRef: recovering
+
+  transitions:
+    - transitionId: tr-normal-degraded
+      name: Latency breach
+      definition: Disturbance drives the service past the operating bound.
+      sourceStateRef: st-normal-obs
+      targetStateRef: st-degraded-obs
+      transitionType: Discrete
+      trigger: Disturbance
+      guard:
+        description: valid, fresh observation exceeds the 50 ms bound
+        evaluationContext: observation freshness and tolerance evaluated by the assurance controller
+      constraintRefs: [inv-availability]
+      authorityRef: auth-protective
+      contractRef: ctr-decide
+      possibleOutcomes: [Completed, Unknown]
+    - transitionId: tr-degraded-recovering
+      name: Authorized redistribution
+      definition: The controller commands a permitted reallocation.
+      sourceStateRef: st-degraded-obs
+      targetStateRef: st-reroute-commanded
+      transitionType: Discrete
+      trigger: AuthorizedIntervention
+      guard:
+        description: requested allocation within the declared control range and preconditions satisfied
+        evaluationContext: authority and constraint evaluation under ctr-redistribute
+      effects: [{variableRef: traffic-allocation, expectedChange: redistribution toward less congested routes, unit: percent}]
+      constraintRefs: [inv-availability, inv-utilization]
+      authorityRef: auth-assurance
+      contractRef: ctr-redistribute
+      possibleOutcomes: [Completed, Rejected, Blocked, Failed, Interrupted]
+    - transitionId: tr-recovering-normal
+      name: Verified recovery
+      definition: Latency returns below the bound — confirmed by independent verification, not by the command.
+      sourcePredicate: measured latency below target-latency in recovering mode
+      targetStateRef: st-normal-obs
+      transitionType: Hybrid
+      trigger: PlantEvent
+      guard:
+        description: post-intervention latency verified against the reference condition
+        evaluationContext: independent verification under ctr-verify (continuous evolution crossing a discrete bound)
+      constraintRefs: []
+      constraintReview: >-
+        no additional constraints beyond the binding invariants already evaluated on the entry
+        transition; availability and utilization remain monitored by their invariants
+      authorityRef: auth-protective
+      contractRef: ctr-verify
+      possibleOutcomes: [Completed, Partial, Unknown]
+
+  contracts:
+    - contractId: ctr-redistribute
+      name: Traffic Redistribution Contract
+      contractType: Action
+      definition: Redistributes traffic allocation to reduce congestion within authorized bounds (§17.2).
+      subjectRef: assurance-controller
+      targetRef: network-service
+      applicableVariableRefs: [traffic-allocation, svc-latency]
+      permittedScope: traffic allocation within the declared control range (0..85 percent)
+      preconditions:
+        - {preconditionId: pre-fresh-obs, description: current latency observation is valid and sufficiently fresh, governingRef: "urn:aocl:policy:observation-freshness"}
+        - {preconditionId: pre-eligible-mode, description: service in Normal or Degraded operating mode, governingRef: "urn:aocl:policy:operating-modes"}
+        - {preconditionId: pre-authority, description: controller holds authority over traffic allocation, governingRef: auth-assurance}
+        - {preconditionId: pre-capacity, description: alternative route capacity is available, governingRef: "urn:aocl:policy:capacity"}
+        - {preconditionId: pre-no-interlock, description: no safety interlock active, governingRef: inv-availability}
+      authorization:
+        authorityRef: auth-assurance
+        approvalRequired: true
+        approvalConditions: changes beyond the approved control range require supervisory approval
+      constraintRefs: [inv-availability, inv-utilization]
+      expectedEffects:
+        - {variableRef: traffic-allocation, expectedChange: redistribution toward less congested routes, targetUnit: percent}
+      postconditions:
+        - {postconditionId: post-exec, description: the command has a recorded execution disposition, kind: ExecutionResult, evidenceSignalRef: sig-exec-status}
+        - {postconditionId: post-state, description: the resulting traffic allocation is observed or otherwise established, kind: StateEstablished, evidenceSignalRef: sig-latency-obs}
+        - {postconditionId: post-outcome, description: service latency measured after the intervention and evaluated against the reference, kind: OperationalOutcome, evidenceSignalRef: sig-verification}
+        - {postconditionId: post-invariants, description: resource and service constraints remain satisfied, kind: InvariantHeld}
+      failureConditions:
+        - {description: actuator rejects or fails the command, disposition: Escalate}
+        - {description: safety condition breached during execution, disposition: EnterSafeState, safeStateRef: safe-latency-mode}
+        - {description: outcome cannot be established, disposition: RecordUnresolved}
+      compensationPolicyRef: "urn:aocl:policy:route-revert"
+      behavioralElementRefs: ["urn:aocl:spec:network-assurance-001#execute-reroute"]
+      lifecycleStatus: Draft
+      version: "1.0.0"
+    - contractId: ctr-decide
+      name: Remediation Decision Contract
+      contractType: Decision
+      definition: Selects a permitted remediation transition when latency breaches the bound.
+      subjectRef: assurance-controller
+      targetRef: network-service
+      permittedScope: decision selection within policy
+      preconditions:
+        - {preconditionId: pre-assessment, description: congestion assessment available and in-date, governingRef: "urn:aocl:policy:assessment-quality"}
+      authorization:
+        authorityRef: auth-assurance
+      constraintRefs: [inv-availability]
+      expectedEffects:
+        - {variableRef: svc-latency, expectedChange: intended reduction toward target, targetUnit: ms}
+      postconditions:
+        - {postconditionId: post-decision, description: "a permitted, authorized transition is selected", kind: ExecutionResult}
+      failureConditions:
+        - {description: no permitted remediation exists, disposition: Escalate}
+      behavioralElementRefs: ["urn:aocl:spec:network-assurance-001#decide-remediation"]
+    - contractId: ctr-verify
+      name: Post-intervention Verification Contract
+      contractType: Verification
+      definition: Evaluates the latency condition against the reference through the independent observation path.
+      subjectRef: verification-path
+      permittedScope: read-only evaluation, no intervention
+      preconditions:
+        - {preconditionId: pre-exec-recorded, description: execution disposition recorded for the intervention, governingRef: ctr-redistribute}
+      authorization:
+        authorityRef: auth-protective
+      expectedEffects:
+        - {variableRef: measured-latency, expectedChange: post-intervention measurement, targetUnit: ms}
+      postconditions:
+        - {postconditionId: post-verified, description: latency condition evaluated against the reference, kind: OperationalOutcome, evidenceSignalRef: sig-verification, verificationRef: vr-latency}
+      failureConditions:
+        - {description: verification evidence insufficient, disposition: RecordUnresolved}
+      behavioralElementRefs: ["urn:aocl:spec:network-assurance-001#verify-latency"]
+
+  authority:
+    - authorityId: auth-assurance
+      subjectRef: assurance-controller
+      scopeRef: network-routing-scope
+      actionClasses: [traffic.redistribute]
+      authorityClass: Primary
+      permittedVariables:
+        - variableRef: traffic-allocation
+          controlRange: {min: 0, max: 85, unit: percent}
+      operatingModeRefs: [normal, degraded]
+      constraintRefs: [inv-utilization]
+      delegation: {permitted: false}
+      approvalRequirements: supervisory approval beyond the control range
+      validity: revocable by governance at any time
+    - authorityId: auth-supervisory
+      subjectRef: supervisory-controller
+      scopeRef: network-routing-scope
+      actionClasses: [traffic.redistribute, traffic.override]
+      authorityClass: Supervisory
+      permittedVariables:
+        - variableRef: traffic-allocation
+          controlRange: {min: 0, max: 100, unit: percent}
+      operatingModeRefs: [normal, degraded, recovering]
+    - authorityId: auth-protective
+      subjectRef: protective-mechanism
+      scopeRef: network-service
+      actionClasses: [mode.enter-safe]
+      authorityClass: Protective
+      permittedVariables:
+        - {variableRef: traffic-allocation}
+      operatingModeRefs: [safe-mode]
+      constraintRefs: [inv-availability]
+
+  coordination:
+    - coordinationId: coord-allocation
+      variableRefs: [traffic-allocation]
+      precedence: protective > supervisory > primary — declared explicitly, never inferred from hierarchy (CTM-029)
+      coordination: allocation deltas reconciled per control cycle
+      conflictDetection: concurrent deltas on traffic-allocation compared each cycle
+      arbitration: higher authority class wins; unresolved conflicts escalate to governance
+
+  invariants:
+    - invariantId: inv-availability
+      subject: network-service
+      appliesTo: Plant
+      variableRefs: [svc-latency]
+      statement: service availability remains above the contractual minimum at all times
+      priorityClass: Safety
+      governingRef: "urn:aocl:policy:service-availability"
+    - invariantId: inv-utilization
+      subject: network-service
+      appliesTo: Variable
+      variableRefs: [max-utilization]
+      statement: resource utilization does not exceed available capacity
+      priorityClass: Operational
+      governingRef: "urn:aocl:policy:capacity"
+
+  safeStates:
+    - safeStateId: safe-latency-mode
+      scopeRef: network-routing-scope
+      variableConditions:
+        - {variableRef: traffic-allocation, condition: held at last-known-good allocation}
+      operatingModeRef: safe-mode
+      entryConditions:
+        - critical safety condition per inv-availability, or EnterSafeState disposition under ctr-redistribute
+      authorityRef: auth-protective
+      prohibitedActions: [further redistribution]
+      exitConditions:
+        - operator intent recorded and safe-mode conditions re-verified
+      verificationRefs: [vr-safe-mode]
+      recoveryRef: ctr-verify
+
+  signals:
+    - {signalId: sig-command, kind: Command, producedByRef: assurance-controller, evidentialStrength: Instruction}
+    - {signalId: sig-ack, kind: Acknowledgement, producedByRef: actuator-traffic-engineering, evidentialStrength: Receipt}
+    - {signalId: sig-exec-status, kind: ExecutionStatus, producedByRef: actuator-traffic-engineering, evidentialStrength: ExecutionReport}
+    - {signalId: sig-latency-obs, kind: Observation, producedByRef: sensor-latency-probe, evidentialStrength: Measurement}
+    - {signalId: sig-estimate, kind: StateEstimate, producedByRef: estimator-congestion, evidentialStrength: Inference}
+    - {signalId: sig-verification, kind: VerificationEvidence, producedByRef: verification-path, evidentialStrength: VerifiedOutcome}
+
+  verificationRefs:
+    - {verificationRef: vr-safe-mode, claim: the safe-mode variable conditions hold on the governed scope}
+    - {verificationRef: vr-latency, claim: post-intervention latency evaluated against the goal reference condition}
+
+  simulationIntent:
+    intendedType: StateBased
+    requiredFidelity: discrete modes with continuous latency evolution (hybrid, abstract — no solver mandated)
+
+  migrationNotes:
+    missingAttributes: []
+    unresolvedMappings: []

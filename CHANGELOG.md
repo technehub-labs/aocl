@@ -4,6 +4,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+### Added
+
+- **CR-007 implementation tranche delivered** (control contracts and state transitions): `schema/control-contract.schema.json` (the ControlModel contract), `src/aocl/control_contract.py` + `aocl-control-contract` CLI (native validation implementing CTM-001..040 with the seven conformance profiles of §19 reported separately and simulation readiness assessed independently per AD-007-12), and the validated reference instance (`examples/control-contract.yaml` — the §17 network-assurance example, acceptance criterion 21). Enforced, not just representable: the six-way state distinction with estimator-named estimates (CTM-008/012), authority never inferred from relationships (CTM-028) with explicit coordination required for overlapping control scopes (CTM-029), execution-completion ≠ operational-outcome via evidential-strength matching of postcondition claims against their supporting signals (AD-007-09 — acknowledgement does not establish execution, execution status does not establish plant state), safety/regulatory invariants binding on any contract touching a covered variable (CTM-033), and unit compatibility (CTM-006). §21 migration carries goal reference conditions into Draft skeletons and deliberately does NOT convert controlled-system bindings into authority.
+
 ## [0.1.2] — 2026-11-07
 
 ### Added
