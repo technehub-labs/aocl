@@ -283,5 +283,115 @@
     function evDur(events, et) { const ev = events.find((e) => e[0] === et); return ev ? ev[2] || ev[3] : 0; }
   }
 
-  return { simulate, LCG, LEVEL, VELOCITY, HITL, HORIZON, SETPOINT, TOLERANCE, DRIFT };
+  /* ---------------- planner (port of aocl.realization fit/plan) ---------------- */
+
+  function leastSquares(xs, ys) {
+    const n = xs.length;
+    const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+    let sxy = 0, sxx = 0;
+    for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; }
+    const b = sxx ? sxy / sxx : 0, a = my - b * mx;
+    const ssTot = ys.reduce((acc, y) => acc + (y - my) ** 2, 0);
+    const ssRes = ys.reduce((acc, y, i) => acc + (y - (a + b * xs[i])) ** 2, 0);
+    const r2 = ssTot ? 1 - ssRes / ssTot : 1;
+    return { a, b, r2 };
+  }
+
+  function fitCurveShape(points) {
+    const pts = points.slice().sort((p, q) => p.level - q.level)
+      .map((p) => [Number(p.level), Number(p.cost)]);
+    if (pts.length < 3) throw new Error("at least 3 calibrated cost points are required");
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    const r2of = (pred) => {
+      const my = ys.reduce((a, b) => a + b, 0) / ys.length;
+      const ssTot = ys.reduce((a, y) => a + (y - my) ** 2, 0);
+      const ssRes = ys.reduce((a, y, i) => a + (y - pred(xs[i])) ** 2, 0);
+      return ssTot ? 1 - ssRes / ssTot : 1;
+    };
+    const lin = leastSquares(xs, ys);
+    const lg = leastSquares(xs.map((x) => Math.log(x)), ys);
+    const cands = [
+      { shape: "linear", r2: lin.r2, params: { a: lin.a, b: lin.b },
+        project: (l) => Math.max(lin.a + lin.b * l, 0) },
+      { shape: "logarithmic", r2: lg.r2, params: { a: lg.a, b: lg.b },
+        project: (l) => Math.max(lg.a + lg.b * Math.log(l), 0) },
+    ];
+    if (ys.every((y) => y > 0)) {
+      const ex = leastSquares(xs, ys.map((y) => Math.log(y)));
+      const a = Math.exp(ex.a), b = ex.b;
+      cands.push({ shape: "exponential", r2: r2of((x) => a * Math.exp(b * x)),
+                   params: { a: a, b: b }, project: (l) => Math.max(a * Math.exp(b * l), 0) });
+    }
+    const order = ["linear", "logarithmic", "exponential"];
+    cands.sort((c1, c2) => (Math.round(c2.r2 * 1e4) - Math.round(c1.r2 * 1e4))
+             || (order.indexOf(c1.shape) - order.indexOf(c2.shape)));
+    const best = cands[0];
+    return { shape: best.shape, r2: +best.r2.toFixed(4), params: best.params,
+             candidates: cands, project: best.project };
+  }
+
+  const REF_EFFORT = { 1: 1.1519, 2: 1.6487, 3: 2.7183, 4: 5.4739, 5: 37.5862 };
+  const AOCL_RULESET = "1.0.0";
+
+  function planInvestment(p) {
+    const budget = p.budget;
+    if (budget === undefined || budget === null || budget < 0) {
+      throw new Error("budget must be a non-negative number");
+    }
+    let costFit, cumCost, costSource;
+    if (p.costPoints && p.costPoints.length >= 3) {
+      costFit = fitCurveShape(p.costPoints);
+      cumCost = {};
+      p.costPoints.forEach((pt) => { cumCost[Number(pt.level)] = Number(pt.cost); });
+      costSource = "calibrated";
+    } else {
+      costFit = { shape: "reference-illustration", r2: null };
+      cumCost = Object.assign({}, REF_EFFORT);
+      costSource = "uncalibrated reference illustration (Table 1.1)";
+    }
+    let valueSource, cumValue, projectValue;
+    if (p.valuePoints && p.valuePoints.length >= 3) {
+      const vfit = fitCurveShape(p.valuePoints.map((pt) => ({ level: pt.level, cost: pt.value })));
+      cumValue = {};
+      p.valuePoints.forEach((pt) => { cumValue[Number(pt.level)] = Number(pt.value); });
+      valueSource = "calibrated (" + vfit.shape + ", R2=" + vfit.r2 + ")";
+      projectValue = (l) => Math.max(vfit.project(l), 0);
+    } else {
+      valueSource = "uncalibrated research value models (log through L3, exponential from L3)";
+      projectValue = (l) => (l <= 3 ? Math.log(1 + l) / Math.log(6)
+                              : Math.exp(l - 3) / Math.exp(0) * Math.log(4) / Math.log(6));
+      cumValue = {};
+      for (let l = 1; l <= 5; l++) cumValue[l] = +projectValue(l).toFixed(4);
+    }
+    const rows = [];
+    for (let l = 1; l <= 5; l++) {
+      const keys = Object.keys(cumCost).map(Number);
+      const cost = cumCost[l] !== undefined ? cumCost[l] : cumCost[Math.max.apply(null, keys)];
+      const vals = Object.keys(cumValue).map(Number);
+      const value = cumValue[l] !== undefined ? cumValue[l] : Math.max.apply(null, vals);
+      rows.push({ level: "L" + l, cumulative_cost: +cost.toFixed(3),
+                  projected_value: +value.toFixed(3), within_budget: cost <= budget,
+                  benefit_per_cost: cost ? +(value / cost).toFixed(3) : null });
+    }
+    const reachable = rows.filter((r) => r.within_budget);
+    const maxLevel = reachable.length
+      ? Math.max.apply(null, reachable.map((r) => Number(r.level.slice(1)))) : 0;
+    const keys = Object.keys(cumCost).map(Number).sort(function (a, b) { return a - b; });
+    const marginal = [];
+    for (let i = 0; i < keys.length - 1; i++) {
+      const a = keys[i], b = keys[i + 1];
+      const dc = cumCost[b] - cumCost[a], dv = (cumValue[b] || 0) - (cumValue[a] || 0);
+      marginal.push({ transition: "L" + a + " to L" + b, marginal_cost: +dc.toFixed(3),
+                      marginal_value: +dv.toFixed(3),
+                      value_per_cost: dc ? +(dv / dc).toFixed(3) : null });
+    }
+    return { ruleset_version: AOCL_RULESET, budget: budget,
+             cost_source: costSource, cost_shape: costFit.shape, cost_fit_r2: costFit.r2,
+             value_source: valueSource, rows: rows,
+             max_level_within_budget: "L" + maxLevel, marginal_analysis: marginal,
+             status: "informative planning support — calibrate before investment decisions" };
+  }
+
+  return { simulate, LCG, LEVEL, VELOCITY, HITL, HORIZON, SETPOINT, TOLERANCE, DRIFT,
+           fitCurveShape, planInvestment };
 });

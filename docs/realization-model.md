@@ -79,6 +79,8 @@ Table 1.1 reference points (theoretical illustrations, not measured benchmarks):
 
 The marginal cost-benefit analysis per level transition — the tool form of the thesis. Effort multiples from the Table 1.1 reference points; value multiples from the two value models; the L3→L4 gate flagged:
 
+> **These multiples are the uncalibrated reference illustration** — the controlled research scenario that first exhibited the exponential-cost pattern. They are not your numbers: real cost curves may be exponential, logarithmic or even near-linear depending on domain, scope, environment and starting position. Calibrate with your own data (`--calibrate`) and let the planner classify the shape before drawing conclusions.
+
 | Transition | Effort multiple | Value multiple | Benefit / effort |
 |---|---|---|---|
 | L1→L2 | 1.43× | 1.58× | **1.11** — the automation frontier pays first |
@@ -87,6 +89,19 @@ The marginal cost-benefit analysis per level transition — the tool form of the
 | L4→L5 | 6.89× | 2.72× | **0.40** — the exponential cost dominates |
 
 Reading: L1→L2 and the L3→L4 crossing are the two justified investments *under the uncalibrated reference model*; L2→L3 and L4→L5 require organizational calibration and per-loop value evidence before commitment. This is the thesis as a decision procedure — always re-run with your own measured E, C, V_d and calibrated effort/value factors.
+
+## Calibration primacy and the planning instrument
+
+The exponential pattern above was observed in **one controlled research scenario** — it illustrates the shape, it does not legislate it. Real cost curves differ by domain, scope, environment and starting position: some are exponential (heavy AI/ML and digital-twin dependencies), some logarithmic (platforms where the hard integration work lands early), some near-linear (incremental RPA-style estates). Treating "exponential" as universal would be the same mistake as treating any single maturity number as universal.
+
+Therefore ([ADR-007](decisions/adr-007-realization-cost-benefit-instrument.md), calibration primacy):
+
+1. **Calibrate the cost side** — supply your own cumulative cost-to-reach-level points; the planner fits linear, logarithmic and exponential curves and reports which shape your data supports, with the fit quality.
+2. **Calibrate the value side** — supply your own realized-value points (burden reduction, excursion reduction, verified outcomes) or fall back to the research value models, clearly labeled uncalibrated.
+3. **Plan against a budget** — given a cost budget (and optionally a target Experience), the planner projects the L1–L5 cost/benefit curve, reports the highest level your budget reaches, the marginal benefit-per-cost at each transition, and where the value/cost crossover occurs.
+4. **Classify before concluding** — the tool tells you whether *your* curve looks logarithmic (front-loaded gains: automate the easy 80% and hold), exponential (late-level costs dominate: only mission-critical loops justify L4+), or linear (steady pay-as-you-go escalation). That classification is the input to the investment decision, not the Table 1.1 illustration.
+
+The 7× figure in the table below remains the research scenario's controlled illustration — useful for understanding the *shape* of the asymmetry, never as a planning constant.
 
 ## Design rules (source §4.6)
 

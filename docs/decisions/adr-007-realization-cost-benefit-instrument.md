@@ -48,3 +48,17 @@ The CR dependency sequence is unchanged (CR-006 → CR-007 → CR-008 → CR-009
 
 - The value models (log/exp) have no calibrated α/β; the instrument ships with corpus reference points and explicit "uncalibrated" labels until organizational data exists.
 - Whether E should be decomposed per human *role* (operator vs observer vs end-user) is deferred — the current E is a single index over routine manual effort.
+
+
+## Refinement — calibration primacy and curve-shape classification (2026-11-07)
+
+User direction, adopted: the exponential-cost pattern was observed in **one controlled research scenario** (the corpus's Table 1.1 illustration). It demonstrates that costs *can* grow exponentially — it does not constrain every domain to that shape. Cost curves may be exponential, logarithmic or near-linear depending on domain, scope, environment and starting position, and the framework must help organizations **discover which shape applies to them** rather than assume one.
+
+Accordingly:
+
+1. **No baked-in constants.** The Table 1.1 multiples (including the 7× L4→L5 figure) are the reference scenario's illustration — labeled as such everywhere, never used as planning defaults where calibration exists.
+2. **Cost calibration tool** — `aocl-realization --calibrate`: fit the organization's own cumulative cost-per-level points against linear, logarithmic and exponential shapes; report the supported shape with fit quality.
+3. **Planning tool** — `aocl-realization --plan`: given a cost budget (and optionally a target Experience), project the L1–L5 cost/benefit curve from the calibrated (or explicitly uncalibrated reference) shape, report the highest level the budget reaches, marginal benefit-per-cost per transition, and emit the projected chart.
+4. **The plan, documentation, enrichment, visualization, tools and simulations** carry this primacy: the decision table labels its multiples as the reference illustration; the canvas and planner charts distinguish calibrated from reference projections; simulation scenario variants double as investment stress tests under the calibrated curve.
+
+This refines Decision 2 of this ADR — it does not change the CR dependency order or the L3 investment gate.
