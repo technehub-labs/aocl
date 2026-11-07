@@ -81,6 +81,15 @@ aocl-evidence examples/evidence-model.yaml     # validate (all nine profiles)
 aocl-evidence --migrate examples/control-contract.yaml   # control model → Draft skeleton (§22)
 ```
 
+## Simulation scenarios (CR-009, implemented)
+
+The conditions under which loop behavior is evaluated: [schema/scenario.schema.json](https://github.com/technehub-labs/aocl/blob/main/schema/scenario.schema.json) (contract) + [src/aocl/scenario.py](https://github.com/technehub-labs/aocl/blob/main/src/aocl/scenario.py) (native validator for rules SCN-001..057). Governed, versioned scenarios with explicit initial conditions (actual plant state kept distinct from what the controller observes), typed range-checked parameters, first-class disturbances with governed classifications and an explicit controller-visibility declaration (a simulated controller never sees the scenario's hidden ground truth), event schedules with cycle-checked dependencies, controlled variants, recorded assumptions, and reproducibility with seeds and stable dataset snapshots. **Mode-specific readiness** (§21): a scenario can be logical-simulation-ready while incomplete for state-based simulation. The [reference library](https://github.com/technehub-labs/aocl/blob/main/examples/scenario-library.yaml) carries the §23 congestion-and-recovery scenario and its variants.
+
+```bash
+aocl-scenario examples/scenario-library.yaml     # validate (all ten profiles + readiness)
+aocl-scenario --migrate model/behavior.yaml      # sim-canvas config → Draft skeletons (§24)
+```
+
 ## Architecture baseline
 
 [AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility. The full CR sequence (CR-001..009 modeling foundation, CR-010..013 engines) is tracked in the [architecture index](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/README.md).

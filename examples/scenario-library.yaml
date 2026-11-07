@@ -1,0 +1,526 @@
+# AOCL Simulation Scenario Library — reference instance (AOCL-CR-009, AC-27/28)
+#
+# The CR-009 §23 network service assurance scenario, canonicalized: validates against
+# schema/scenario.schema.json (structural) and src/aocl/scenario.py (semantic, SCN-001..057).
+#
+# Demonstrates the acceptance patterns:
+#   base scenario ................... SCN-NET-001 Congestion and Recovery (§23.1..23.7): explicit initial
+#                                     states, typed range-checked parameters, a step Demand disturbance,
+#                                     an event schedule with dependencies, verification targets
+#   hidden disturbance .............. d-demand-spike declares knownToController: false — the simulated
+#                                     Controller responds to what it can see, never the ground truth (§11.5)
+#   actual vs observed .............. initial states carry stateClass Actual + Observed separately (SCN-011,
+#                                     AD-009-04); variant C extends the split for stale telemetry (§23.10)
+#   variants (§23.8) ................ SCN-NET-001-C (stale telemetry — DataQuality disturbance) and
+#                                     SCN-NET-001-F (competing loop interventions — multi-loop with a
+#                                     declared shared resource) extend the base with explicit differences
+#   event dependencies .............. ev-obs depends on ev-onset; ev-verify on ev-obs — cycle-checked (SCN-034)
+#   reproducibility ................. seed declared; compatibility assessed against the exact baseline
+# Mode-specific readiness is reported separately (SCN-054/055, AD-009-15).
+schemaVersion: "0.1"
+modelVersion: "1.0.0"
+schemaVersion: '0.1'
+modelVersion: 1.0.0
+scenarioLibrary:
+  id: urn:aocl:scenarios:network-assurance
+  type: ScenarioLibrary
+  name: Network Assurance Scenario Library
+  definition: Reference scenarios for the CR-009 acceptance patterns.
+  closedLoopRef:
+    loopId: urn:aocl:loop:network-assurance-001
+    sourceSystem: AOCL
+  contexts:
+  - contextId: ctx-net
+    domain: Network Operations
+    environment: production-like service topology
+    plantRef: network-service
+  scenarios:
+  - scenarioId: SCN-NET-001
+    scenarioType: Normal
+    name: Network Service Congestion and Recovery
+    definition: Evaluate whether the assurance loop detects congestion, remediates within authority, and
+      restores latency.
+    version: 1.0.0
+    lifecycleStatus: InReview
+    contextRef: ctx-net
+    modelRefs:
+      closedLoopRefs:
+      - urn:aocl:loop:network-assurance-001
+      behavioralSpecRef: urn:aocl:spec:network-assurance-001
+      controlModelRef: urn:aocl:control:network-assurance-001
+      evidenceModelRef: urn:aocl:evidence:network-assurance-001
+    modelVersionRefs:
+    - baseline-2026-11
+    initialConditions:
+      method: Explicit
+      states:
+      - initialStateId: is-plant-latency
+        subjectRef: network-service
+        stateVariableRef: svc-latency
+        value: 42
+        valueType: numeric
+        unit: ms
+        stateClass: Actual
+        initializationMethod: Explicit
+      - initialStateId: is-obs-latency
+        subjectRef: network-service
+        stateVariableRef: svc-latency
+        value: 42
+        valueType: numeric
+        unit: ms
+        stateClass: Observed
+        initializationMethod: Explicit
+      - initialStateId: is-mode
+        subjectRef: network-service
+        stateVariableRef: operating-mode
+        value: normal
+        valueType: operating-mode state
+        stateClass: Actual
+        initializationMethod: Explicit
+    parameters:
+    - parameterId: p-target
+      name: Latency target
+      definition: Goal setpoint.
+      valueType: numeric
+      value: 50
+      unit: ms
+      variationMode: Fixed
+      allowedRange:
+        min: 1
+        max: 1000
+    - parameterId: p-demand
+      name: Traffic increase
+      definition: Disturbance magnitude.
+      valueType: numeric
+      value: 35
+      unit: percent
+      variationMode: Ranged
+      allowedRange:
+        min: 0
+        max: 100
+    operatingConditions:
+    - conditionId: oc-normal
+      scope: network-service
+      basis: Static
+      operatingModeRef: urn:aocl:control:network-assurance-001#mode-normal
+    environmentalConditions:
+    - conditionId: ec-demand
+      subjectRef: external-traffic
+      definition: External demand pattern, distinct from plant state.
+    disturbances:
+    - disturbanceId: d-demand-spike
+      disturbanceType: Demand
+      name: Sudden traffic demand increase
+      definition: Step increase in external demand 60 s after start.
+      targetRefs:
+      - network-service
+      magnitude: 35
+      magnitudeUnit: percent
+      onset:
+        basis: RelativeTime
+        at: 60 s
+      duration: persistent until remediation
+      profile:
+        kind: Step
+      effect:
+        variableRef: svc-latency
+        effect: latency rises toward the congestion threshold
+      knownToController: false
+    events:
+    - eventId: ev-start
+      eventType: ScenarioStart
+      name: Scenario starts
+      trigger:
+        basis: RelativeTime
+        at: 0 s
+      subjectRef: network-service
+      ordering: Independent
+    - eventId: ev-onset
+      eventType: DisturbanceOnset
+      name: Demand increases
+      trigger:
+        basis: RelativeTime
+        at: 60 s
+      subjectRef: network-service
+      ordering: Independent
+    - eventId: ev-obs
+      eventType: ObservationReceived
+      name: Congestion observed
+      trigger:
+        basis: Event
+        afterEventRef: ev-onset
+      subjectRef: assurance-controller
+      ordering: Ordered
+      dependsOnRefs:
+      - ev-onset
+    - eventId: ev-verify
+      eventType: VerificationCompleted
+      name: Post-remediation verification
+      trigger:
+        basis: Condition
+        conditionRef: after execution plus evaluation interval
+      subjectRef: verification-path
+      ordering: Conditional
+      dependsOnRefs:
+      - ev-obs
+    assumptions:
+    - assumptionId: as-topology
+      description: Network topology unchanged during the scenario.
+      basis: controlled test environment
+      validationStatus: Validated
+    scenarioConstraints:
+    - constraintId: sc-max-duration
+      description: Maximum simulated horizon 10 minutes.
+    expectedObservations:
+    - observationId: eo-latency-rise
+      subjectRef: network-service
+      expectation: latency rises above 50 ms after the demand spike
+      kind: PlantCondition
+    - observationId: eo-controller-view
+      subjectRef: assurance-controller
+      expectation: controller receives the delayed post-delay observation
+      kind: ControllerVisible
+    verificationTargets:
+    - targetId: vt-detection
+      claimRef: claim-detection
+      criterionRef: crit-detection
+      conditions: after the demand spike
+      evaluationInterval: one observation cycle
+    - targetId: vt-outcome
+      claimRef: claim-c-latency-goal
+      criterionRef: crit-latency
+      conditions: post-remediation evaluation window
+      requiredEvidence: independent measurement
+    reproducibility:
+      seed: 2026
+      seedOrPolicyDeclared: true
+    compatibility:
+      outcome: Compatible
+      modelBaselineRef: baseline-2026-11
+  - scenarioId: SCN-NET-001-C
+    scenarioType: Degraded
+    name: Stale telemetry variant
+    definition: Detection and decision quality under stale telemetry.
+    version: 1.0.0
+    lifecycleStatus: Draft
+    contextRef: ctx-net
+    modelRefs:
+      closedLoopRefs:
+      - urn:aocl:loop:network-assurance-001
+      behavioralSpecRef: urn:aocl:spec:network-assurance-001
+      controlModelRef: urn:aocl:control:network-assurance-001
+      evidenceModelRef: urn:aocl:evidence:network-assurance-001
+    modelVersionRefs:
+    - baseline-2026-11
+    initialConditions:
+      method: Explicit
+      states:
+      - initialStateId: is-plant-latency
+        subjectRef: network-service
+        stateVariableRef: svc-latency
+        value: 42
+        valueType: numeric
+        unit: ms
+        stateClass: Actual
+        initializationMethod: Explicit
+      - initialStateId: is-stale-obs
+        subjectRef: network-service
+        stateVariableRef: svc-latency
+        value: 42
+        valueType: numeric
+        unit: ms
+        stateClass: Observed
+        initializationMethod: Derived
+        sourceRef: delayed telemetry feed
+    parameters:
+    - parameterId: p-target
+      name: Latency target
+      definition: Goal setpoint.
+      valueType: numeric
+      value: 50
+      unit: ms
+      variationMode: Fixed
+      allowedRange:
+        min: 1
+        max: 1000
+    - parameterId: p-demand
+      name: Traffic increase
+      definition: Disturbance magnitude.
+      valueType: numeric
+      value: 35
+      unit: percent
+      variationMode: Ranged
+      allowedRange:
+        min: 0
+        max: 100
+    operatingConditions:
+    - conditionId: oc-normal
+      scope: network-service
+      basis: Static
+      operatingModeRef: urn:aocl:control:network-assurance-001#mode-normal
+    environmentalConditions:
+    - conditionId: ec-demand
+      subjectRef: external-traffic
+      definition: External demand pattern, distinct from plant state.
+    disturbances:
+    - disturbanceId: d-stale-telemetry
+      disturbanceType: DataQuality
+      name: Stale telemetry
+      definition: Observation freshness degraded.
+      targetRefs:
+      - sensor-latency-probe
+      magnitude: 30 s
+      magnitudeUnit: delay
+      onset:
+        basis: RelativeTime
+        at: 0 s
+      duration: scenario-long
+      profile:
+        kind: Step
+      effect:
+        variableRef: measured-latency
+        effect: observations lag plant state
+      knownToController: false
+    events:
+    - eventId: ev-start
+      eventType: ScenarioStart
+      name: Scenario starts
+      trigger:
+        basis: RelativeTime
+        at: 0 s
+      subjectRef: network-service
+      ordering: Independent
+    - eventId: ev-onset
+      eventType: DisturbanceOnset
+      name: Demand increases
+      trigger:
+        basis: RelativeTime
+        at: 60 s
+      subjectRef: network-service
+      ordering: Independent
+    - eventId: ev-obs
+      eventType: ObservationReceived
+      name: Congestion observed
+      trigger:
+        basis: Event
+        afterEventRef: ev-onset
+      subjectRef: assurance-controller
+      ordering: Ordered
+      dependsOnRefs:
+      - ev-onset
+    - eventId: ev-verify
+      eventType: VerificationCompleted
+      name: Post-remediation verification
+      trigger:
+        basis: Condition
+        conditionRef: after execution plus evaluation interval
+      subjectRef: verification-path
+      ordering: Conditional
+      dependsOnRefs:
+      - ev-obs
+    assumptions:
+    - assumptionId: as-topology
+      description: Network topology unchanged during the scenario.
+      basis: controlled test environment
+      validationStatus: Validated
+    scenarioConstraints:
+    - constraintId: sc-max-duration
+      description: Maximum simulated horizon 10 minutes.
+    expectedObservations:
+    - observationId: eo-latency-rise
+      subjectRef: network-service
+      expectation: latency rises above 50 ms after the demand spike
+      kind: PlantCondition
+    - observationId: eo-controller-view
+      subjectRef: assurance-controller
+      expectation: controller receives the delayed post-delay observation
+      kind: ControllerVisible
+    verificationTargets:
+    - targetId: vt-detection
+      claimRef: claim-detection
+      criterionRef: crit-detection
+      conditions: after the demand spike
+      evaluationInterval: one observation cycle
+    - targetId: vt-outcome
+      claimRef: claim-c-latency-goal
+      criterionRef: crit-latency
+      conditions: post-remediation evaluation window
+      requiredEvidence: independent measurement
+    reproducibility:
+      seed: 2026
+      seedOrPolicyDeclared: true
+    compatibility:
+      outcome: Compatible
+      modelBaselineRef: baseline-2026-11
+    extends: SCN-NET-001
+    differences:
+    - controller-visible initial latency held at 42 ms while the plant moves to 72 ms
+    - observation delay increased to 30 s
+  - scenarioId: SCN-NET-001-F
+    scenarioType: Comparative
+    name: Competing interventions
+    definition: Multi-loop coordination under conflicting remediation.
+    version: 1.0.0
+    lifecycleStatus: InReview
+    contextRef: ctx-net
+    modelRefs:
+      closedLoopRefs:
+      - urn:aocl:loop:network-assurance-001
+      - urn:aocl:loop:peer-assurance-001
+    modelVersionRefs:
+    - baseline-2026-11
+    initialConditions:
+      method: Explicit
+      states:
+      - initialStateId: is-plant-latency
+        subjectRef: network-service
+        stateVariableRef: svc-latency
+        value: 42
+        valueType: numeric
+        unit: ms
+        stateClass: Actual
+        initializationMethod: Explicit
+      - initialStateId: is-obs-latency
+        subjectRef: network-service
+        stateVariableRef: svc-latency
+        value: 42
+        valueType: numeric
+        unit: ms
+        stateClass: Observed
+        initializationMethod: Explicit
+      - initialStateId: is-mode
+        subjectRef: network-service
+        stateVariableRef: operating-mode
+        value: normal
+        valueType: operating-mode state
+        stateClass: Actual
+        initializationMethod: Explicit
+    parameters:
+    - parameterId: p-target
+      name: Latency target
+      definition: Goal setpoint.
+      valueType: numeric
+      value: 50
+      unit: ms
+      variationMode: Fixed
+      allowedRange:
+        min: 1
+        max: 1000
+    - parameterId: p-demand
+      name: Traffic increase
+      definition: Disturbance magnitude.
+      valueType: numeric
+      value: 35
+      unit: percent
+      variationMode: Ranged
+      allowedRange:
+        min: 0
+        max: 100
+    operatingConditions:
+    - conditionId: oc-normal
+      scope: network-service
+      basis: Static
+      operatingModeRef: urn:aocl:control:network-assurance-001#mode-normal
+    environmentalConditions:
+    - conditionId: ec-demand
+      subjectRef: external-traffic
+      definition: External demand pattern, distinct from plant state.
+    disturbances:
+    - disturbanceId: d-demand-spike
+      disturbanceType: Demand
+      name: Sudden traffic demand increase
+      definition: Step increase in external demand 60 s after start.
+      targetRefs:
+      - network-service
+      magnitude: 35
+      magnitudeUnit: percent
+      onset:
+        basis: RelativeTime
+        at: 60 s
+      duration: persistent until remediation
+      profile:
+        kind: Step
+      effect:
+        variableRef: svc-latency
+        effect: latency rises toward the congestion threshold
+      knownToController: false
+    events:
+    - eventId: ev-start
+      eventType: ScenarioStart
+      name: Scenario starts
+      trigger:
+        basis: RelativeTime
+        at: 0 s
+      subjectRef: network-service
+      ordering: Independent
+    - eventId: ev-onset
+      eventType: DisturbanceOnset
+      name: Demand increases
+      trigger:
+        basis: RelativeTime
+        at: 60 s
+      subjectRef: network-service
+      ordering: Independent
+    - eventId: ev-obs
+      eventType: ObservationReceived
+      name: Congestion observed
+      trigger:
+        basis: Event
+        afterEventRef: ev-onset
+      subjectRef: assurance-controller
+      ordering: Ordered
+      dependsOnRefs:
+      - ev-onset
+    - eventId: ev-verify
+      eventType: VerificationCompleted
+      name: Post-remediation verification
+      trigger:
+        basis: Condition
+        conditionRef: after execution plus evaluation interval
+      subjectRef: verification-path
+      ordering: Conditional
+      dependsOnRefs:
+      - ev-obs
+    assumptions:
+    - assumptionId: as-topology
+      description: Network topology unchanged during the scenario.
+      basis: controlled test environment
+      validationStatus: Validated
+    scenarioConstraints:
+    - constraintId: sc-max-duration
+      description: Maximum simulated horizon 10 minutes.
+    expectedObservations:
+    - observationId: eo-latency-rise
+      subjectRef: network-service
+      expectation: latency rises above 50 ms after the demand spike
+      kind: PlantCondition
+    - observationId: eo-controller-view
+      subjectRef: assurance-controller
+      expectation: controller receives the delayed post-delay observation
+      kind: ControllerVisible
+    verificationTargets:
+    - targetId: vt-detection
+      claimRef: claim-detection
+      criterionRef: crit-detection
+      conditions: after the demand spike
+      evaluationInterval: one observation cycle
+    - targetId: vt-outcome
+      claimRef: claim-c-latency-goal
+      criterionRef: crit-latency
+      conditions: post-remediation evaluation window
+      requiredEvidence: independent measurement
+    reproducibility:
+      seed: 2026
+      seedOrPolicyDeclared: true
+    compatibility:
+      outcome: Compatible
+      modelBaselineRef: baseline-2026-11
+    extends: SCN-NET-001
+    differences:
+    - a second assurance loop intervenes on the same allocation variable
+    sharedResources:
+    - resourceId: traffic-allocation
+      coordination: supervisory arbitration
+      sharedByLoopRefs:
+      - urn:aocl:loop:network-assurance-001
+      - urn:aocl:loop:peer-assurance-001

@@ -1,0 +1,358 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/scenario.schema.json",
+  "title": "AOCL Simulation Scenario and Disturbance Model document (AOCL-CR-009)",
+  "description": "The canonical simulation scenario model established by AOCL-CR-009 — the final Modeling-stack tranche: governed, versioned SimulationScenarios with contexts, explicit initial conditions that keep actual, observed and estimated states distinct (SCN-007..013, AD-009-04), typed parameters validated against ranges (SCN-014/015), operating and environmental conditions, first-class disturbances with governed classifications, profiles, effects and an explicit controller-visibility declaration (SCN-020..028, §11.5: a Controller never automatically receives the scenario's hidden ground truth), scenario events with triggers, ordering and dependency-cycle detection (SCN-029..034), variants that extend a base scenario with explicit differences (SCN-035/036), recorded assumptions and scenario-specific constraints (SCN-037/038), expected observations distinguishing Plant state from Controller-visible information (SCN-042), verification targets referencing the CR-008 model (SCN-040/041), reproducibility with seeds and stable dataset snapshots (SCN-048..051), and compatibility against exact model versions (SCN-052/053). Structural rules are expressed here and enforced natively by src/aocl/scenario.py, which adds referential integrity, dependency-cycle detection, range checks, mode-specific simulation readiness (logical vs state-based, AD-009-15) and explicit reporting of gaps. Engine execution semantics are out of scope (CR-010).",
+  "type": "object",
+  "required": ["schemaVersion", "modelVersion", "scenarioLibrary"],
+  "properties": {
+    "schemaVersion": { "const": "0.1" },
+    "modelVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "scenarioLibrary": { "$ref": "#/$defs/ScenarioLibrary" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Lifecycle": { "enum": ["Draft", "InReview", "Approved", "Deprecated", "Retired"] },
+    "InitMethod": { "enum": ["Explicit", "Derived", "Referenced", "Sampled", "Inherited", "Defaulted"] },
+    "TriggerBasis": { "enum": ["AbsoluteTime", "RelativeTime", "Periodic", "Event", "Condition", "Random", "Unknown"] },
+    "ProfileKind": { "enum": ["Step", "Ramp", "Pulse", "Periodic", "Degradation", "SuddenFailure", "Intermittent", "Recovery", "Compound", "Random"] },
+    "DisturbanceType": {
+      "enum": ["Demand", "Capacity", "Resource", "Environmental", "ComponentFailure", "DataQuality",
+               "Timing", "Security", "Dependency", "Policy", "Coordination"],
+      "description": "Governed disturbance classifications (CR-009 §11.2), extensible through governed extensions."
+    },
+    "EventType": {
+      "enum": ["ScenarioStart", "DisturbanceOnset", "ThresholdCrossing", "ObservationReceived", "ApprovalRequested",
+               "ApprovalGranted", "ActuatorFailure", "RecoveryCondition", "Timeout", "DependencyRestored", "VerificationCompleted"]
+    },
+    "Ordering": { "enum": ["Independent", "Ordered", "Concurrent", "MutuallyExclusive", "Conditional", "Coordinated"] },
+    "ScenarioType": { "enum": ["Baseline", "Normal", "Stress", "Degraded", "Failure", "Recovery", "Boundary", "Adversarial", "Sensitivity", "Comparative"] },
+    "Context": {
+      "type": "object",
+      "required": ["contextId", "domain"],
+      "properties": {
+        "contextId": { "type": "string", "minLength": 3 },
+        "domain": { "type": "string", "minLength": 1 },
+        "environment": { "type": "string" },
+        "plantRef": { "type": "string" },
+        "operatingModeRefs": { "type": "array", "items": { "type": "string" } },
+        "externalDependencies": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "InitialState": {
+      "type": "object",
+      "required": ["initialStateId", "subjectRef", "stateVariableRef", "stateClass", "initializationMethod"],
+      "properties": {
+        "initialStateId": { "type": "string", "minLength": 3 },
+        "subjectRef": { "type": "string", "minLength": 1, "description": "Plant, component or variable (SCN-008)." },
+        "stateVariableRef": { "type": "string", "minLength": 1 },
+        "value": { "type": ["string", "number", "boolean"] },
+        "valueType": { "type": "string", "description": "Type or state representation (SCN-009)." },
+        "unit": { "type": "string" },
+        "stateClass": { "enum": ["Actual", "Observed", "Estimated"], "description": "SCN-011/AD-009-04: actual Plant state stays distinguishable from what Sensors report and estimators infer — e.g. Plant at 72 ms while the Controller sees 48 ms (§23.10)." },
+        "initializationMethod": { "$ref": "#/$defs/InitMethod" },
+        "sourceRef": { "type": "string", "description": "Required for Derived/Referenced/Sampled initialization (SCN-012/013)." },
+        "validityContext": { "type": "string" },
+        "uncertainty": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "Parameter": {
+      "type": "object",
+      "required": ["parameterId", "name", "definition", "valueType", "value"],
+      "properties": {
+        "parameterId": { "type": "string", "minLength": 3 },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "valueType": { "enum": ["numeric", "boolean", "categorical", "temporal", "structured"], "description": "SCN-014." },
+        "value": { "type": ["string", "number", "boolean"] },
+        "unit": { "type": "string" },
+        "allowedRange": {
+          "type": "object",
+          "properties": { "min": { "type": "number" }, "max": { "type": "number" } },
+          "additionalProperties": false,
+          "description": "Values are validated against this range (SCN-015)."
+        },
+        "variationMode": { "enum": ["Fixed", "Ranged", "Sampled", "External"] },
+        "distributionRef": { "type": "string", "description": "Required when variationMode is Sampled (SCN-049)." },
+        "sensitivityRole": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "OperatingCondition": {
+      "type": "object",
+      "required": ["conditionId", "scope", "basis"],
+      "properties": {
+        "conditionId": { "type": "string", "minLength": 3 },
+        "scope": { "type": "string", "minLength": 1, "description": "Applicable scope (SCN-016)." },
+        "basis": { "enum": ["Static", "TimeDependent", "EventTriggered", "ConditionTriggered", "Derived"] },
+        "temporalBasis": { "type": "string", "description": "Required when basis is TimeDependent (SCN-019)." },
+        "operatingModeRef": { "type": "string", "description": "References the CR-007 state model (SCN-017)." }
+      },
+      "additionalProperties": false
+    },
+    "EnvironmentalCondition": {
+      "type": "object",
+      "required": ["conditionId", "subjectRef", "definition"],
+      "properties": {
+        "conditionId": { "type": "string", "minLength": 3 },
+        "subjectRef": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1, "description": "External to the Plant, distinguishable from Plant state (SCN-018)." }
+      },
+      "additionalProperties": false
+    },
+    "Disturbance": {
+      "type": "object",
+      "required": ["disturbanceId", "disturbanceType", "name", "definition", "targetRefs", "onset", "profile", "knownToController"],
+      "properties": {
+        "disturbanceId": { "type": "string", "minLength": 3, "description": "SCN-020." },
+        "disturbanceType": { "$ref": "#/$defs/DisturbanceType" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "targetRefs": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Affected Plants, variables or components (SCN-021)." },
+        "magnitude": { "type": ["string", "number"] },
+        "magnitudeUnit": { "type": "string", "description": "SCN-023 — required with magnitude for non-Random profiles." },
+        "onset": {
+          "type": "object",
+          "required": ["basis"],
+          "properties": {
+            "basis": { "$ref": "#/$defs/TriggerBasis" },
+            "at": { "type": ["string", "number"] },
+            "conditionRef": { "type": "string" },
+            "unknown": { "type": "boolean", "description": "Explicitly declared unknown onset (SCN-024)." }
+          },
+          "additionalProperties": false
+        },
+        "duration": { "type": "string", "description": "SCN-024 — defined or explicitly 'unknown'." },
+        "profile": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": { "$ref": "#/$defs/ProfileKind" },
+            "distributionRef": { "type": "string", "description": "Required when kind is Random (SCN-049)." }
+          },
+          "additionalProperties": false,
+          "description": "DisturbanceProfile: temporal/conditional evolution (SCN-025, §11.3)."
+        },
+        "effect": {
+          "type": "object",
+          "required": ["variableRef", "effect"],
+          "properties": {
+            "variableRef": { "type": "string", "minLength": 1, "description": "References the CR-007 state model (SCN-026)." },
+            "effect": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "knownToController": { "type": "boolean", "description": "SCN-027/§11.5 — explicit visibility declaration: an unknown disturbance is defined for the simulation while withheld from the simulated Controller. No default: every disturbance declares what the Controller may know." },
+        "uncertainty": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ScenarioEvent": {
+      "type": "object",
+      "required": ["eventId", "eventType", "trigger", "subjectRef", "ordering"],
+      "properties": {
+        "eventId": { "type": "string", "minLength": 3 },
+        "eventType": { "$ref": "#/$defs/EventType", "description": "SCN-029." },
+        "name": { "type": "string" },
+        "trigger": {
+          "type": "object",
+          "required": ["basis"],
+          "properties": {
+            "basis": { "$ref": "#/$defs/TriggerBasis", "description": "Scheduling/time basis (SCN-030/031)." },
+            "at": { "type": ["string", "number"] },
+            "every": { "type": ["string", "number"], "description": "Required when basis is Periodic." },
+            "conditionRef": { "type": "string" },
+            "afterEventRef": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "subjectRef": { "type": "string", "minLength": 1 },
+        "ordering": { "$ref": "#/$defs/Ordering", "description": "SCN-033: concurrent and ordered events are distinguishable." },
+        "dependsOnRefs": { "type": "array", "items": { "type": "string" }, "description": "SCN-032/034 — validated for resolution and cycles." }
+      },
+      "additionalProperties": false
+    },
+    "Assumption": {
+      "type": "object",
+      "required": ["assumptionId", "description", "basis"],
+      "properties": {
+        "assumptionId": { "type": "string", "minLength": 3 },
+        "description": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string" },
+        "basis": { "type": "string", "minLength": 1, "description": "Rationale (SCN-037)." },
+        "validationStatus": { "enum": ["Validated", "Unvalidated", "Invalidated"] },
+        "limitations": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ScenarioConstraint": {
+      "type": "object",
+      "required": ["constraintId", "description"],
+      "properties": {
+        "constraintId": { "type": "string", "minLength": 3 },
+        "description": { "type": "string", "minLength": 1, "description": "Applies to the scenario itself, never overriding operational ControlConstraints (SCN-038, §14.2)." }
+      },
+      "additionalProperties": false
+    },
+    "ExpectedObservation": {
+      "type": "object",
+      "required": ["observationId", "subjectRef", "expectation", "kind"],
+      "properties": {
+        "observationId": { "type": "string", "minLength": 3 },
+        "subjectRef": { "type": "string", "minLength": 1 },
+        "expectation": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["PlantCondition", "SensorOutput", "ControllerVisible", "VerificationEvidence"], "description": "SCN-042: Plant state is distinct from Controller-visible information." }
+      },
+      "additionalProperties": false
+    },
+    "VerificationTarget": {
+      "type": "object",
+      "required": ["targetId", "claimRef", "criterionRef", "conditions"],
+      "properties": {
+        "targetId": { "type": "string", "minLength": 3 },
+        "claimRef": { "type": "string", "minLength": 1, "description": "References the CR-008 verification model (SCN-041)." },
+        "criterionRef": { "type": "string", "minLength": 1 },
+        "conditions": { "type": "string", "minLength": 1 },
+        "requiredEvidence": { "type": "string" },
+        "evaluationInterval": { "type": "string" },
+        "assuranceRef": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "Reproducibility": {
+      "type": "object",
+      "required": ["seedOrPolicyDeclared"],
+      "properties": {
+        "seed": { "type": ["string", "number"] },
+        "seedPolicy": { "type": "string", "description": "Seed policy for stochastic scenarios (SCN-049) — seed or policy required (SCN-048)." },
+        "seedOrPolicyDeclared": { "type": "boolean", "description": "Explicit declaration; false requires a limitation explaining the gap (SCN-051)." },
+        "externalDatasets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["datasetId", "source"],
+            "properties": {
+              "datasetId": { "type": "string", "minLength": 3 },
+              "source": { "type": "string", "minLength": 1 },
+              "snapshot": { "type": "string", "description": "Stable version or snapshot — a moving reference is insufficient (SCN-050)." },
+              "acquiredAt": { "type": "string" },
+              "transformations": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "limitations": { "type": "string", "description": "Recorded reproduction limitations — reported, never concealed (SCN-051)." }
+      },
+      "additionalProperties": false
+    },
+    "Compatibility": {
+      "type": "object",
+      "required": ["outcome", "modelBaselineRef"],
+      "properties": {
+        "outcome": { "enum": ["Compatible", "CompatibleWithWarnings", "Incompatible", "RequiresMigration", "Unresolved"], "description": "SCN-052/053 — evaluated against the exact model baseline." },
+        "modelBaselineRef": { "type": "string", "minLength": 1 },
+        "notes": { "type": "string", "description": "Required when CompatibleWithWarnings (SCN-039)." }
+      },
+      "additionalProperties": false
+    },
+    "Scenario": {
+      "type": "object",
+      "required": ["scenarioId", "scenarioType", "name", "definition", "version", "lifecycleStatus", "contextRef",
+                   "modelRefs", "modelVersionRefs", "initialConditions", "parameters", "disturbances", "events",
+                   "assumptions", "verificationTargets", "reproducibility", "compatibility"],
+      "properties": {
+        "scenarioId": { "type": "string", "minLength": 3, "description": "Stable identity, independent of display name (SCN-001)." },
+        "scenarioType": { "$ref": "#/$defs/ScenarioType" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "description": "SCN-002." },
+        "lifecycleStatus": { "$ref": "#/$defs/Lifecycle", "description": "SCN-006 — distinct from simulation-run status." },
+        "contextRef": { "type": "string", "minLength": 1, "description": "SCN-005." },
+        "modelRefs": {
+          "type": "object",
+          "description": "SCN-003 — the evaluated model scope; composed scenarios list each constituent loop (SCN-045).",
+          "required": ["closedLoopRefs"],
+          "properties": {
+            "closedLoopRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^urn:aocl:loop:[a-z0-9][a-z0-9-]*$" } },
+            "behavioralSpecRef": { "type": "string" },
+            "controlModelRef": { "type": "string" },
+            "evidenceModelRef": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "modelVersionRefs": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "SCN-004 — exact versions evaluated (SCN-053)." },
+        "extends": { "type": "string", "description": "Base scenario for a variant (SCN-035)." },
+        "differences": { "type": "array", "items": { "type": "string" }, "description": "Explicit differences introduced by a variant (SCN-036)." },
+        "initialConditions": {
+          "type": "object",
+          "required": ["method", "states"],
+          "properties": {
+            "method": { "enum": ["Explicit", "Derived", "Referenced", "Sampled", "Inherited", "Defaulted"], "description": "SCN-012." },
+            "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/InitialState" } },
+            "pendingEvents": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "parameters": { "type": "array", "items": { "$ref": "#/$defs/Parameter" } },
+        "operatingConditions": { "type": "array", "items": { "$ref": "#/$defs/OperatingCondition" } },
+        "environmentalConditions": { "type": "array", "items": { "$ref": "#/$defs/EnvironmentalCondition" } },
+        "disturbances": { "type": "array", "items": { "$ref": "#/$defs/Disturbance" } },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/ScenarioEvent" } },
+        "assumptions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Assumption" }, "description": "SCN-037 — recorded, visible in results." },
+        "scenarioConstraints": { "type": "array", "items": { "$ref": "#/$defs/ScenarioConstraint" } },
+        "expectedObservations": { "type": "array", "items": { "$ref": "#/$defs/ExpectedObservation" } },
+        "verificationTargets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/VerificationTarget" }, "description": "SCN-040." },
+        "sharedResources": {
+          "type": "array",
+          "description": "SCN-046 — shared Plants/resources/variables in composed scenarios.",
+          "items": {
+            "type": "object",
+            "required": ["resourceId", "sharedByLoopRefs"],
+            "properties": {
+              "resourceId": { "type": "string", "minLength": 3 },
+              "sharedByLoopRefs": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+              "coordination": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "reproducibility": { "$ref": "#/$defs/Reproducibility" },
+        "compatibility": { "$ref": "#/$defs/Compatibility" },
+        "migrationNotes": {
+          "type": "object",
+          "properties": {
+            "missingAttributes": { "type": "array", "items": { "type": "string" } },
+            "hardCodedBehavior": { "type": "array", "items": { "type": "string" }, "description": "Engine-embedded disturbance/parameter behavior surfaced by migration (§24)." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScenarioLibrary": {
+      "type": "object",
+      "required": ["id", "type", "name", "definition", "closedLoopRef", "contexts", "scenarios"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^urn:aocl:scenarios:[a-z0-9][a-z0-9-]*$" },
+        "type": { "const": "ScenarioLibrary" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "closedLoopRef": {
+          "type": "object",
+          "required": ["loopId", "sourceSystem"],
+          "properties": {
+            "loopId": { "type": "string", "pattern": "^urn:aocl:loop:[a-z0-9][a-z0-9-]*$" },
+            "sourceSystem": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "contexts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Context" } },
+        "scenarios": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Scenario" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}

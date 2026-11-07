@@ -60,6 +60,12 @@ jobs:
           python3 tools/aocl_evidence.py examples/evidence-model.yaml --json > /dev/null
           python3 tools/aocl_evidence.py --migrate examples/control-contract.yaml --json > /dev/null
           echo "evidence model valid (VER-001..050); migration diagnostics ok"
+      - name: Scenario library validator + migration (CR-009)
+        run: |
+          python3 tools/aocl_scenario.py --self-test
+          python3 tools/aocl_scenario.py examples/scenario-library.yaml --json > /dev/null
+          python3 tools/aocl_scenario.py --migrate model/behavior.yaml --json > /dev/null
+          echo "scenario library valid (SCN-001..057); migration diagnostics ok"
       - name: Example ledger health (deterministic)
         run: |
           python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
@@ -110,6 +116,9 @@ jobs:
           ev_schema = json.loads(pathlib.Path("schema/evidence-model.schema.json").read_text())
           Draft202012Validator(ev_schema).validate(yaml.safe_load(pathlib.Path("examples/evidence-model.yaml").read_text()))
           print("ok   examples/evidence-model.yaml validates against evidence-model.schema.json")
+          scn_schema = json.loads(pathlib.Path("schema/scenario.schema.json").read_text())
+          Draft202012Validator(scn_schema).validate(yaml.safe_load(pathlib.Path("examples/scenario-library.yaml").read_text()))
+          print("ok   examples/scenario-library.yaml validates against scenario.schema.json")
           for m in sorted(pathlib.Path("model").glob("*.yaml")):
               yaml.safe_load(m.read_text()); print(f"ok   model  {m.name}")
           # example ledger against its schema
