@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-11-07
+
 ### Added
 
 - **CR-009 implementation tranche delivered** (simulation scenario and disturbance model — completes the Modeling stage): `schema/scenario.schema.json` (the ScenarioLibrary contract), `src/aocl/scenario.py` + `aocl-scenario` CLI (native validation implementing SCN-001..057 with the ten conformance profiles of §21 plus **mode-specific simulation readiness** — logical vs state-based reported separately per AD-009-15), and the validated reference instance (`examples/scenario-library.yaml` — the §23 congestion-and-recovery scenario with the stale-telemetry and competing-loops variants, acceptance criteria 27–28). Enforced, not just representable: actual/observed/estimated initial states stay distinct (SCN-011/AD-009-04); initialization without silent defaults (SCN-013); **every disturbance declares what the simulated Controller may know about it** (SCN-027/§11.5); event dependency cycles detected (SCN-034); parameters range-checked (SCN-015); stochastic scenarios declare their randomization basis (SCN-049); external datasets need stable snapshots (SCN-050); Incompatible scenarios can never be silently Approved (SCN-053). The §24 migration surfaces the simulation canvas's engine-embedded scenario data (`model/behavior.yaml`: four scenarios, disturbances, invariants) as Draft skeletons with the hard-coding inventoried — the canvas's scenarios now have a canonical home.
