@@ -66,6 +66,12 @@ jobs:
           python3 tools/aocl_scenario.py examples/scenario-library.yaml --json > /dev/null
           python3 tools/aocl_scenario.py --migrate model/behavior.yaml --json > /dev/null
           echo "scenario library valid (SCN-001..057); migration diagnostics ok"
+      - name: Execution semantics validator + migration (CR-010)
+        run: |
+          python3 tools/aocl_execution.py --self-test
+          python3 tools/aocl_execution.py examples/execution-definition.yaml --json > /dev/null
+          python3 tools/aocl_execution.py --migrate model/behavior.yaml --json > /dev/null
+          echo "execution definition valid (EXE-001..040); migration diagnostics ok"
       - name: Example ledger health (deterministic)
         run: |
           python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
@@ -119,6 +125,9 @@ jobs:
           scn_schema = json.loads(pathlib.Path("schema/scenario.schema.json").read_text())
           Draft202012Validator(scn_schema).validate(yaml.safe_load(pathlib.Path("examples/scenario-library.yaml").read_text()))
           print("ok   examples/scenario-library.yaml validates against scenario.schema.json")
+          exe_schema = json.loads(pathlib.Path("schema/execution-semantics.schema.json").read_text())
+          Draft202012Validator(exe_schema).validate(yaml.safe_load(pathlib.Path("examples/execution-definition.yaml").read_text()))
+          print("ok   examples/execution-definition.yaml validates against execution-semantics.schema.json")
           for m in sorted(pathlib.Path("model").glob("*.yaml")):
               yaml.safe_load(m.read_text()); print(f"ok   model  {m.name}")
           # example ledger against its schema

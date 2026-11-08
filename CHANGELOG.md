@@ -4,6 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+### Added
+
+- **AOCL-CR-010 baselined and implemented** (canonical execution semantics — the Modeling-stage → engine transition): the CR document (`docs/architecture/AOCL-CR-010.md`, Proposed — principles P27–P34, rules EXE-001..040, decisions AD-010-01..12), `schema/execution-semantics.schema.json` (the ExecutionDefinition contract), `src/aocl/execution.py` + `aocl-execution` CLI (native validation with the §17 profiles and mode-specific **engine readiness** — logical vs state-based), and the validated reference instance (`examples/execution-definition.yaml`). The ExecutionInstance binds a behavioral specification, a simulation scenario and the control/evidence models into a runnable interpretation whose every semantic decision is a declared policy: graph-faithful activation, guards-before-effects, always-checked authority, blocking freshness, deterministic tie-breaking, the CR-007 dispatch chain as distinct records, suspending approval gates, escalating exception handling, verified safe states, seeded determinism — and runtime **information-visibility enforcement** (`controllerVisiblePolicy: PerScenarioDeclaration` is the only conforming value; `Full` is forbidden): the simulated Controller never receives the scenario's hidden ground truth, which is what makes the veracity experiments valid. The §19 migration carries the simulation canvas's implicit policies into a Draft ExecutionDefinition as carried semantics, never promoted. No engine is implemented; CR-011/012 now have a normative contract to implement against.
+
+
 ## [0.1.3] — 2026-11-07
 
 ### Added

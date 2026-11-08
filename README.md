@@ -90,6 +90,15 @@ aocl-scenario examples/scenario-library.yaml     # validate (all ten profiles + 
 aocl-scenario --migrate model/behavior.yaml      # sim-canvas config → Draft skeletons (§24)
 ```
 
+## Execution semantics (CR-010, baselined + implemented)
+
+How a specification is *interpreted* — the contract the engines must honor: [AOCL-CR-010](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-010.md) (the CR: P27–P34, EXE-001..040) + [schema/execution-semantics.schema.json](https://github.com/technehub-labs/aocl/blob/main/schema/execution-semantics.schema.json) + [src/aocl/execution.py](https://github.com/technehub-labs/aocl/blob/main/src/aocl/execution.py) (native validator). An ExecutionInstance binds a behavioral specification, a simulation scenario and the control/evidence models into a runnable interpretation whose every semantic decision is **declared**: graph-faithful activation, guards before effects, always-checked authority, stale evidence blocks, deterministic tie-breaking, the dispatch chain as distinct records (an acknowledgement never advances state), suspending approvals, escalating exceptions, verified safe states, seeded determinism — and runtime **information-visibility enforcement**: the simulated Controller never receives the scenario's hidden ground truth (`controllerVisiblePolicy: Full` is structurally forbidden), which is what makes the data-veracity experiments valid. Mode-specific engine readiness (logical vs state-based) is reported separately. No engine is included; CR-011/012 implement this contract.
+
+```bash
+aocl-execution examples/execution-definition.yaml     # validate (all profiles + engine readiness)
+aocl-execution --migrate model/behavior.yaml          # canvas policies → Draft skeleton (§19)
+```
+
 ## Architecture baseline
 
 [AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility. The full CR sequence (CR-001..009 modeling foundation, CR-010..013 engines) is tracked in the [architecture index](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/README.md).

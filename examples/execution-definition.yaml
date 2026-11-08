@@ -1,0 +1,135 @@
+# AOCL Canonical Execution Semantics — reference instance (AOCL-CR-010, AC-16/17)
+#
+# Validates against schema/execution-semantics.schema.json (structural) and
+# src/aocl/execution.py (semantic, EXE-001..040).
+#
+# A StateBased-mode ExecutionDefinition binding the CR-006 behavioral specification,
+# the CR-009 congestion-recovery scenario, and the CR-007/008 models into a runnable
+# interpretation. Every semantic decision an engine would otherwise make implicitly
+# is a DECLARED policy here:
+#   graph-faithful activation ....... entry per the specification's declared entry; no stage
+#                                     ordering implied (EXE-008/010)
+#   evaluation discipline ........... guards before effects, authority always checked, declared
+#                                     deltas, governed outcomes (EXE-015..018); stale evidence
+#                                     BLOCKS dependent evaluation (EXE-014)
+#   events .......................... ordering per scenario declarations, deterministic
+#                                     tie-break, dependencies block (EXE-019..021)
+#   dispatch honesty ................ command → acknowledgement → execution status → effect →
+#                                     outcome as distinct records — an acknowledgement never
+#                                     advances state as if execution occurred (EXE-024, AD-007-09)
+#   approvals suspend ............... WaitingApproval with declared timeout/fallback (EXE-027/028)
+#   exceptions escalate ............. never silently absorbed; critical unresolved block (EXE-029..031)
+#   safe states verified ............ pre-authorized authority AND declared verification (EXE-032/033)
+#   determinism ..................... declared seeded sources; same inputs → same trace (EXE-034/035)
+#   THE LOAD-BEARING RULE ........... controllerVisiblePolicy: PerScenarioDeclaration with Runtime
+#                                     enforcement — the simulated Controller never receives the
+#                                     scenario's hidden ground truth (EXE-036, P30); Full is
+#                                     structurally forbidden. This is what makes the data-veracity
+#                                     experiments valid.
+# Mode-specific readiness: this definition is ready for BOTH engines; a Logical-mode definition
+# with an EventDriven basis would be logical-ready only (validated in the self-test).
+schemaVersion: "0.1"
+modelVersion: "1.0.0"
+schemaVersion: '0.1'
+modelVersion: 1.0.0
+executionDefinition:
+  id: urn:aocl:execution:network-assurance-statebased
+  type: ExecutionDefinition
+  name: Network Assurance State-Based Execution
+  definition: State-based interpretation of the assurance specification under the congestion-recovery
+    scenario.
+  version: 1.0.0
+  lifecycleStatus: InReview
+  executionMode: StateBased
+  behavioralSpecRef: urn:aocl:spec:network-assurance-001
+  specVersion: 1.0.0
+  scenarioRef: urn:aocl:scenarios:network-assurance
+  scenarioVersion: 1.0.0
+  scenarioId: SCN-NET-001
+  controlModelRef: urn:aocl:control:network-assurance-001
+  evidenceModelRef: urn:aocl:evidence:network-assurance-001
+  timeBasis:
+    basis: Tick
+    tickUnit: 30 s service interval
+  activation:
+    entryPolicy: DeclaredEntry
+    graphWalkOnly: true
+    notes: entry per cond-continuous-monitoring; RepeatsTo learn→observe closes each cycle
+  conditionEvaluation:
+    contextPolicy: DeclaredContext
+    freshnessPolicy: BlockOnStale
+    delegatedEvaluations:
+    - conditionRef: cond-approval-granted
+      responsibleRef: policy-approval-service
+      resultContract: authorization decision record
+  transitionEvaluation:
+    guardOrder: GuardsBeforeEffects
+    authorityCheck: AlwaysDeclared
+    effectApplication: DeclaredDeltas
+    outcomeClassification: Governed
+  eventHandling:
+    orderingResolution: PerScenarioDeclaration
+    tieBreak: DeclaredDeterministic
+    dependenciesBlock: true
+  scheduling:
+    cyclePolicy: PerVelocityDeclaration
+    timeoutPolicy: approval window PT10M per cond-approval-timeout
+  actionDispatch:
+    chain:
+    - Command
+    - Acknowledgement
+    - ExecutionStatus
+    - Effect
+    - Outcome
+    distinctRecords: true
+    resultClassification: Governed
+    retryPolicy:
+      permitted: true
+      budgetsDeclared: true
+      note: retry budget 1 per invocation per pol-retry-budget
+  humanParticipation:
+    approvalGate: Suspend
+    timeoutPolicy: cond-approval-timeout
+    fallbackPolicy: rejected → esc-ops branch per r11
+  exceptionHandling:
+    handlerResolution: DeclaredPaths
+    unhandledPolicy: Escalate
+    criticalUnresolvedBlock: true
+  safeStateHandling:
+    authorityRequired: true
+    verificationRequired: true
+  determinism:
+    seedPolicy: Declared
+    sameInputsSameTrace: true
+    stochasticSources:
+    - sourceId: demand-noise
+      distribution: declared scenario distribution
+  informationVisibility:
+    channelPolicy: SeparatedChannels
+    controllerVisiblePolicy: PerScenarioDeclaration
+    enforcement: Runtime
+  trace:
+    records:
+    - Activation
+    - ApprovalResolution
+    - ConditionEvaluation
+    - Dispatch
+    - ExceptionDisposition
+    - SafeStateTransition
+    - TransitionEvaluation
+    temporalRefs: true
+  evidence:
+    originClass: SimulationTime
+    runIdentity: Declared
+  executionLifecycle:
+    states:
+    - Initialized
+    - Ready
+    - Running
+    - Suspended
+    - WaitingApproval
+    - Terminated
+    - Failed
+    - Cancelled
+    distinctFromModelLifecycle: true
+    temporalRecording: true

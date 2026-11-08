@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/execution-semantics.schema.json",
+  "title": "AOCL Canonical Execution Semantics document (AOCL-CR-010)",
+  "description": "The canonical ExecutionInstance established by AOCL-CR-010 — the architectural transition between the Modeling stage and the engines: a governed, versioned binding of one BehavioralSpecification (CR-006), one SimulationScenario (CR-009) and the referenced control/evidence models (CR-007/008) into a runnable interpretation with declared policies for activation (graph-faithful, EXE-008/010), condition and transition evaluation order (EXE-012..018), event ordering resolution honoring scenario declarations (EXE-019..021), time basis (EXE-022), action dispatch preserving the CR-007 evidential chain (EXE-024..026), approval-gate suspension (EXE-027/028), exception escalation (EXE-029..031), safe-state authority and verification (EXE-032/033), seeded determinism (EXE-034/035), and RUNTIME information-visibility enforcement (EXE-036/037 — the simulated Controller never receives the scenario's hidden ground truth; P30/P31). Trace obligations are declared here; the trace format itself is CR-013's (EXE-038). Structural rules are expressed here and enforced natively by src/aocl/execution.py, which adds policy coherence checks and mode-specific engine readiness (logical vs state-based, distinct profiles). No engine implementation is defined or implied (AD-010-12).",
+  "type": "object",
+  "required": ["schemaVersion", "modelVersion", "executionDefinition"],
+  "properties": {
+    "schemaVersion": { "const": "0.1" },
+    "modelVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "executionDefinition": { "$ref": "#/$defs/ExecutionDefinition" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ExecutionMode": { "enum": ["Logical", "StateBased", "Hybrid"] },
+    "TimeBasis": {
+      "type": "object",
+      "required": ["basis"],
+      "properties": {
+        "basis": { "enum": ["Tick", "WallClock", "EventDriven"], "description": "EXE-022 — a mode without a declared time basis is non-conformant." },
+        "tickUnit": { "type": "string", "description": "Required when basis is Tick." }
+      },
+      "additionalProperties": false
+    },
+    "Activation": {
+      "type": "object",
+      "required": ["entryPolicy", "graphWalkOnly"],
+      "properties": {
+        "entryPolicy": { "enum": ["DeclaredEntry", "FirstElement"], "description": "EXE-010: DeclaredEntry required — execution begins at the specification's declared entry elements." },
+        "graphWalkOnly": { "type": "boolean", "description": "EXE-008: activation follows the behavioral graph; no implied sequencing. Must be true." },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ConditionEvaluation": {
+      "type": "object",
+      "required": ["contextPolicy", "freshnessPolicy"],
+      "properties": {
+        "contextPolicy": { "enum": ["DeclaredContext", "EngineDefault"], "description": "EXE-012: DeclaredContext required." },
+        "freshnessPolicy": { "enum": ["BlockOnStale", "ProceedOnStale"], "description": "EXE-014: BlockOnStale required — stale evidence blocks dependent evaluation, never silently proceeds." },
+        "delegatedEvaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["responsibleRef", "resultContract"],
+            "properties": {
+              "conditionRef": { "type": "string" },
+              "responsibleRef": { "type": "string", "minLength": 1 },
+              "resultContract": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false,
+            "description": "EXE-013: delegated evaluations name the responsible reference and result contract."
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "TransitionEvaluation": {
+      "type": "object",
+      "required": ["guardOrder", "authorityCheck", "effectApplication", "outcomeClassification"],
+      "properties": {
+        "guardOrder": { "enum": ["GuardsBeforeEffects", "EffectsFirst"], "description": "EXE-015: GuardsBeforeEffects required." },
+        "authorityCheck": { "enum": ["AlwaysDeclared", "OnDemand"], "description": "EXE-016: AlwaysDeclared required — authority checked against the CR-007 AuthorityDefinition at dispatch, never inferred." },
+        "effectApplication": { "enum": ["DeclaredDeltas", "EngineComputed"], "description": "EXE-017: DeclaredDeltas required — effects applied as declared with postcondition kinds preserved." },
+        "outcomeClassification": { "enum": ["Governed", "EngineSpecific"], "description": "EXE-018: Governed required." }
+      },
+      "additionalProperties": false
+    },
+    "EventHandling": {
+      "type": "object",
+      "required": ["orderingResolution", "tieBreak", "dependenciesBlock"],
+      "properties": {
+        "orderingResolution": { "enum": ["PerScenarioDeclaration", "EngineDefault"], "description": "EXE-019: PerScenarioDeclaration required — ordering honors the scenario's per-event declarations (SCN-033)." },
+        "tieBreak": { "enum": ["DeclaredDeterministic", "ArrivalOrder"], "description": "EXE-020: DeclaredDeterministic required — simultaneous events never resolve accidentally (P29)." },
+        "dependenciesBlock": { "type": "boolean", "description": "EXE-021: must be true — dependents blocked until dependencies resolve." }
+      },
+      "additionalProperties": false
+    },
+    "Scheduling": {
+      "type": "object",
+      "required": ["cyclePolicy"],
+      "properties": {
+        "cyclePolicy": { "enum": ["PerVelocityDeclaration", "EngineDefault"], "description": "EXE-023: PerVelocityDeclaration required — cycle execution follows the loop's velocity." },
+        "timeoutPolicy": { "type": "string", "description": "Declared temporal conditions for timeouts." }
+      },
+      "additionalProperties": false
+    },
+    "ActionDispatch": {
+      "type": "object",
+      "required": ["chain", "distinctRecords", "resultClassification", "retryPolicy"],
+      "properties": {
+        "chain": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "enum": ["Command", "Acknowledgement", "ExecutionStatus", "Effect", "Outcome"] },
+          "description": "EXE-024: the full CR-007 chain, in order — acknowledgement never advances state as if execution occurred (AD-007-09)."
+        },
+        "distinctRecords": { "type": "boolean", "description": "EXE-024: must be true — the chain stages are distinct runtime records (P32)." },
+        "resultClassification": { "enum": ["Governed", "EngineSpecific"], "description": "EXE-025: Governed required." },
+        "retryPolicy": {
+          "type": "object",
+          "required": ["permitted"],
+          "properties": {
+            "permitted": { "type": "boolean" },
+            "budgetsDeclared": { "type": "boolean", "description": "Required true when permitted — retries only within declared budgets (EXE-026); no implicit retry." },
+            "note": { "type": "string", "description": "The declared budget reference." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "HumanParticipation": {
+      "type": "object",
+      "required": ["approvalGate", "timeoutPolicy", "fallbackPolicy"],
+      "properties": {
+        "approvalGate": { "enum": ["Suspend", "ContinueWithDefault"], "description": "EXE-027: Suspend required — approval elements suspend the path into WaitingApproval." },
+        "timeoutPolicy": { "type": "string", "minLength": 1, "description": "EXE-028: follows the CR-006 participation declaration." },
+        "fallbackPolicy": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "ExceptionHandling": {
+      "type": "object",
+      "required": ["handlerResolution", "unhandledPolicy", "criticalUnresolvedBlock"],
+      "properties": {
+        "handlerResolution": { "enum": ["DeclaredPaths", "EngineDefault"], "description": "EXE-029: DeclaredPaths required — exceptions resolve through the specification's HandlesException paths." },
+        "unhandledPolicy": { "enum": ["Escalate", "Absorb"], "description": "EXE-030: Escalate required — unhandled exceptions follow the CR-007 dispositions, never silent absorption." },
+        "criticalUnresolvedBlock": { "type": "boolean", "description": "EXE-031: must be true — critical unresolved exceptions (BSS-026) block execution readiness." }
+      },
+      "additionalProperties": false
+    },
+    "SafeStateHandling": {
+      "type": "object",
+      "required": ["authorityRequired", "verificationRequired"],
+      "properties": {
+        "authorityRequired": { "type": "boolean", "description": "EXE-032: must be true — safe-state entry uses the pre-authorized protective mechanism." },
+        "verificationRequired": { "type": "boolean", "description": "EXE-033: must be true — a safe state is never treated as established without its declared verification (CTM-032)." }
+      },
+      "additionalProperties": false
+    },
+    "Determinism": {
+      "type": "object",
+      "required": ["seedPolicy", "sameInputsSameTrace"],
+      "properties": {
+        "seedPolicy": { "enum": ["Declared", "Ungoverned"], "description": "EXE-034: Declared required — all stochastic behavior flows through declared seeded sources (P33)." },
+        "stochasticSources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["sourceId", "distribution"],
+            "properties": {
+              "sourceId": { "type": "string", "minLength": 3 },
+              "distribution": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "sameInputsSameTrace": { "type": "boolean", "description": "EXE-035: must be true — same declared inputs yield the same trace within an engine version (P34)." }
+      },
+      "additionalProperties": false
+    },
+    "InformationVisibility": {
+      "type": "object",
+      "required": ["channelPolicy", "controllerVisiblePolicy", "enforcement"],
+      "properties": {
+        "channelPolicy": { "enum": ["SeparatedChannels", "SingleChannel"], "description": "EXE-037: SeparatedChannels required — actual, observed and estimated remain separate runtime channels (P31)." },
+        "controllerVisiblePolicy": { "enum": ["PerScenarioDeclaration", "Full"], "description": "EXE-036/P30: PerScenarioDeclaration required — the simulated Controller receives exactly what the scenario declares visible (SCN-027), never the ground truth. Full is forbidden.", "frozen": true },
+        "enforcement": { "enum": ["Runtime", "Authorial"], "description": "Runtime required — the visibility declaration is enforced by the interpreter itself, not left to scenario authoring discipline." }
+      },
+      "additionalProperties": false
+    },
+    "Trace": {
+      "type": "object",
+      "required": ["records", "temporalRefs"],
+      "properties": {
+        "records": {
+          "type": "array",
+          "minItems": 7,
+          "items": { "enum": ["Activation", "ConditionEvaluation", "TransitionEvaluation", "Dispatch", "ApprovalResolution", "ExceptionDisposition", "SafeStateTransition"] },
+          "description": "EXE-038: all obligatory record classes — the format, recording and replay are CR-013's."
+        },
+        "temporalRefs": { "type": "boolean", "description": "EXE-038: must be true — every record carries its temporal reference." }
+      },
+      "additionalProperties": false
+    },
+    "Evidence": {
+      "type": "object",
+      "required": ["originClass", "runIdentity"],
+      "properties": {
+        "originClass": { "enum": ["SimulationTime", "OperationalTime"], "description": "EXE-039/AD-008-11: simulation modes produce SimulationEvidence — OperationalTime at definition level is invalid." },
+        "runIdentity": { "enum": ["Declared", "Anonymous"], "description": "EXE-039: Declared required — runtime evidence carries run identity (VER-039)." }
+      },
+      "additionalProperties": false
+    },
+    "ExecutionDefinition": {
+      "type": "object",
+      "required": ["id", "type", "name", "definition", "version", "lifecycleStatus", "executionMode",
+                   "behavioralSpecRef", "specVersion", "scenarioRef", "scenarioVersion",
+                   "controlModelRef", "evidenceModelRef", "timeBasis", "activation", "conditionEvaluation",
+                   "transitionEvaluation", "eventHandling", "scheduling", "actionDispatch", "humanParticipation",
+                   "exceptionHandling", "safeStateHandling", "determinism", "informationVisibility", "trace", "evidence",
+                   "executionLifecycle"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^urn:aocl:execution:[a-z0-9][a-z0-9-]*$", "description": "EXE-001." },
+        "type": { "const": "ExecutionDefinition" },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "lifecycleStatus": { "enum": ["Draft", "InReview", "Approved", "Deprecated", "Retired"] },
+        "executionMode": { "$ref": "#/$defs/ExecutionMode", "description": "EXE-005." },
+        "behavioralSpecRef": { "type": "string", "pattern": "^urn:aocl:spec:[a-z0-9][a-z0-9-]*$", "description": "EXE-002." },
+        "specVersion": { "type": "string", "minLength": 1, "description": "EXE-002: exact version executed." },
+        "scenarioRef": { "type": "string", "pattern": "^urn:aocl:scenarios:[a-z0-9][a-z0-9-]*$", "description": "EXE-003." },
+        "scenarioVersion": { "type": "string", "minLength": 1, "description": "EXE-003: exact version applied." },
+        "scenarioId": { "type": "string", "description": "Specific scenario within the library." },
+        "controlModelRef": { "type": "string", "pattern": "^urn:aocl:control:[a-z0-9][a-z0-9-]*$", "description": "EXE-004." },
+        "evidenceModelRef": { "type": "string", "pattern": "^urn:aocl:evidence:[a-z0-9][a-z0-9-]*$", "description": "EXE-004." },
+        "timeBasis": { "$ref": "#/$defs/TimeBasis" },
+        "activation": { "$ref": "#/$defs/Activation" },
+        "conditionEvaluation": { "$ref": "#/$defs/ConditionEvaluation" },
+        "transitionEvaluation": { "$ref": "#/$defs/TransitionEvaluation" },
+        "eventHandling": { "$ref": "#/$defs/EventHandling" },
+        "scheduling": { "$ref": "#/$defs/Scheduling" },
+        "actionDispatch": { "$ref": "#/$defs/ActionDispatch" },
+        "humanParticipation": { "$ref": "#/$defs/HumanParticipation" },
+        "exceptionHandling": { "$ref": "#/$defs/ExceptionHandling" },
+        "safeStateHandling": { "$ref": "#/$defs/SafeStateHandling" },
+        "determinism": { "$ref": "#/$defs/Determinism" },
+        "informationVisibility": { "$ref": "#/$defs/InformationVisibility" },
+        "trace": { "$ref": "#/$defs/Trace" },
+        "evidence": { "$ref": "#/$defs/Evidence" },
+        "executionLifecycle": {
+          "type": "object",
+          "required": ["states", "distinctFromModelLifecycle"],
+          "properties": {
+            "states": {
+              "type": "array",
+              "minItems": 3,
+              "items": { "enum": ["Initialized", "Ready", "Running", "Suspended", "WaitingApproval", "Terminated", "Failed", "Cancelled"] },
+              "description": "EXE-006: governed execution lifecycle."
+            },
+            "distinctFromModelLifecycle": { "type": "boolean", "description": "EXE-006: must be true — distinct from model/spec/scenario lifecycles and run status." },
+            "temporalRecording": { "type": "boolean", "description": "EXE-007: lifecycle transitions recorded with temporal references." }
+          },
+          "additionalProperties": false
+        },
+        "migrationNotes": {
+          "type": "object",
+          "properties": {
+            "missingAttributes": { "type": "array", "items": { "type": "string" } },
+            "carriedPolicies": { "type": "array", "items": { "type": "string" }, "description": "Canvas/engine policies carried as declared semantics (§19) — never silently promoted to Approved." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

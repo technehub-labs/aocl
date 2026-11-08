@@ -45,6 +45,7 @@ aocl-behavior-spec = "aocl.behavior_spec:main"
 aocl-control-contract = "aocl.control_contract:main"
 aocl-evidence = "aocl.evidence_model:main"
 aocl-scenario = "aocl.scenario:main"
+aocl-execution = "aocl.execution:main"
 
 [project.optional-dependencies]
 dev = ["jsonschema>=4.21", "build", "pyinstaller"]
