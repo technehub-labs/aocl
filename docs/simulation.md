@@ -69,6 +69,8 @@ The simulation was subsequently reviewed against [AOCL-ARCH-001](architecture/AO
 
 **Criticized by ARCH-001:** the simulated loop has **no Verify stage (S6)** — excursion detection is the simulator's judgment, not a loop-owned expected-vs-actual mechanism (REQ-010 untestable in the current sim); **no governed learning (S7)** — FI learning is automatic, and finding F1 (capability leak past the level gate) is itself evidence for REQ-011's governance; **no behavioral specification** — the loop is a level-parameterized policy, so P09 is only partially honored; **no explicit temporal model**; **no intent model (P02)** beyond a constant setpoint.
 
+**The decision brief:** the four findings are now stated as concrete decisions with options and recommendations in [ADR-008](decisions/adr-008-formal-model-finding-decisions.md) — open, awaiting the model owner's calls.
+
 **The disposition:** the canvas is designated the prototype of ARCH-001's state-based simulation mode (§10.2); its migration path is to execute the CR-003 behavioral specification, gaining S6 and governed S7; the findings F1–F4 are disposed against the CR sequence (F1 → must-resolve in CR-002; F2 → CR-003 burden-shift framing; F3 → CR-004 sandbox conformance attribute; F4 → CR-002/CR-004 velocity fit + temporal model). See ADR-006.
 
 ## The two simulation modes

@@ -4,6 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+### Added
+
+- **ADR-008 draft — formal-model finding decisions (F1–F4) presented as an open decision record** ([docs/decisions/adr-008-formal-model-finding-decisions.md](docs/decisions/adr-008-formal-model-finding-decisions.md)): the four findings the simulation produced (min-aggregation inconsistency, the L5 burden shift, load-bearing sandboxing, the missing velocity fit) are now stated as four concrete decisions (D1–D4) with options and engineering recommendations, awaiting the model owner's calls. Nothing is adopted until decided; the engines report the findings as observations (SBE-013), never silently resolved.
+
+
 ## [0.1.5] — 2026-11-23
 
 ### Added
