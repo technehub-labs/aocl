@@ -1,0 +1,116 @@
+# AOCL Canonical Execution Semantics — StateBased reference instance for the sim-canvas library
+#
+# The CR-012 reference execution definition: StateBased mode, 1-tick basis, bound to the migrated
+# sim-canvas scenario library (examples/scenario-library-sim.yaml). The policy source is the canonical
+# loop's assessment vectors via the level→policy reference mapping (informative — SBE-006/015).
+# Validates against schema/execution-semantics.schema.json and src/aocl/execution.py (EXE-001..040).
+schemaVersion: '0.1'
+modelVersion: 1.0.0
+executionDefinition:
+  id: urn:aocl:execution:sim-canvas-statebased
+  type: ExecutionDefinition
+  name: Sim-Canvas State-Based Execution
+  definition: 'State-based interpretation for the CR-012 reference runs: the sim-canvas scenario library
+    (migrated skeletons) under the level→policy reference mapping, vectors from the canonical loop.'
+  version: 1.0.0
+  lifecycleStatus: InReview
+  executionMode: StateBased
+  behavioralSpecRef: urn:aocl:spec:network-assurance-001
+  specVersion: 1.0.0
+  scenarioRef: urn:aocl:scenarios:sim-canvas
+  scenarioVersion: 0.1.0
+  scenarioId: SCN-SIM-BASELINE-001
+  controlModelRef: urn:aocl:control:network-assurance-001
+  evidenceModelRef: urn:aocl:evidence:network-assurance-001
+  timeBasis:
+    basis: Tick
+    tickUnit: 30 s service interval
+  activation:
+    entryPolicy: DeclaredEntry
+    graphWalkOnly: true
+    notes: entry per cond-continuous-monitoring; RepeatsTo learn→observe closes each cycle
+  conditionEvaluation:
+    contextPolicy: DeclaredContext
+    freshnessPolicy: BlockOnStale
+    delegatedEvaluations:
+    - conditionRef: cond-approval-granted
+      responsibleRef: policy-approval-service
+      resultContract: authorization decision record
+  transitionEvaluation:
+    guardOrder: GuardsBeforeEffects
+    authorityCheck: AlwaysDeclared
+    effectApplication: DeclaredDeltas
+    outcomeClassification: Governed
+  eventHandling:
+    orderingResolution: PerScenarioDeclaration
+    tieBreak: DeclaredDeterministic
+    dependenciesBlock: true
+  scheduling:
+    cyclePolicy: PerVelocityDeclaration
+    timeoutPolicy: approval window PT10M per cond-approval-timeout
+  actionDispatch:
+    chain:
+    - Command
+    - Acknowledgement
+    - ExecutionStatus
+    - Effect
+    - Outcome
+    distinctRecords: true
+    resultClassification: Governed
+    retryPolicy:
+      permitted: true
+      budgetsDeclared: true
+      note: retry budget 1 per invocation per pol-retry-budget
+  humanParticipation:
+    approvalGate: Suspend
+    timeoutPolicy: cond-approval-timeout
+    fallbackPolicy: rejected → esc-ops branch per r11
+  exceptionHandling:
+    handlerResolution: DeclaredPaths
+    unhandledPolicy: Escalate
+    criticalUnresolvedBlock: true
+  safeStateHandling:
+    authorityRequired: true
+    verificationRequired: true
+  determinism:
+    seedPolicy: Declared
+    sameInputsSameTrace: true
+    stochasticSources:
+    - sourceId: demand-noise
+      distribution: declared scenario distribution
+  informationVisibility:
+    channelPolicy: SeparatedChannels
+    controllerVisiblePolicy: PerScenarioDeclaration
+    enforcement: Runtime
+  trace:
+    records:
+    - Activation
+    - ApprovalResolution
+    - ConditionEvaluation
+    - Dispatch
+    - ExceptionDisposition
+    - SafeStateTransition
+    - TransitionEvaluation
+    temporalRefs: true
+  evidence:
+    originClass: SimulationTime
+    runIdentity: Declared
+  executionLifecycle:
+    states:
+    - Initialized
+    - Ready
+    - Running
+    - Suspended
+    - WaitingApproval
+    - Terminated
+    - Failed
+    - Cancelled
+    distinctFromModelLifecycle: true
+    temporalRecording: true
+  migrationNotes:
+    carriedPolicies:
+    - the level→policy parameters (thresholds, gains, containment authority) remain the informative mapping
+      under test (model/behavior.yaml) — the policy source is the loop's assessment vectors
+    - the behavioral-spec/control/evidence bindings are the governed reference family; the state-based
+      run's dynamics come from vectors + scenario, not from the spec graph (declared per CR-012 §7)
+    missingAttributes: []

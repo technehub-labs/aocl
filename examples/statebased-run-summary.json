@@ -1,0 +1,190 @@
+{
+  "_comment": "AOCL state-based run summary — the CR-012 reference run (aocl-engine-statebased on execution-definition-statebased-sim + canonical-loop vectors GD3/DV3/FI3 + scenario-library-sim SCN-SIM-BASELINE-001, seed 2026). The invariant suite (S1-S8, multi-seed S6) evaluates as run verdicts: 7/7 hold; the four formal-model findings are reported as observations (SBE-013). SimulationEvidence carries run identity, seed, vectors, engine version.",
+
+  "runId": "sbrun-SCN-SIM-BASELINE-001-seed2026",
+  "rulesetVersion": "1.0.0",
+  "engineVersion": "0.1.0",
+  "coreVersion": "1.0.0",
+  "executionRef": "urn:aocl:execution:sim-canvas-statebased",
+  "executionMode": "StateBased",
+  "scenarioRef": "urn:aocl:scenarios:sim-canvas",
+  "scenarioId": "SCN-SIM-BASELINE-001",
+  "loopRef": "urn:aocl:loop:service-assurance-001",
+  "vectors": {
+    "GD": 3,
+    "DV": 3,
+    "FI": 3
+  },
+  "assessedLevel": 3,
+  "policySource": "level\u2192policy reference mapping (model/behavior.yaml, informative \u2014 SBE-006/015)",
+  "seed": 2026,
+  "singleRun": {
+    "level": 3,
+    "vectors": {
+      "GD": 3,
+      "DV": 3,
+      "FI": 3
+    },
+    "velocity": "fast",
+    "prevented_fraction": null,
+    "excursions": 27,
+    "mttr": 5.26,
+    "peak": 24.32,
+    "human_ticks": 30,
+    "human_interventions": 1,
+    "self_inflicted": 4,
+    "known_count": 6,
+    "known_mttr": 3.33,
+    "novel_count": 15,
+    "novel_mttr": 7.6,
+    "novel_depth": 13.54,
+    "epoch1_count": 15,
+    "epoch2_count": 12,
+    "epoch1_mttr": 5.4,
+    "epoch2_mttr": 5.08,
+    "E_sim": 0.99,
+    "id": "SCN-SIM-BASELINE-001-L3"
+  },
+  "invariants": [
+    {
+      "id": "restoration-monotonicity",
+      "statement": "peak severity decreases monotonically L1\u2192L5 (bounded); MTTR drops sharply L1\u2192L2 and stays bounded \u2014 recovery speed in the HITL/HOTL band is human-policy-driven, not a maturity law",
+      "ok": true,
+      "detail": "mttr=[25.73, 10.6, 4.25, 1.97, 3.07] peak=[78.14, 46.82, 20.71, 15.9, 8.12]"
+    },
+    {
+      "id": "human-burden-monotonicity",
+      "statement": "human burden decreases L1\u2192L4; L5 bounded (novelty-only engagement)",
+      "ok": true,
+      "detail": "human_ticks=[2280, 870, 0, 0, 60]"
+    },
+    {
+      "id": "novel-mode-gap",
+      "statement": "L3 pre-empts known modes (count < 0.8x L2); novel depth L3\u2248L2; L4 depth < L3",
+      "ok": true,
+      "detail": "known_count L2=19 L3=3; novel_depth L2=15.79 L3=14.05 L4=6.54"
+    },
+    {
+      "id": "velocity-orthogonality",
+      "statement": "level does not prevent velocity-mismatch excursions (prevention rate < 15% at L1 AND L5)",
+      "ok": true,
+      "detail": "prevented fraction: L1=0% L5=0% \u2014 L5-slow human_ticks=0 (HOOTL watches only novel/self; accumulation is silent \u2014 velocity fit is load-bearing for L5)"
+    },
+    {
+      "id": "exploration-cost",
+      "statement": "L5 experimentation is sandboxed: zero self-inflicted production excursions",
+      "ok": true,
+      "detail": "quiet: L4 self=1 vs L5 self=0 (unsandboxed experimentation raised L5 human burden above L4 in an earlier iteration \u2014 assumption 7 must be explicit in the formal model)"
+    },
+    {
+      "id": "policy-downflow",
+      "statement": "governing slow loop's playbook conversion cuts mean epoch-2 excursion count by >=30% (8-seed mini-study; exception upflow \u2192 policy downflow)",
+      "ok": true,
+      "detail": "mean epoch2 count: governed=4.25 ungoverned=15.25 (samples with/without: [3, 3, 5, 5, 4, 3, 6, 5] / [19, 17, 15, 11, 16, 19, 11, 14])"
+    },
+    {
+      "id": "veracity-multiplier",
+      "statement": "DV 5\u21922 at the same L5 shape: zero-touch lost (human burden >= 2x) and MTTR >= 1.5x",
+      "ok": true,
+      "detail": "human 30\u2192780 (26.0x); mttr 2.14\u21928.55 (4.0x); excursions 42\u219269 (missed detections aggregate onsets)"
+    }
+  ],
+  "allInvariantsHold": true,
+  "formalFindings": [
+    {
+      "id": "burden-shift",
+      "statement": "L5 does not extend the burden monotonicity: with humans out of the loop, routine recovery is the loop's alone (its MTTR can exceed L4's human-assisted recovery), and novelty/deployment events still summon people. The formal model should say L5 eliminates ROUTINE burden \u2014 not that burden monotonically decreases to zero.",
+      "detail": "human_ticks=[2280, 870, 0, 0, 60]; mttr=[25.73, 10.6, 4.25, 1.97, 3.07]"
+    },
+    {
+      "id": "aggregation-blind-savant",
+      "statement": "Under min-aggregation, (GD5,DV1,FI5) is behaviorally IDENTICAL to pure L1 \u2014 the model cannot express 'sophisticated but blind'. Is that the intended semantics?",
+      "detail": "blind-savant == pure L1 exactly: False (mttr 22.85, peak 53.2, human 2160)"
+    },
+    {
+      "id": "aggregation-capability-leak",
+      "statement": "Conversely, (GD5,DV2,FI5) \u2014 also min-L2 \u2014 BEHAVES BETTER than pure L2 (FI4+ gain adaptation is vector-gated, not level-gated). min-aggregation is inconsistent: it gates some capabilities but not others. Decision needed: strictly level-gate all capabilities, or treat (GD,DV,FI) as the behavioral profile and 'level' as a reporting label only.",
+      "detail": "savant(peak=46.37, mttr=8.26, human=840) vs pure-L2(peak=42.54, mttr=8.65, human=840)"
+    },
+    {
+      "id": "gain-velocity-codesign",
+      "statement": "Level policy parameters (gain, thresholds, lead times) are velocity-independent in the mapping. Any instability of high-gain policies on slow cycles is a formal-model gap: the mapping needs an explicit gain\u00d7cycle co-design rule (or a velocity-fit precondition before high maturity is claimed).",
+      "detail": "slow-L5 mttr=2860.0 peak=721.78 (compare fast-L5 in S1)"
+    }
+  ],
+  "ladderMetrics": [
+    {
+      "level": "L1",
+      "excursions": 97,
+      "mttr": 25.73,
+      "peak": 78.14,
+      "humanTicks": 2280,
+      "selfInflicted": 0,
+      "novelDepth": 20.48,
+      "ESim": 0.24
+    },
+    {
+      "level": "L2",
+      "excursions": 63,
+      "mttr": 10.6,
+      "peak": 46.82,
+      "humanTicks": 870,
+      "selfInflicted": 9,
+      "novelDepth": 17.61,
+      "ESim": 0.71
+    },
+    {
+      "level": "L3",
+      "excursions": 24,
+      "mttr": 4.25,
+      "peak": 20.71,
+      "humanTicks": 0,
+      "selfInflicted": 2,
+      "novelDepth": 11.38,
+      "ESim": 1.0
+    },
+    {
+      "level": "L4",
+      "excursions": 38,
+      "mttr": 1.97,
+      "peak": 15.9,
+      "humanTicks": 0,
+      "selfInflicted": 5,
+      "novelDepth": 6.77,
+      "ESim": 1.0
+    },
+    {
+      "level": "L5",
+      "excursions": 30,
+      "mttr": 3.07,
+      "peak": 8.12,
+      "humanTicks": 60,
+      "selfInflicted": 0,
+      "novelDepth": 6.27,
+      "ESim": 0.98
+    }
+  ],
+  "evidence": {
+    "evidenceId": "E-sbrun-SCN-SIM-BASELINE-001-seed2026",
+    "evidenceType": "SimulationEvidence",
+    "name": "State-based run sbrun-SCN-SIM-BASELINE-001-seed2026",
+    "sourceRef": "aocl-engine-statebased@0.1.0 (core sim@1.0.0)",
+    "subjectRef": "urn:aocl:control:network-assurance-001",
+    "originClass": "SimulationTime",
+    "simulationRun": {
+      "runId": "sbrun-SCN-SIM-BASELINE-001-seed2026",
+      "scenarioRef": "SCN-SIM-BASELINE-001",
+      "seed": 2026,
+      "engineVersion": "0.1.0",
+      "behavioralSpecVersion": "1.0.0",
+      "controlContractVersion": "bound-by-reference",
+      "vectors": {
+        "GD": 3,
+        "DV": 3,
+        "FI": 3
+      },
+      "assessedLevel": 3
+    }
+  },
+  "findings": []
+}

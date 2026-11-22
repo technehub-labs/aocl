@@ -119,6 +119,7 @@
           "properties": {
             "basis": { "$ref": "#/$defs/TriggerBasis" },
             "at": { "type": ["string", "number"] },
+            "every": { "type": ["string", "number"], "description": "Interval for Periodic onsets." },
             "conditionRef": { "type": "string" },
             "unknown": { "type": "boolean", "description": "Explicitly declared unknown onset (SCN-024)." }
           },

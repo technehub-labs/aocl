@@ -78,6 +78,11 @@ jobs:
           python3 tools/aocl_engine_logical.py run examples/execution-definition-logical.yaml --spec examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml --control examples/control-contract.yaml --evidence examples/evidence-model.yaml --approve approve-reroute=granted@3 --json > /dev/null
           python3 tools/aocl_engine_logical.py run examples/execution-definition-logical.yaml --spec examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml --control examples/control-contract.yaml --json > /dev/null
           echo "logical engine: self-test + reference run (granted → VerifiedCompletion) + default run (timeout → SafeStateTransition) ok"
+      - name: State-based simulation engine (CR-012)
+        run: |
+          python3 tools/aocl_engine_statebased.py --self-test
+          python3 tools/aocl_engine_statebased.py run examples/execution-definition-statebased-sim.yaml --loop examples/canonical-loop.yaml --scenarios examples/scenario-library-sim.yaml --json > /dev/null
+          echo "state-based engine: self-test + reference run (7/7 invariants as verdicts) ok"
       - name: Example ledger health (deterministic)
         run: |
           python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
@@ -136,6 +141,8 @@ jobs:
           print("ok   examples/execution-definition.yaml validates against execution-semantics.schema.json")
           Draft202012Validator(exe_schema).validate(yaml.safe_load(pathlib.Path("examples/execution-definition-logical.yaml").read_text()))
           print("ok   examples/execution-definition-logical.yaml validates against execution-semantics.schema.json")
+          Draft202012Validator(exe_schema).validate(yaml.safe_load(pathlib.Path("examples/execution-definition-statebased-sim.yaml").read_text()))
+          print("ok   examples/execution-definition-statebased-sim.yaml validates against execution-semantics.schema.json")
           for m in sorted(pathlib.Path("model").glob("*.yaml")):
               yaml.safe_load(m.read_text()); print(f"ok   model  {m.name}")
           # example ledger against its schema
