@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-11-22
+
 ### Added
 
 - **AOCL-CR-012 drafted and implemented** (State-Based Simulation Engine — quantitative evolution over the CR-010 contract): the CR document (`docs/architecture/AOCL-CR-012.md`, Proposed — engine-conformance rules SBE-001..020), the verbatim extraction of the sim-canvas prototype's physics into the canonical core `src/aocl/simcore.py` (`tools/sim_check.py` is now a shim over it with byte-identical output; `site/sim.js` remains the JS parity port), `src/aocl/engine_statebased.py` + `aocl-engine-statebased` CLI, the migrated sim-canvas scenario library (`examples/scenario-library-sim.yaml`), the StateBased reference execution definition (`examples/execution-definition-statebased-sim.yaml`), and the committed reference run summary (`examples/statebased-run-summary.json`). The engine is conformance-gated (execution definition state-based readiness, valid scenario library, canonical loop with assessment vectors as the policy source), runs the full invariant suite (S1–S8 with the multi-seed S6 study) with each invariant reported as a **first-class run verdict** and the formal-model findings (F1–F4) as observations, and emits SimulationEvidence carrying run identity, seed, vectors and engine version. Reference run: 7/7 invariants hold as verdicts under the canonical loop's vectors.
