@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-11-23
+
 ### Added
 
 - **AOCL-CR-014 drafted and implemented** (Studio — graph-based visual modeling canvas): the CR document (`docs/architecture/AOCL-CR-014.md`, Proposed — rules STU-001..008), `src/aocl/studio.py` + `aocl-studio` CLI exporting the **conformance-gated, deterministic studio bundle** (every artifact must pass its native validator; the graph renders exactly the declared relationships — nothing implied; disturbance visibility declarations carried; read-only over the canonical artifacts), and the site's **Studio view** (`site/studio.html` + `site/studio.js`): the behavioral specification as a staged graph over the seven responsibility lanes with relationship-type-coded edges and condition markers, the scenario library with controller-blind vs controller-known disturbances visually distinguished, the control model's contracts/authority/invariants, and the reference run's verdict banner. The committed bundle (`site/studio-data.json`) is asserted never to drift from the artifacts in CI.
