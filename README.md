@@ -99,6 +99,20 @@ aocl-execution examples/execution-definition.yaml     # validate (all profiles +
 aocl-execution --migrate model/behavior.yaml          # canvas policies → Draft skeleton (§19)
 ```
 
+## Logical simulation engine (CR-011, implemented)
+
+The first engine implementing the [CR-010](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-010.md) contract: [src/aocl/engine_logical.py](https://github.com/technehub-labs/aocl/blob/main/src/aocl/engine_logical.py) + `aocl-engine-logical`. **Conformance-gated** — it refuses to execute any artifact that fails its native validator — and enforces the declared semantics at runtime: separated actual/observed/estimated channels with controller-visibility enforcement (a disturbance declared unknown to the Controller never reaches the controller view until observed), graph-faithful activation, approval suspension with declared timeouts and escalation, the five-record dispatch chain (an acknowledgement never advances state), safe states with pending verification, deterministic seeded runs, and SimulationEvidence with input-derived run identity. The [reference run summary](https://github.com/technehub-labs/aocl/blob/main/examples/logical-run-summary.json) executes the full example family: granted approval → VerifiedCompletion in 3 ticks; default run → approval timeout → escalation → SafeStateTransition, verification honestly pending.
+
+```bash
+aocl-engine-logical run examples/execution-definition-logical.yaml \
+  --spec examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml \
+  --control examples/control-contract.yaml --evidence examples/evidence-model.yaml \
+  --approve approve-reroute=granted@3      # reference run (VerifiedCompletion)
+aocl-engine-logical run examples/execution-definition-logical.yaml \
+  --spec examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml \
+  --control examples/control-contract.yaml   # default run (timeout → SafeStateTransition)
+```
+
 ## Architecture baseline
 
 [AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility. The full CR sequence (CR-001..009 modeling foundation, CR-010..013 engines) is tracked in the [architecture index](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/README.md).

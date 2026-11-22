@@ -1,0 +1,82 @@
+{
+  "_comment": "AOCL logical run summary — the CR-011 reference run (aocl-engine-logical on the example family: execution-definition-logical + behavioral-spec + scenario-library SCN-NET-001 + control-contract + evidence-model, --approve approve-reroute=granted@3, seed 2026). Trace omitted for size; regenerate with the run command in README. Demonstration of: full dispatch chain, approval suspension+grant, verification-by-reference, VerifiedCompletion, SimulationEvidence with run identity.",
+
+  "runId": "run-SCN-NET-001-seed2026",
+  "rulesetVersion": "1.0.0",
+  "engineVersion": "0.1.0",
+  "executionRef": "urn:aocl:execution:network-assurance-logical",
+  "executionMode": "Logical",
+  "scenarioRef": "urn:aocl:scenarios:network-assurance",
+  "scenarioId": "SCN-NET-001",
+  "seed": 2026,
+  "runInputs": {
+    "approvals": {
+      "approve-reroute": {
+        "resolution": "granted",
+        "atTick": 3
+      }
+    },
+    "failures": []
+  },
+  "ticks": 3,
+  "terminationOutcome": "VerifiedCompletion",
+  "terminationWhy": "declared verification succeeded (LSE-013)",
+  "verificationSucceeded": true,
+  "deviationDetected": false,
+  "verificationTargets": [
+    {
+      "targetId": "vt-detection",
+      "claimRef": "claim-detection",
+      "evaluation": "NotEvaluated"
+    },
+    {
+      "targetId": "vt-outcome",
+      "claimRef": "claim-c-latency-goal",
+      "evaluation": "Achieved"
+    }
+  ],
+  "traceCounts": {
+    "Activation": 14,
+    "ConditionEvaluation": 5,
+    "TransitionEvaluation": 3,
+    "Dispatch": 5,
+    "ApprovalResolution": 2,
+    "ExceptionDisposition": 0,
+    "SafeStateTransition": 0
+  },
+  "traceRecordsValid": true,
+  "channels": {
+    "actual": {
+      "svc-latency": 42,
+      "operating-mode": "normal"
+    },
+    "observed": {
+      "svc-latency": 42,
+      "operating-mode": "normal"
+    },
+    "estimated": {}
+  },
+  "evidence": {
+    "evidenceId": "E-run-SCN-NET-001-seed2026",
+    "evidenceType": "SimulationEvidence",
+    "name": "Logical run run-SCN-NET-001-seed2026",
+    "sourceRef": "aocl-engine-logical@0.1.0",
+    "subjectRef": "urn:aocl:control:network-assurance-001",
+    "originClass": "SimulationTime",
+    "simulationRun": {
+      "runId": "run-SCN-NET-001-seed2026",
+      "scenarioRef": "SCN-NET-001",
+      "seed": 2026,
+      "engineVersion": "0.1.0",
+      "behavioralSpecVersion": "1.0.0",
+      "controlContractVersion": "bound-by-reference"
+    }
+  },
+  "findings": [
+    "behavioral specification declares no controlContractBindings \u2014 contracts are matched by reference only (BSS-036 readiness not claimed)",
+    "scenario event ev-obs: basis 'Event' has no computed tick in the reference interpretation \u2014 tied to its dependency",
+    "scenario event ev-verify: basis 'Condition' has no computed tick in the reference interpretation \u2014 tied to its dependency",
+    "element sub-telemetry: activation blocked \u2014 approval gate open (approve-reroute); the path is suspended",
+    "elements not activated: ['esc-ops', 'evt-actuator-complete', 'execute-throttle', 'handler-exec', 'intent-goals', 'obs-post-latency', 'safe-degraded', 'sub-telemetry']"
+  ]
+}
