@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AOCL Studio — behavioral graph, scenarios, contracts</title>
+<style>
+  :root { --line:#e2e8f0; --muted:#64748b; --accent:#4c1d95; --bg:#f8fafc; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:ui-monospace,Menlo,monospace; background:var(--bg); color:#0f172a; }
+  header { display:flex; align-items:center; gap:14px; padding:14px 20px; background:#fff; border-bottom:1px solid var(--line); }
+  header h1 { font-size:16px; margin:0; color:var(--accent); }
+  header a { font-size:12px; color:var(--muted); }
+  main { padding:16px 20px; max-width:1200px; margin:0 auto; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:16px; }
+  .card h2 { font-size:13px; margin:0 0 10px; color:var(--accent); }
+  .muted { color:var(--muted); font-size:12px; }
+  svg { max-width:100%; height:auto; display:block; }
+  .legend { display:flex; flex-wrap:wrap; gap:10px; font-size:11px; color:var(--muted); margin-top:8px; }
+  .legend span b { display:inline-block; width:18px; height:0; border-top:2px solid; vertical-align:middle; margin-right:4px; }
+  .scen { border-top:1px dashed var(--line); padding:10px 0; }
+  .scen:first-of-type { border-top:0; }
+  .chip { display:inline-block; font-size:11px; border:1px solid var(--line); border-radius:10px; padding:1px 8px; margin:2px 4px 2px 0; background:#fafafa; }
+  .chip.hidden { border-color:#b91c1c; color:#b91c1c; background:#fef2f2; }
+  .chip.visible { border-color:#166534; color:#166534; background:#f0fdf4; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th, td { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; }
+  .verdict { font-size:13px; padding:8px 10px; border-radius:6px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+  .verdict.warn { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+  #err { color:#b91c1c; font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AOCL Studio</h1>
+  <span class="muted" id="meta">loading bundle…</span>
+  <a href="index.html">← toolkit</a>
+  <a href="simulation.html">simulation canvas ↗</a>
+</header>
+<main>
+  <div id="err"></div>
+
+  <div class="card">
+    <h2>Behavioral specification — staged graph</h2>
+    <div class="muted" id="specmeta"></div>
+    <div id="graph"></div>
+    <div class="legend">
+      <span><b style="border-color:#334155"></b>FlowsTo</span>
+      <span><b style="border-color:#d97706;border-top-style:dashed"></b>BranchesTo</span>
+      <span><b style="border-color:#0d9488;border-top-style:dashed"></b>Triggers</span>
+      <span><b style="border-color:#7c3aed;border-top-style:dashed"></b>Repeats/Returns</span>
+      <span><b style="border-color:#b91c1c"></b>Exception/Escalation</span>
+      <span><b style="border-color:#94a3b8;border-top-style:dashed"></b>TerminatesWith</span>
+      <span><b style="border-color:#2563eb;border-top-style:dotted"></b>Other</span>
+    </div>
+    <div class="muted" style="margin-top:6px">Edges render exactly the declared relationships — no implied sequencing (STU-003). Multi-stage elements carry stage badges.</div>
+  </div>
+
+  <div class="card">
+    <h2>Run verdict</h2>
+    <div id="verdict" class="muted">no trace bound</div>
+  </div>
+
+  <div class="card">
+    <h2>Scenario library</h2>
+    <div class="muted" style="margin-bottom:8px">Disturbance visibility is rendered explicitly (STU-005): a controller-blind disturbance is known to YOU but never to the simulated Controller (EXE-036).</div>
+    <div id="scenarios"></div>
+  </div>
+
+  <div class="card" id="controlcard">
+    <h2>Control model — contracts, authority, invariants</h2>
+    <div id="control"></div>
+  </div>
+</main>
+<script src="studio.js"></script>
+</body>
+</html>

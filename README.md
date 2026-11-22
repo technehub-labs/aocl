@@ -135,6 +135,16 @@ aocl-trace verify examples/trace-logical-run.json \
   --evidence examples/evidence-model.yaml
 ```
 
+## Studio and scenario management (CR-014 + CR-016, implemented)
+
+The visual surface over the canonical artifacts: the site's **Studio view** ([site/studio.html](https://github.com/technehub-labs/aocl/blob/main/site/studio.html)) renders the behavioral specification as a staged graph over the seven responsibility lanes, the scenario library with controller-blind disturbances visually distinguished, the control model's contracts and invariants, and the reference run's verdict — all from a conformance-gated, deterministic bundle (`aocl-studio export`); the Studio is read-only over the artifacts and CI asserts the bundle never drifts. Scenario management ([src/aocl/scenario_compare.py](https://github.com/technehub-labs/aocl/blob/main/src/aocl/scenario_compare.py) + `aocl-scenario-compare`) compares scenarios with the model held constant (differences are scenario-attributable), diffs variants structurally, and reports verification-target coverage.
+
+```bash
+aocl-studio export examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml \
+  --control examples/control-contract.yaml --trace examples/trace-logical-run.json --out site/studio-data.json
+aocl-scenario-compare run examples/scenario-library-sim.yaml --loop examples/canonical-loop.yaml
+```
+
 ## Architecture baseline
 
 [AOCL-ARCH-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-ARCH-001.md) (Proposed) establishes the normative foundation: a closed-loop **engineering and realization framework** with a seven-stage behavioral lifecycle (Intent, Observe, Analyze, Decide, Execute, **Verify**, **Learn**), structural control architecture distinct from behavioral lifecycle, hybrid logical + state-based simulation, three layers (domain model / engineering engine / studio), and principles P01–P12. [AOCL-CR-001](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/AOCL-CR-001.md) proposes its adoption. The simulation canvas ([findings](https://github.com/technehub-labs/aocl/blob/main/docs/simulation.md), [ADR-006](https://github.com/technehub-labs/aocl/blob/main/docs/decisions/adr-006-simulation-evidence-and-architecture-alignment.md)) is the prototype of ARCH-001's state-based simulation mode and the evidence instrument for the mapping's plausibility. The full CR sequence (CR-001..009 modeling foundation, CR-010..013 engines) is tracked in the [architecture index](https://github.com/technehub-labs/aocl/blob/main/docs/architecture/README.md).

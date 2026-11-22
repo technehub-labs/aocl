@@ -1,0 +1,982 @@
+{
+  "bundleVersion": "1.0.0",
+  "rulesetVersion": "1.0.0",
+  "generatedBy": "aocl-studio",
+  "spec": {
+    "ref": "urn:aocl:spec:network-assurance-001",
+    "name": "Network Service Assurance Behavior",
+    "version": "1.0.0",
+    "lifecycleStatus": "Draft",
+    "entry": [
+      "cond-continuous-monitoring"
+    ],
+    "terminationOutcomes": [
+      "VerifiedCompletion",
+      "Escalation",
+      "SafeStateTransition",
+      "Suspended"
+    ],
+    "elements": [
+      {
+        "id": "analyze-congestion",
+        "type": "Analysis",
+        "name": "Analyze congestion",
+        "stages": [
+          "Analyze"
+        ],
+        "inputs": [
+          "fused-observation"
+        ],
+        "outputs": [
+          "congestion-assessment"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "approve-reroute",
+        "type": "Approval",
+        "name": "Approve traffic reroute",
+        "stages": [
+          "Decide",
+          "Execute"
+        ],
+        "inputs": [
+          "remediation-decision"
+        ],
+        "outputs": [
+          "reroute-authorization"
+        ],
+        "participationRefs": [
+          "hp-approve-reroute"
+        ],
+        "goalRefs": [],
+        "conditionRefs": [
+          "cond-approval-granted",
+          "cond-approval-rejected",
+          "cond-approval-timeout"
+        ],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "assess-service",
+        "type": "Assessment",
+        "name": "Assess service state",
+        "stages": [
+          "Analyze"
+        ],
+        "inputs": [
+          "congestion-assessment"
+        ],
+        "outputs": [
+          "service-assessment"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "decide-remediation",
+        "type": "Decision",
+        "name": "Decide remediation",
+        "stages": [
+          "Decide"
+        ],
+        "inputs": [
+          "service-assessment"
+        ],
+        "outputs": [
+          "remediation-decision"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [
+          "cond-reroute-appropriate",
+          "cond-congestion-severe"
+        ],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "esc-ops",
+        "type": "Escalation",
+        "name": "Escalate to operations",
+        "stages": [
+          "Decide"
+        ],
+        "inputs": [
+          "exception-report"
+        ],
+        "outputs": [
+          "escalation-request"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "evt-actuator-complete",
+        "type": "Event",
+        "name": "Actuator completion notification",
+        "stages": [],
+        "inputs": [],
+        "outputs": [],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "execute-reroute",
+        "type": "Action",
+        "name": "Reroute traffic",
+        "stages": [
+          "Execute"
+        ],
+        "inputs": [
+          "reroute-authorization"
+        ],
+        "outputs": [
+          "reroute-result"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {
+          "controllerRef": "controller-assurance",
+          "actuatorRef": "actuator-traffic-engineering"
+        },
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "execute-throttle",
+        "type": "Action",
+        "name": "Throttle non-critical flows",
+        "stages": [
+          "Execute"
+        ],
+        "inputs": [
+          "remediation-decision"
+        ],
+        "outputs": [
+          "throttle-result"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {
+          "actuatorRef": "actuator-rate-limiter"
+        },
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "handler-exec",
+        "type": "ExceptionHandler",
+        "name": "Handle execution failure",
+        "stages": [
+          "Execute"
+        ],
+        "inputs": [
+          "reroute-result"
+        ],
+        "outputs": [
+          "exception-report"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "intent-goals",
+        "type": "IntentReference",
+        "name": "Governing intent",
+        "stages": [
+          "Intent"
+        ],
+        "inputs": [],
+        "outputs": [],
+        "participationRefs": [],
+        "goalRefs": [
+          "goal-service-latency",
+          "goal-service-availability"
+        ],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "learn-playbook",
+        "type": "Learning",
+        "name": "Record remediation experience",
+        "stages": [
+          "Learn"
+        ],
+        "inputs": [
+          "verification-result"
+        ],
+        "outputs": [
+          "playbook-record"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "obs-latency",
+        "type": "Observation",
+        "name": "Observe service latency",
+        "stages": [
+          "Observe"
+        ],
+        "inputs": [],
+        "outputs": [
+          "latency-observation"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {
+          "sensorRef": "sensor-latency-probe"
+        },
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "obs-post-latency",
+        "type": "Observation",
+        "name": "Independent post-action latency probe",
+        "stages": [
+          "Verify"
+        ],
+        "inputs": [],
+        "outputs": [
+          "post-latency-observation"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {
+          "sensorRef": "sensor-latency-probe"
+        },
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "obs-traffic",
+        "type": "Observation",
+        "name": "Observe traffic matrix",
+        "stages": [
+          "Observe"
+        ],
+        "inputs": [],
+        "outputs": [
+          "traffic-observation"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {
+          "sensorRef": "sensor-traffic-probe"
+        },
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "safe-degraded",
+        "type": "SafeState",
+        "name": "Degraded routing safe state",
+        "stages": [
+          "Execute",
+          "Verify"
+        ],
+        "inputs": [],
+        "outputs": [],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "sub-telemetry",
+        "type": "SubSpecification",
+        "name": "Telemetry fusion behavior",
+        "stages": [
+          "Observe"
+        ],
+        "inputs": [],
+        "outputs": [],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "sync-obs",
+        "type": "Synchronization",
+        "name": "Fuse parallel observations",
+        "stages": [
+          "Observe"
+        ],
+        "inputs": [
+          "latency-observation",
+          "traffic-observation"
+        ],
+        "outputs": [
+          "fused-observation"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": "WaitForAll"
+      },
+      {
+        "id": "verify-latency",
+        "type": "Verification",
+        "name": "Verify latency outcome",
+        "stages": [
+          "Verify"
+        ],
+        "inputs": [
+          "actuator-settled",
+          "post-latency-observation"
+        ],
+        "outputs": [
+          "verification-result"
+        ],
+        "participationRefs": [
+          "hp-notify-ops"
+        ],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": null,
+        "syncPattern": null
+      },
+      {
+        "id": "wait-actuator",
+        "type": "Wait",
+        "name": "Await actuator completion",
+        "stages": [
+          "Execute"
+        ],
+        "inputs": [
+          "reroute-result"
+        ],
+        "outputs": [
+          "actuator-settled"
+        ],
+        "participationRefs": [],
+        "goalRefs": [],
+        "conditionRefs": [],
+        "controlArchitectureRef": {},
+        "resumeEventRef": "evt-actuator-complete",
+        "syncPattern": null
+      }
+    ],
+    "relationships": [
+      {
+        "relationshipId": "r01",
+        "type": "FlowsTo",
+        "source": "obs-latency",
+        "target": "sync-obs"
+      },
+      {
+        "relationshipId": "r02",
+        "type": "FlowsTo",
+        "source": "obs-traffic",
+        "target": "sync-obs"
+      },
+      {
+        "relationshipId": "r03",
+        "type": "SynchronizesWith",
+        "source": "obs-latency",
+        "target": "sync-obs"
+      },
+      {
+        "relationshipId": "r04",
+        "type": "FlowsTo",
+        "source": "sync-obs",
+        "target": "analyze-congestion"
+      },
+      {
+        "relationshipId": "r05",
+        "type": "FlowsTo",
+        "source": "analyze-congestion",
+        "target": "assess-service"
+      },
+      {
+        "relationshipId": "r06",
+        "type": "FlowsTo",
+        "source": "assess-service",
+        "target": "decide-remediation"
+      },
+      {
+        "relationshipId": "r07",
+        "type": "FlowsTo",
+        "source": "decide-remediation",
+        "target": "approve-reroute"
+      },
+      {
+        "relationshipId": "r08",
+        "type": "BranchesTo",
+        "source": "decide-remediation",
+        "target": "execute-reroute",
+        "conditionRef": "cond-reroute-appropriate"
+      },
+      {
+        "relationshipId": "r09",
+        "type": "BranchesTo",
+        "source": "decide-remediation",
+        "target": "execute-throttle",
+        "conditionRef": "cond-congestion-severe"
+      },
+      {
+        "relationshipId": "r10",
+        "type": "BranchesTo",
+        "source": "approve-reroute",
+        "target": "execute-reroute",
+        "conditionRef": "cond-approval-granted"
+      },
+      {
+        "relationshipId": "r11",
+        "type": "BranchesTo",
+        "source": "approve-reroute",
+        "target": "esc-ops",
+        "conditionRef": "cond-approval-rejected"
+      },
+      {
+        "relationshipId": "r12",
+        "type": "FlowsTo",
+        "source": "execute-reroute",
+        "target": "wait-actuator"
+      },
+      {
+        "relationshipId": "r13",
+        "type": "Triggers",
+        "source": "evt-actuator-complete",
+        "target": "wait-actuator"
+      },
+      {
+        "relationshipId": "r14",
+        "type": "FlowsTo",
+        "source": "wait-actuator",
+        "target": "verify-latency"
+      },
+      {
+        "relationshipId": "r15",
+        "type": "FlowsTo",
+        "source": "obs-post-latency",
+        "target": "verify-latency"
+      },
+      {
+        "relationshipId": "r16",
+        "type": "FlowsTo",
+        "source": "verify-latency",
+        "target": "learn-playbook"
+      },
+      {
+        "relationshipId": "r17",
+        "type": "RepeatsTo",
+        "source": "learn-playbook",
+        "target": "obs-latency",
+        "conditionRef": "cond-continuous-monitoring"
+      },
+      {
+        "relationshipId": "r18",
+        "type": "HandlesException",
+        "source": "execute-reroute",
+        "target": "handler-exec"
+      },
+      {
+        "relationshipId": "r19",
+        "type": "RepeatsTo",
+        "source": "handler-exec",
+        "target": "execute-reroute",
+        "conditionRef": "cond-retry-allowed"
+      },
+      {
+        "relationshipId": "r20",
+        "type": "EscalatesTo",
+        "source": "handler-exec",
+        "target": "esc-ops"
+      },
+      {
+        "relationshipId": "r21",
+        "type": "TerminatesWith",
+        "source": "esc-ops",
+        "target": "safe-degraded",
+        "terminationOutcome": "SafeStateTransition"
+      },
+      {
+        "relationshipId": "r22",
+        "type": "ReturnsTo",
+        "source": "verify-latency",
+        "target": "analyze-congestion",
+        "conditionRef": "cond-outcome-not-achieved"
+      },
+      {
+        "relationshipId": "r23",
+        "type": "ExecutesInParallelWith",
+        "source": "obs-latency",
+        "target": "obs-traffic"
+      },
+      {
+        "relationshipId": "r24",
+        "type": "Invokes",
+        "source": "sub-telemetry",
+        "target": "sync-obs"
+      }
+    ],
+    "conditions": [
+      {
+        "conditionId": "cond-actuator-timeout",
+        "category": "Temporal",
+        "subject": "actuator.completion.age",
+        "operator": null,
+        "valueRef": null,
+        "evaluationContext": "completion notification expected within the actuator SLA; breach triggers exc-actuator-timeout"
+      },
+      {
+        "conditionId": "cond-approval-granted",
+        "category": "Authorization",
+        "subject": "reroute-authorization.status",
+        "operator": null,
+        "valueRef": null,
+        "evaluationContext": "decision recorded by hp-approve-reroute within authorization context pol-routing-auth"
+      },
+      {
+        "conditionId": "cond-approval-rejected",
+        "category": "Authorization",
+        "subject": "reroute-authorization.status",
+        "operator": null,
+        "valueRef": null,
+        "evaluationContext": "decision recorded by hp-approve-reroute within authorization context pol-routing-auth"
+      },
+      {
+        "conditionId": "cond-approval-timeout",
+        "category": "Temporal",
+        "subject": "approval.request.age",
+        "operator": "greaterThan",
+        "valueRef": "PT10M",
+        "evaluationContext": "no approver response within the window triggers exc-approval-timeout (\u00a712 timeout behavior)"
+      },
+      {
+        "conditionId": "cond-congestion-severe",
+        "category": "Threshold",
+        "subject": "congestion.level",
+        "operator": "greaterThanOrEqual",
+        "valueRef": "severe",
+        "evaluationContext": "service-assessment evaluated by controller-assurance against the loop reference conditions"
+      },
+      {
+        "conditionId": "cond-continuous-monitoring",
+        "category": "Temporal",
+        "subject": "monitoring cycle",
+        "operator": null,
+        "valueRef": null,
+        "evaluationContext": "loop scheduler tick \u2014 true at each cycle boundary of the continuously operating loop"
+      },
+      {
+        "conditionId": "cond-outcome-not-achieved",
+        "category": "State",
+        "subject": "post-latency-observation.p95",
+        "operator": "greaterThan",
+        "valueRef": "goal-service-latency target",
+        "evaluationContext": "independent verification result compared against the goal reference condition (r22)"
+      },
+      {
+        "conditionId": "cond-reroute-appropriate",
+        "category": "Threshold",
+        "subject": "congestion.level",
+        "operator": "lessThan",
+        "valueRef": "severe",
+        "evaluationContext": "service-assessment evaluated by controller-assurance against the loop reference conditions"
+      },
+      {
+        "conditionId": "cond-retry-allowed",
+        "category": "Policy",
+        "subject": "exception.retryCount",
+        "operator": "lessThan",
+        "valueRef": "1",
+        "evaluationContext": "retry budget from governed policy pol-retry-budget \u2014 a declared, not schema-imposed, limit (\u00a78.5)"
+      },
+      {
+        "conditionId": "cond-safe-degraded-entry",
+        "category": "State",
+        "subject": "routing.controlState",
+        "operator": null,
+        "valueRef": null,
+        "evaluationContext": "unsafe or unverifiable routing state per constraint pol-routing-safety; entry criterion for safe-degraded"
+      }
+    ],
+    "humanParticipation": [
+      {
+        "participationId": "hp-approve-reroute",
+        "role": "Approver",
+        "participationKind": "Approval",
+        "expectedResponse": "grant or reject the reroute within the approval window"
+      },
+      {
+        "participationId": "hp-notify-ops",
+        "role": "Observer",
+        "participationKind": "Notification",
+        "expectedResponse": "none \u2014 informational only (distinct from approval, BSS-024)"
+      }
+    ],
+    "exceptions": [
+      {
+        "exceptionId": "exc-actuator-timeout",
+        "category": "Timeout",
+        "affectedElementRef": "wait-actuator",
+        "criticality": "Major",
+        "recoveryOrEscalation": "Recovery"
+      },
+      {
+        "exceptionId": "exc-approval-timeout",
+        "category": "Timeout",
+        "affectedElementRef": "approve-reroute",
+        "criticality": "Critical",
+        "recoveryOrEscalation": "Escalation"
+      },
+      {
+        "exceptionId": "exc-exec-failure",
+        "category": "ExecutionFailure",
+        "affectedElementRef": "execute-reroute",
+        "criticality": "Major",
+        "recoveryOrEscalation": "Recovery"
+      },
+      {
+        "exceptionId": "exc-human-required",
+        "category": "HumanInterventionRequired",
+        "affectedElementRef": "esc-ops",
+        "criticality": "Critical",
+        "recoveryOrEscalation": "SafeState"
+      },
+      {
+        "exceptionId": "exc-verification-failure",
+        "category": "VerificationFailure",
+        "affectedElementRef": "verify-latency",
+        "criticality": "Major",
+        "recoveryOrEscalation": "Recovery"
+      }
+    ],
+    "safeStates": [
+      {
+        "safeStateId": "safe-degraded-routing",
+        "scopeRef": "network-routing-scope",
+        "expectedOutcome": "Traffic engineered to last-known-good routes; automated remediation suspended pending operator intent."
+      }
+    ],
+    "verificationRefs": [
+      {
+        "verificationId": "vr-authorization-audit",
+        "elementRef": "verify-latency",
+        "independence": "Delegated",
+        "claim": null
+      },
+      {
+        "verificationId": "vr-latency-independent",
+        "elementRef": "verify-latency",
+        "independence": "Independent",
+        "claim": null
+      }
+    ]
+  },
+  "scenarios": {
+    "ref": "urn:aocl:scenarios:network-assurance",
+    "name": "Network Assurance Scenario Library",
+    "scenarios": [
+      {
+        "scenarioId": "SCN-NET-001",
+        "name": "Network Service Congestion and Recovery",
+        "type": "Normal",
+        "version": "1.0.0",
+        "lifecycleStatus": "InReview",
+        "extends": null,
+        "differences": [],
+        "disturbances": [
+          {
+            "disturbanceId": "d-demand-spike",
+            "type": "Demand",
+            "name": "Sudden traffic demand increase",
+            "magnitude": 35,
+            "magnitudeUnit": "percent",
+            "profile": "Step",
+            "knownToController": false
+          }
+        ],
+        "verificationTargets": [
+          {
+            "targetId": "vt-detection",
+            "claimRef": "claim-detection"
+          },
+          {
+            "targetId": "vt-outcome",
+            "claimRef": "claim-c-latency-goal"
+          }
+        ],
+        "initialStates": [
+          {
+            "stateVariableRef": "svc-latency",
+            "stateClass": "Actual",
+            "value": 42,
+            "unit": "ms"
+          },
+          {
+            "stateVariableRef": "svc-latency",
+            "stateClass": "Observed",
+            "value": 42,
+            "unit": "ms"
+          },
+          {
+            "stateVariableRef": "operating-mode",
+            "stateClass": "Actual",
+            "value": "normal",
+            "unit": null
+          }
+        ]
+      },
+      {
+        "scenarioId": "SCN-NET-001-C",
+        "name": "Stale telemetry variant",
+        "type": "Degraded",
+        "version": "1.0.0",
+        "lifecycleStatus": "Draft",
+        "extends": "SCN-NET-001",
+        "differences": [
+          "controller-visible initial latency held at 42 ms while the plant moves to 72 ms",
+          "observation delay increased to 30 s"
+        ],
+        "disturbances": [
+          {
+            "disturbanceId": "d-stale-telemetry",
+            "type": "DataQuality",
+            "name": "Stale telemetry",
+            "magnitude": "30 s",
+            "magnitudeUnit": "delay",
+            "profile": "Step",
+            "knownToController": false
+          }
+        ],
+        "verificationTargets": [
+          {
+            "targetId": "vt-detection",
+            "claimRef": "claim-detection"
+          },
+          {
+            "targetId": "vt-outcome",
+            "claimRef": "claim-c-latency-goal"
+          }
+        ],
+        "initialStates": [
+          {
+            "stateVariableRef": "svc-latency",
+            "stateClass": "Actual",
+            "value": 42,
+            "unit": "ms"
+          },
+          {
+            "stateVariableRef": "svc-latency",
+            "stateClass": "Observed",
+            "value": 42,
+            "unit": "ms"
+          }
+        ]
+      },
+      {
+        "scenarioId": "SCN-NET-001-F",
+        "name": "Competing interventions",
+        "type": "Comparative",
+        "version": "1.0.0",
+        "lifecycleStatus": "InReview",
+        "extends": "SCN-NET-001",
+        "differences": [
+          "a second assurance loop intervenes on the same allocation variable"
+        ],
+        "disturbances": [
+          {
+            "disturbanceId": "d-demand-spike",
+            "type": "Demand",
+            "name": "Sudden traffic demand increase",
+            "magnitude": 35,
+            "magnitudeUnit": "percent",
+            "profile": "Step",
+            "knownToController": false
+          }
+        ],
+        "verificationTargets": [
+          {
+            "targetId": "vt-detection",
+            "claimRef": "claim-detection"
+          },
+          {
+            "targetId": "vt-outcome",
+            "claimRef": "claim-c-latency-goal"
+          }
+        ],
+        "initialStates": [
+          {
+            "stateVariableRef": "svc-latency",
+            "stateClass": "Actual",
+            "value": 42,
+            "unit": "ms"
+          },
+          {
+            "stateVariableRef": "svc-latency",
+            "stateClass": "Observed",
+            "value": 42,
+            "unit": "ms"
+          },
+          {
+            "stateVariableRef": "operating-mode",
+            "stateClass": "Actual",
+            "value": "normal",
+            "unit": null
+          }
+        ]
+      }
+    ]
+  },
+  "control": {
+    "ref": "urn:aocl:control:network-assurance-001",
+    "version": null,
+    "variables": [
+      {
+        "variableId": "svc-latency",
+        "roles": [
+          "Controlled"
+        ],
+        "unit": "ms"
+      },
+      {
+        "variableId": "measured-latency",
+        "roles": [
+          "Observed"
+        ],
+        "unit": "ms"
+      },
+      {
+        "variableId": "predicted-latency",
+        "roles": [
+          "Estimated"
+        ],
+        "unit": "ms"
+      },
+      {
+        "variableId": "traffic-allocation",
+        "roles": [
+          "Manipulated"
+        ],
+        "unit": "percent"
+      },
+      {
+        "variableId": "demand-external",
+        "roles": [
+          "Disturbance"
+        ],
+        "unit": "Gbps"
+      },
+      {
+        "variableId": "target-latency",
+        "roles": [
+          "Reference"
+        ],
+        "unit": "ms"
+      },
+      {
+        "variableId": "max-utilization",
+        "roles": [
+          "Constraint"
+        ],
+        "unit": "percent"
+      }
+    ],
+    "contracts": [
+      {
+        "contractId": "ctr-redistribute",
+        "contractType": "Action",
+        "subjectRef": "assurance-controller"
+      },
+      {
+        "contractId": "ctr-decide",
+        "contractType": "Decision",
+        "subjectRef": "assurance-controller"
+      },
+      {
+        "contractId": "ctr-verify",
+        "contractType": "Verification",
+        "subjectRef": "verification-path"
+      }
+    ],
+    "authority": [
+      {
+        "authorityId": "auth-assurance",
+        "subjectRef": "assurance-controller",
+        "authorityClass": "Primary"
+      },
+      {
+        "authorityId": "auth-supervisory",
+        "subjectRef": "supervisory-controller",
+        "authorityClass": "Supervisory"
+      },
+      {
+        "authorityId": "auth-protective",
+        "subjectRef": "protective-mechanism",
+        "authorityClass": "Protective"
+      }
+    ],
+    "invariants": [
+      {
+        "invariantId": "inv-availability",
+        "priorityClass": "Safety",
+        "statement": "service availability remains above the contractual minimum at all times"
+      },
+      {
+        "invariantId": "inv-utilization",
+        "priorityClass": "Operational",
+        "statement": "resource utilization does not exceed available capacity"
+      }
+    ]
+  },
+  "trace": {
+    "runId": "run-SCN-NET-001-seed2026",
+    "engineName": "aocl-engine-logical",
+    "engineVersion": "0.1.0",
+    "termination": {
+      "outcome": "VerifiedCompletion",
+      "why": "declared verification succeeded (LSE-013)",
+      "t": 3
+    },
+    "recordCount": 29
+  }
+}

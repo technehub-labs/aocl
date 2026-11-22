@@ -89,6 +89,17 @@ jobs:
           python3 tools/aocl_trace.py validate examples/trace-logical-run.json --json > /dev/null
           python3 tools/aocl_trace.py verify examples/trace-logical-run.json --execution examples/execution-definition-logical.yaml --spec examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml --control examples/control-contract.yaml --evidence examples/evidence-model.yaml --json > /dev/null
           echo "trace: self-test + canonical trace validation + deterministic replay verification ok"
+      - name: Studio export (CR-014)
+        run: |
+          python3 tools/aocl_studio.py --self-test
+          python3 tools/aocl_studio.py export examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml --control examples/control-contract.yaml --trace examples/trace-logical-run.json --out site/studio-data.json
+          git diff --exit-code site/studio-data.json || { echo "studio bundle drifted — regenerate and commit"; exit 1; }
+          echo "studio: self-test + gated bundle export deterministic ok"
+      - name: Scenario comparison (CR-016)
+        run: |
+          python3 tools/aocl_scenario_compare.py --self-test
+          python3 tools/aocl_scenario_compare.py run examples/scenario-library-sim.yaml --loop examples/canonical-loop.yaml --json > /dev/null
+          echo "scenario comparison: self-test + cross-scenario run (model held constant) ok"
       - name: Example ledger health (deterministic)
         run: |
           python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
