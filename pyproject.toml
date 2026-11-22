@@ -48,6 +48,7 @@ aocl-scenario = "aocl.scenario:main"
 aocl-execution = "aocl.execution:main"
 aocl-engine-logical = "aocl.engine_logical:main"
 aocl-engine-statebased = "aocl.engine_statebased:main"
+aocl-trace = "aocl.trace:main"
 
 [project.optional-dependencies]
 dev = ["jsonschema>=4.21", "build", "pyinstaller"]

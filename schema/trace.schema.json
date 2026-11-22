@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/technehub-labs/aocl/main/schema/trace.schema.json",
+  "title": "AOCL ExecutionTrace document (AOCL-CR-013)",
+  "description": "The canonical ExecutionTrace established by AOCL-CR-013: the serialization of one engine run's record sequence under the CR-010 record classes (Activation, ConditionEvaluation, TransitionEvaluation, Dispatch, ApprovalResolution, ExceptionDisposition, SafeStateTransition — EXE-038), with the envelope bindings (TRC-002), declared inputs for reproduction (TRC-007), termination record (TRC-009), evidence reference (TRC-013) and replay metadata. Structural rules are expressed here and enforced natively by src/aocl/trace.py, which adds ordering, single-run scope, outcome-vocabulary, and replay-verification rules (TRC-006/008/010..012/016 — structural validity is distinct from replay success).",
+  "type": "object",
+  "required": ["schemaVersion", "traceVersion", "executionTrace"],
+  "properties": {
+    "schemaVersion": { "const": "0.1" },
+    "traceVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "executionTrace": { "$ref": "#/$defs/ExecutionTrace" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "RecordClass": {
+      "enum": ["Activation", "ConditionEvaluation", "TransitionEvaluation", "Dispatch",
+               "ApprovalResolution", "ExceptionDisposition", "SafeStateTransition"],
+      "description": "The CR-010 obligatory record classes (EXE-038, TRC-003)."
+    },
+    "Record": {
+      "type": "object",
+      "required": ["recordId", "class", "t", "ref"],
+      "properties": {
+        "recordId": { "type": "string", "minLength": 3, "description": "Stable within the trace (TRC-004)." },
+        "class": { "$ref": "#/$defs/RecordClass" },
+        "t": { "type": "integer", "minimum": 0, "description": "Temporal reference (TRC-003)." },
+        "ref": { "type": "string", "minLength": 1, "description": "Referenced element, condition, event or scenario id (TRC-004)." },
+        "detail": { "type": "string", "description": "Human-readable detail — MAY differ across replay (TRC-011)." },
+        "outcome": { "type": "string", "description": "Governed outcome where the class has one (TRC-005) — compared on replay." },
+        "channel": { "enum": ["actual", "observed", "estimated"], "description": "Channel route for ConditionEvaluation records (EXE-036/037)." }
+      },
+      "additionalProperties": false
+    },
+    "ExecutionTrace": {
+      "type": "object",
+      "required": ["runId", "type", "executionRef", "specRef", "specVersion", "scenarioRef",
+                   "scenarioId", "scenarioVersion", "engineName", "engineVersion", "seed",
+                   "runInputs", "records"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 3, "description": "The producing run's identity (TRC-001) — matches the evidence record." },
+        "type": { "const": "ExecutionTrace" },
+        "executionRef": { "type": "string", "pattern": "^urn:aocl:execution:[a-z0-9][a-z0-9-]*$", "description": "TRC-002." },
+        "specRef": { "type": "string", "pattern": "^urn:aocl:spec:[a-z0-9][a-z0-9-]*$" },
+        "specVersion": { "type": "string", "minLength": 1 },
+        "scenarioRef": { "type": "string", "pattern": "^urn:aocl:scenarios:[a-z0-9][a-z0-9-]*$" },
+        "scenarioId": { "type": "string", "minLength": 1 },
+        "scenarioVersion": { "type": "string", "minLength": 1 },
+        "engineName": { "type": "string", "minLength": 1, "description": "TRC-002/012: engine identity scopes replay compatibility." },
+        "engineVersion": { "type": "string", "minLength": 1 },
+        "seed": { "type": ["string", "number"], "description": "TRC-007." },
+        "runInputs": {
+          "type": "object",
+          "description": "Declared inputs needed for reproduction (TRC-007): approval resolutions, declared failures.",
+          "properties": {
+            "approvals": { "type": "object" },
+            "failures": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "termination": {
+          "type": "object",
+          "required": ["outcome", "why"],
+          "properties": {
+            "outcome": { "type": "string", "minLength": 1, "description": "TRC-009 — the governed termination outcome." },
+            "why": { "type": "string", "minLength": 1 },
+            "t": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "evidenceRef": { "type": "string", "minLength": 3, "description": "TRC-013: the SimulationEvidence record the run emitted." },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Record" }
+        },
+        "stateSamples": {
+          "type": "array",
+          "description": "Optional per-tick quantitative samples (state-based engine) — capped, never a substitute for the record sequence.",
+          "items": {
+            "type": "object",
+            "required": ["t"],
+            "properties": {
+              "t": { "type": "integer", "minimum": 0 },
+              "actual": { "type": "number" },
+              "observed": { "type": "number" },
+              "excursion": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

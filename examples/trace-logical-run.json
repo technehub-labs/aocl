@@ -1,0 +1,256 @@
+{
+  "schemaVersion": "0.1",
+  "traceVersion": "1.0.0",
+  "executionTrace": {
+    "runId": "run-SCN-NET-001-seed2026",
+    "type": "ExecutionTrace",
+    "executionRef": "urn:aocl:execution:network-assurance-logical",
+    "specRef": "urn:aocl:spec:network-assurance-001",
+    "specVersion": "1.0.0",
+    "scenarioRef": "urn:aocl:scenarios:network-assurance",
+    "scenarioId": "SCN-NET-001",
+    "scenarioVersion": "1.0.0",
+    "engineName": "aocl-engine-logical",
+    "engineVersion": "0.1.0",
+    "seed": 2026,
+    "runInputs": {
+      "approvals": {
+        "approve-reroute": {
+          "resolution": "granted",
+          "atTick": 3
+        }
+      },
+      "failures": []
+    },
+    "termination": {
+      "outcome": "VerifiedCompletion",
+      "why": "declared verification succeeded (LSE-013)",
+      "t": 3
+    },
+    "evidenceRef": "E-run-SCN-NET-001-seed2026",
+    "records": [
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "<run>",
+        "detail": "execution urn:aocl:execution:network-assurance-logical v1.0.0; mode Logical; scenario SCN-NET-001; seed 2026; runId run-SCN-NET-001-seed2026",
+        "recordId": "r-001"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "obs-latency",
+        "detail": "activated (declared entry); type=Observation, stages=['Observe']",
+        "recordId": "r-002"
+      },
+      {
+        "class": "TransitionEvaluation",
+        "t": 0,
+        "ref": "sync-obs",
+        "detail": "synchronization sync-obs: waiting for parallel inputs (WaitForAll)",
+        "outcome": "Waiting",
+        "recordId": "r-003"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "obs-traffic",
+        "detail": "activated (declared entry); type=Observation, stages=['Observe']",
+        "recordId": "r-004"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "sync-obs",
+        "detail": "activated (FlowsTo r02); type=Synchronization, stages=['Observe']",
+        "recordId": "r-005"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "analyze-congestion",
+        "detail": "activated (FlowsTo r04); type=Analysis, stages=['Analyze']",
+        "recordId": "r-006"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "assess-service",
+        "detail": "activated (FlowsTo r05); type=Assessment, stages=['Analyze']",
+        "recordId": "r-007"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "decide-remediation",
+        "detail": "activated (FlowsTo r06); type=Decision, stages=['Decide']",
+        "recordId": "r-008"
+      },
+      {
+        "class": "ConditionEvaluation",
+        "t": 0,
+        "ref": "cond-reroute-appropriate",
+        "detail": "unresolved: subject 'congestion.level' on channel observed is not numerically evaluable (recorded, never defaulted \u2014 LSE-007)",
+        "outcome": "Unresolved",
+        "channel": "observed",
+        "recordId": "r-009"
+      },
+      {
+        "class": "ConditionEvaluation",
+        "t": 0,
+        "ref": "cond-congestion-severe",
+        "detail": "unresolved: subject 'congestion.level' on channel observed is not numerically evaluable (recorded, never defaulted \u2014 LSE-007)",
+        "outcome": "Unresolved",
+        "channel": "observed",
+        "recordId": "r-010"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "approve-reroute",
+        "detail": "activated (FlowsTo r07); type=Approval, stages=['Decide', 'Execute']",
+        "recordId": "r-011"
+      },
+      {
+        "class": "ApprovalResolution",
+        "t": 0,
+        "ref": "approve-reroute",
+        "detail": "suspended into WaitingApproval (declared window 20 ticks)",
+        "outcome": "WaitingApproval",
+        "recordId": "r-012"
+      },
+      {
+        "class": "Activation",
+        "t": 0,
+        "ref": "ev-start",
+        "detail": "scenario event ScenarioStart fired",
+        "recordId": "r-013"
+      },
+      {
+        "class": "Activation",
+        "t": 2,
+        "ref": "ev-onset",
+        "detail": "scenario event DisturbanceOnset fired",
+        "recordId": "r-014"
+      },
+      {
+        "class": "ApprovalResolution",
+        "t": 3,
+        "ref": "approve-reroute",
+        "detail": "granted (declared run input)",
+        "outcome": "granted",
+        "recordId": "r-015"
+      },
+      {
+        "class": "Activation",
+        "t": 3,
+        "ref": "execute-reroute",
+        "detail": "activated (approval grant \u2192 cond-approval-granted); type=Action, stages=['Execute']",
+        "recordId": "r-016"
+      },
+      {
+        "class": "Dispatch",
+        "t": 3,
+        "ref": "execute-reroute",
+        "detail": "Command: command issued to assurance-controller",
+        "outcome": "Recorded",
+        "recordId": "r-017"
+      },
+      {
+        "class": "Dispatch",
+        "t": 3,
+        "ref": "execute-reroute",
+        "detail": "Acknowledgement: acknowledgement received (Receipt \u2014 NOT execution)",
+        "outcome": "Recorded",
+        "recordId": "r-018"
+      },
+      {
+        "class": "Dispatch",
+        "t": 3,
+        "ref": "execute-reroute",
+        "detail": "ExecutionStatus: execution reported complete",
+        "outcome": "Recorded",
+        "recordId": "r-019"
+      },
+      {
+        "class": "Dispatch",
+        "t": 3,
+        "ref": "execute-reroute",
+        "detail": "Effect: declared effect on traffic-allocation: redistribution toward less congested routes",
+        "outcome": "Applied",
+        "recordId": "r-020"
+      },
+      {
+        "class": "Dispatch",
+        "t": 3,
+        "ref": "execute-reroute",
+        "detail": "Outcome: action outcome recorded (distinct from execution status)",
+        "outcome": "Recorded",
+        "recordId": "r-021"
+      },
+      {
+        "class": "TransitionEvaluation",
+        "t": 3,
+        "ref": "execute-reroute",
+        "detail": "authority 'auth-assurance' checked against declared AuthorityDefinition: valid",
+        "outcome": "Valid",
+        "recordId": "r-022"
+      },
+      {
+        "class": "Activation",
+        "t": 3,
+        "ref": "wait-actuator",
+        "detail": "activated (FlowsTo r12); type=Wait, stages=['Execute']",
+        "recordId": "r-023"
+      },
+      {
+        "class": "Activation",
+        "t": 3,
+        "ref": "verify-latency",
+        "detail": "activated (FlowsTo r14); type=Verification, stages=['Verify']",
+        "recordId": "r-024"
+      },
+      {
+        "class": "TransitionEvaluation",
+        "t": 3,
+        "ref": "verify-latency:independent-probe",
+        "detail": "observation: actual \u2192 controller-visible view copied",
+        "outcome": "Observed",
+        "recordId": "r-025"
+      },
+      {
+        "class": "ConditionEvaluation",
+        "t": 3,
+        "ref": "verify-latency",
+        "detail": "verification: observed svc-latency=42.0 vs reference 50.0 \u2192 achieved (evaluated-by-reference; textual conditions recorded separately)",
+        "outcome": "Achieved",
+        "recordId": "r-026"
+      },
+      {
+        "class": "Activation",
+        "t": 3,
+        "ref": "learn-playbook",
+        "detail": "activated (FlowsTo r16); type=Learning, stages=['Learn']",
+        "recordId": "r-027"
+      },
+      {
+        "class": "ConditionEvaluation",
+        "t": 3,
+        "ref": "cond-continuous-monitoring",
+        "detail": "unresolved: subject 'monitoring cycle' on channel observed is not numerically evaluable (recorded, never defaulted \u2014 LSE-007)",
+        "outcome": "Unresolved",
+        "channel": "observed",
+        "recordId": "r-028"
+      },
+      {
+        "class": "ConditionEvaluation",
+        "t": 3,
+        "ref": "cond-outcome-not-achieved",
+        "detail": "unresolved: subject 'post-latency-observation.p95' on channel observed is not numerically evaluable (recorded, never defaulted \u2014 LSE-007)",
+        "outcome": "Unresolved",
+        "channel": "observed",
+        "recordId": "r-029"
+      }
+    ]
+  }
+}

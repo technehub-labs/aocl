@@ -4,6 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); semver. The re
 
 ## [Unreleased]
 
+### Added
+
+- **AOCL-CR-013 drafted and implemented** (Simulation Trace and Replay): the CR document (`docs/architecture/AOCL-CR-013.md`, Proposed — rules TRC-001..016), `schema/trace.schema.json` (the canonical ExecutionTrace envelope: run identity, model bindings, declared inputs, termination, evidence reference), `src/aocl/trace.py` + `aocl-trace` CLI (native validation + **deterministic replay verification** — re-executes the bound artifacts under the envelope's declared inputs and compares record sequences on (class, ref, outcome) triples, reporting the exact diverging position on failure; replay compatibility is engine-version-scoped), and the committed canonical trace of the CR-011 reference run (`examples/trace-logical-run.json`, 29 records, `build_trace` serialization). CI now proves the full loop: run → trace → validate → replay-verify. Structural validity is distinct from replay success (TRC-016).
+
+
 ## [0.1.4] — 2026-11-22
 
 ### Added

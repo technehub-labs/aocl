@@ -83,6 +83,12 @@ jobs:
           python3 tools/aocl_engine_statebased.py --self-test
           python3 tools/aocl_engine_statebased.py run examples/execution-definition-statebased-sim.yaml --loop examples/canonical-loop.yaml --scenarios examples/scenario-library-sim.yaml --json > /dev/null
           echo "state-based engine: self-test + reference run (7/7 invariants as verdicts) ok"
+      - name: Trace and replay (CR-013)
+        run: |
+          python3 tools/aocl_trace.py --self-test
+          python3 tools/aocl_trace.py validate examples/trace-logical-run.json --json > /dev/null
+          python3 tools/aocl_trace.py verify examples/trace-logical-run.json --execution examples/execution-definition-logical.yaml --spec examples/behavioral-spec.yaml --scenarios examples/scenario-library.yaml --control examples/control-contract.yaml --evidence examples/evidence-model.yaml --json > /dev/null
+          echo "trace: self-test + canonical trace validation + deterministic replay verification ok"
       - name: Example ledger health (deterministic)
         run: |
           python3 tools/aocl_ledger.py examples/loops.yaml --today 2026-09-28 --json > /dev/null             || { echo "expected healthy ledger on 2026-09-28 (before staleness)"; exit 1; }
@@ -143,6 +149,9 @@ jobs:
           print("ok   examples/execution-definition-logical.yaml validates against execution-semantics.schema.json")
           Draft202012Validator(exe_schema).validate(yaml.safe_load(pathlib.Path("examples/execution-definition-statebased-sim.yaml").read_text()))
           print("ok   examples/execution-definition-statebased-sim.yaml validates against execution-semantics.schema.json")
+          trc_schema = json.loads(pathlib.Path("schema/trace.schema.json").read_text())
+          Draft202012Validator(trc_schema).validate(json.loads(pathlib.Path("examples/trace-logical-run.json").read_text()))
+          print("ok   examples/trace-logical-run.json validates against trace.schema.json")
           for m in sorted(pathlib.Path("model").glob("*.yaml")):
               yaml.safe_load(m.read_text()); print(f"ok   model  {m.name}")
           # example ledger against its schema
